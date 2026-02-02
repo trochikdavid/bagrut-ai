@@ -4,7 +4,7 @@
 .practice-session {
     max-width: 640px;
     margin: 0 auto;
-    margin-top: 40px;
+    margin-top: 20px;
     /* Reduced top margin for simulation items */
     padding: 0 var(--space-sm);
 }
@@ -113,8 +113,12 @@ a.exit-button:hover {
     border-color: var(--error);
     transform: scale(1.05);
     box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
-    color: #ffffff !important;
     /* Force white text on red background */
+}
+
+/* Fix for Link/Anchor buttons inside modals turning primary color */
+a.btn.btn-danger:hover {
+    color: #ffffff !important;
 }
 
 /* Header title in center */
@@ -477,9 +481,9 @@ a.exit-button:hover {
     align-items: center;
     justify-content: center;
     gap: 0;
-    margin-bottom: var(--space-lg);
-    /* Reduced from 2xl */
-    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    /* Reduced from lg */
+    padding: var(--space-xs);
     /* Reduced padding */
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
@@ -1052,4 +1056,69 @@ a.exit-button:hover {
 .simulation-step.active .step-label {
     color: var(--primary-light);
     font-weight: 600;
+}
+
+/* Submission Card */
+.submission-card {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-xl);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid var(--primary-light);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+}
+
+.submission-card-bg {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    animation: spin 20s linear infinite;
+}
+
+.submission-icon {
+    font-size: 5rem;
+    margin-bottom: var(--space-md);
+    animation: bounce 2s infinite;
+}
+
+.submission-title {
+    font-size: 2rem;
+    margin-bottom: var(--space-md);
+    background: var(--gradient-primary);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.submission-text {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-2xl);
+    max-width: 400px;
+    margin: 0 auto var(--space-2xl);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.submission-btn {
+    font-size: 1.25rem;
+    padding: 1rem 3rem;
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }

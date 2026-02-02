@@ -275,7 +275,7 @@ export default function Simulation() {
 
     return (
         <div className="page animate-fade-in" style={{ paddingTop: 0 }}>
-            <div className="practice-session" style={{ marginTop: '40px' }}>
+            <div className="practice-session">
                 <header className="practice-header simulation-header">
                     {/* Back button - RIGHT corner (first in DOM for RTL) */}
                     {phase !== 'intro' ? (
@@ -747,9 +747,9 @@ export default function Simulation() {
                                                     </button>
                                                     {/*  Redundant previous button removed as per user request (use header back button) */}
                                                     {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
-                                                        <button className="btn btn-primary" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
+                                                        <button className="btn btn-primary btn-lg" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
                                                     ) : allCQuestionsAnswered && (
-                                                        <button className="btn btn-primary" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
+                                                        <button className="btn btn-primary btn-lg" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
                                                     )}
                                                 </div>
                                             </div>
@@ -768,9 +768,9 @@ export default function Simulation() {
                                                         <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
                                                             {/*  Redundant previous button removed as per user request (use header back button) */}
                                                             {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
-                                                                <button className="btn btn-primary" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
+                                                                <button className="btn btn-primary btn-lg" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
                                                             ) : allCQuestionsAnswered && (
-                                                                <button className="btn btn-primary" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
+                                                                <button className="btn btn-primary btn-lg" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -781,49 +781,23 @@ export default function Simulation() {
                                 })()}
                             </>
                         ) : (
-                            <div className="submit-section animate-slide-up" style={{ padding: 0, border: 'none', background: 'transparent' }}>
-                                <div className="card" style={{
-                                    textAlign: 'center',
-                                    padding: 'var(--space-2xl) var(--space-xl)',
-                                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
-                                    border: '1px solid var(--primary-light)',
-                                    boxShadow: '0 0 40px rgba(99, 102, 241, 0.2)',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-50%',
-                                        left: '-50%',
-                                        width: '200%',
-                                        height: '200%',
-                                        background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 50%)',
-                                        animation: 'spin 20s linear infinite'
-                                    }}></div>
+                            <div className="submission-card animate-scale-in">
+                                <div className="submission-card-bg"></div>
+                                <div className="submission-icon">🏆</div>
+                                <div className="submission-title">כל הכבוד!</div>
+                                <p className="submission-text">
+                                    סיימת בהצלחה את כל המודולים בסימולציה.
+                                    <br />
+                                    לחץ על הכפתור למטה כדי להגיש ולקבל ניתוח מלא.
+                                </p>
 
-                                    <div style={{ fontSize: '5rem', marginBottom: 'var(--space-md)', animation: 'bounce 2s infinite' }}>🏆</div>
-                                    <h2 style={{ fontSize: '2rem', marginBottom: 'var(--space-md)', background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                        כל הכבוד!
-                                    </h2>
-                                    <p className="text-secondary" style={{ fontSize: '1.1rem', marginBottom: 'var(--space-2xl)', maxWidth: '400px', margin: '0 auto var(--space-2xl)' }}>
-                                        סיימת בהצלחה את כל המודולים בסימולציה.
-                                        <br />
-                                        לחץ על הכפתור למטה כדי להגיש ולקבל ניתוח מלא.
-                                    </p>
-
-                                    <button
-                                        className="btn btn-primary btn-lg"
-                                        onClick={finishSimulation}
-                                        style={{
-                                            fontSize: '1.25rem',
-                                            padding: '1rem 3rem',
-                                            boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)'
-                                        }}
-                                    >
-                                        <FiCheck style={{ marginLeft: '10px' }} />
-                                        הגש סימולציה וקבל ציון
-                                    </button>
-                                </div>
+                                <button
+                                    className="btn btn-primary btn-lg submission-btn"
+                                    onClick={finishSimulation}
+                                >
+                                    <FiCheck style={{ marginLeft: '10px' }} />
+                                    הגש סימולציה וקבל ציון
+                                </button>
                             </div>
                         )}
                     </div>
