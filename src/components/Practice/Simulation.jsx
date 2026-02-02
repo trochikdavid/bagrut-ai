@@ -745,11 +745,7 @@ export default function Simulation() {
                                                     >
                                                         <FiTrash2 /> מחק והקלט מחדש
                                                     </button>
-                                                    {currentCQuestion > 0 && (
-                                                        <button className="btn btn-secondary" onClick={() => setCurrentCQuestion(prev => prev - 1)}>
-                                                            ← שאלה קודמת
-                                                        </button>
-                                                    )}
+                                                    {/*  Redundant previous button removed as per user request (use header back button) */}
                                                     {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
                                                         <button className="btn btn-primary" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
                                                     ) : allCQuestionsAnswered && (
@@ -770,11 +766,7 @@ export default function Simulation() {
                                                     <div className="submit-section animate-slide-up">
                                                         <p className="text-success"><FiCheck /> תשובה נשמרה!</p>
                                                         <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                                            {currentCQuestion > 0 && (
-                                                                <button className="btn btn-secondary" onClick={() => setCurrentCQuestion(prev => prev - 1)}>
-                                                                    ← שאלה קודמת
-                                                                </button>
-                                                            )}
+                                                            {/*  Redundant previous button removed as per user request (use header back button) */}
                                                             {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
                                                                 <button className="btn btn-primary" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
                                                             ) : allCQuestionsAnswered && (
@@ -789,27 +781,47 @@ export default function Simulation() {
                                 })()}
                             </>
                         ) : (
-                            <div className="submit-section animate-slide-up">
+                            <div className="submit-section animate-slide-up" style={{ padding: 0, border: 'none', background: 'transparent' }}>
                                 <div className="card" style={{
                                     textAlign: 'center',
-                                    padding: 'var(--space-xl)',
+                                    padding: 'var(--space-2xl) var(--space-xl)',
                                     background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
                                     border: '1px solid var(--primary-light)',
-                                    boxShadow: '0 0 30px rgba(99, 102, 241, 0.15)'
+                                    boxShadow: '0 0 40px rgba(99, 102, 241, 0.2)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
                                 }}>
-                                    <div style={{ fontSize: '4rem', marginBottom: 'var(--space-md)', animation: 'bounce 2s infinite' }}>🏆</div>
-                                    <h2 style={{
-                                        marginBottom: 'var(--space-sm)',
-                                        background: 'var(--gradient-primary)',
-                                        WebkitBackgroundClip: 'text',
-                                        WebkitTextFillColor: 'transparent',
-                                        display: 'inline-block'
-                                    }}>כל הכבוד!</h2>
-                                    <p className="text-secondary" style={{ marginBottom: 'var(--space-lg)' }}>
-                                        סיימת את הסימולציה בהצלחה
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-50%',
+                                        left: '-50%',
+                                        width: '200%',
+                                        height: '200%',
+                                        background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 50%)',
+                                        animation: 'spin 20s linear infinite'
+                                    }}></div>
+
+                                    <div style={{ fontSize: '5rem', marginBottom: 'var(--space-md)', animation: 'bounce 2s infinite' }}>🏆</div>
+                                    <h2 style={{ fontSize: '2rem', marginBottom: 'var(--space-md)', background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                        כל הכבוד!
+                                    </h2>
+                                    <p className="text-secondary" style={{ fontSize: '1.1rem', marginBottom: 'var(--space-2xl)', maxWidth: '400px', margin: '0 auto var(--space-2xl)' }}>
+                                        סיימת בהצלחה את כל המודולים בסימולציה.
+                                        <br />
+                                        לחץ על הכפתור למטה כדי להגיש ולקבל ניתוח מלא.
                                     </p>
-                                    <button className="btn btn-primary btn-lg" onClick={finishSimulation} style={{ width: '100%' }}>
-                                        <FiCheck /> הגש סימולציה לניתוח
+
+                                    <button
+                                        className="btn btn-primary btn-lg"
+                                        onClick={finishSimulation}
+                                        style={{
+                                            fontSize: '1.25rem',
+                                            padding: '1rem 3rem',
+                                            boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)'
+                                        }}
+                                    >
+                                        <FiCheck style={{ marginLeft: '10px' }} />
+                                        הגש סימולציה וקבל ציון
                                     </button>
                                 </div>
                             </div>
@@ -818,40 +830,43 @@ export default function Simulation() {
                 )}
             </div>
 
+
             {/* Exit Confirmation Modal */}
-            {showExitConfirm && (
-                <div className="modal-overlay" onClick={() => setShowExitConfirm(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', textAlign: 'center' }}>🤔</div>
-                        <h3 style={{ marginBottom: 'var(--space-md)', textAlign: 'center' }}>רגע, בטוח?</h3>
-                        <p style={{
-                            color: 'var(--text-secondary)',
-                            marginBottom: 'var(--space-xl)',
-                            textAlign: 'center',
-                            lineHeight: 1.6
-                        }}>
-                            אם תצאו עכשיו, ההקלטות שעשיתם לא יישמרו ותצטרכו להתחיל מחדש
-                        </p>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center' }}>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => setShowExitConfirm(false)}
-                            >
-                                המשך להתאמן
-                            </button>
-                            <Link
-                                to="/practice"
-                                className="btn btn-danger"
-                                onClick={() => {
-                                    if (timerRef.current) clearInterval(timerRef.current)
-                                }}
-                            >
-                                יציאה
-                            </Link>
+            {
+                showExitConfirm && (
+                    <div className="modal-overlay" onClick={() => setShowExitConfirm(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', textAlign: 'center' }}>🤔</div>
+                            <h3 style={{ marginBottom: 'var(--space-md)', textAlign: 'center' }}>רגע, בטוח?</h3>
+                            <p style={{
+                                color: 'var(--text-secondary)',
+                                marginBottom: 'var(--space-xl)',
+                                textAlign: 'center',
+                                lineHeight: 1.6
+                            }}>
+                                אם תצאו עכשיו, ההקלטות שעשיתם לא יישמרו ותצטרכו להתחיל מחדש
+                            </p>
+                            <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center' }}>
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowExitConfirm(false)}
+                                >
+                                    המשך להתאמן
+                                </button>
+                                <Link
+                                    to="/practice"
+                                    className="btn btn-danger"
+                                    onClick={() => {
+                                        if (timerRef.current) clearInterval(timerRef.current)
+                                    }}
+                                >
+                                    יציאה
+                                </Link>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

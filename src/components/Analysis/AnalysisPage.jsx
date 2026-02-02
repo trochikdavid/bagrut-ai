@@ -23,8 +23,9 @@ export default function AnalysisPage() {
                 const data = await getPracticeById(id)
                 if (data) {
                     setPractice(data)
-                    // Expand all 5 questions by default
-                    const expanded = { 0: true, 1: true, 2: true, 3: true, 4: true }
+                    // Expand all questions by default (0-9 covers potential range of Qs)
+                    const expanded = {}
+                    for (let i = 0; i < 10; i++) expanded[i] = true
                     setExpandedQuestions(expanded)
 
                     // Fetch audio URLs
@@ -226,7 +227,7 @@ export default function AnalysisPage() {
                             }
 
                             return allQuestions.map((qa, idx) => (
-                                <div key={qa.questionId} className={`question-analysis card ${!qa.isAnswered ? 'question-unselected' : ''}`}>
+                                <div key={qa.questionId} className={`question-analysis ${!qa.isAnswered ? 'question-unselected' : ''}`}>
                                     <button
                                         className="question-analysis-header"
                                         onClick={() => qa.isAnswered && toggleQuestion(idx)}

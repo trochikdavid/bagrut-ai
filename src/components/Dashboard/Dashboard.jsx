@@ -135,21 +135,43 @@ export default function Dashboard() {
                 </section>
 
                 {/* Progress Chart */}
-                {stats.recentScores.length > 0 && (
+                {(stats.recentPractices?.length > 0 || stats.recentScores?.length > 0) && (
                     <section className="dashboard-chart card">
                         <h3 className="chart-title">התקדמות אחרונה</h3>
                         <div className="chart-container">
                             <div className="chart-bars">
-                                {stats.recentScores.map((score, index) => (
-                                    <div key={index} className="chart-bar-wrapper">
-                                        <div
-                                            className={`chart-bar ${getScoreClass(score)}`}
-                                            style={{ height: `${(score / maxScore) * 100}%` }}
-                                        >
-                                            <span className="chart-bar-value">{score}</span>
+                                {stats.recentPractices?.length > 0 ? (
+                                    stats.recentPractices.map((practice, index) => {
+                                        const score = practice.totalScore || 0
+                                        const date = new Date(practice.completedAt || practice.startedAt)
+                                        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`
+
+                                        return (
+                                            <div key={practice.id || index} className="chart-bar-wrapper">
+                                                <div
+                                                    className={`chart-bar ${getScoreClass(score)}`}
+                                                    style={{ height: `${Math.min(score, 100)}%` }}
+                                                    title={`ציון: ${score} - ${date.toLocaleDateString('he-IL')}`}
+                                                >
+                                                    <span className="chart-bar-value">{score}</span>
+                                                </div>
+                                                <span className="chart-label">{dateStr}</span>
+                                            </div>
+                                        )
+                                    })
+                                ) : (
+                                    // Fallback for legacy/empty data
+                                    stats.recentScores.map((score, index) => (
+                                        <div key={index} className="chart-bar-wrapper">
+                                            <div
+                                                className={`chart-bar ${getScoreClass(score)}`}
+                                                style={{ height: `${Math.min(score, 100)}%` }}
+                                            >
+                                                <span className="chart-bar-value">{score}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                             <div className="chart-baseline"></div>
                         </div>

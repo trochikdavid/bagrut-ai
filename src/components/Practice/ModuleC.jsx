@@ -198,14 +198,14 @@ export default function ModuleC() {
                                 />
                                 <div className="preview-actions">
                                     <button
-                                        className="btn btn-secondary"
+                                        className="btn btn-danger"
                                         onClick={handleDeleteRecording}
                                     >
                                         <FiTrash2 /> מחק והקלט מחדש
                                     </button>
                                     {!allQuestionsAnswered && (
                                         <button
-                                            className="btn btn-primary btn-lg"
+                                            className="btn btn-primary"
                                             onClick={handleNextQuestion}
                                         >
                                             המשך לשאלה הבאה

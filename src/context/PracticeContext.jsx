@@ -532,6 +532,8 @@ export function PracticeProvider({ children }) {
                 moduleBCount: 0,
                 moduleCCount: 0,
                 simulationCount: 0,
+
+                recentPractices: [],
                 recentScores: [],
                 improvement: 0
             }
@@ -550,6 +552,10 @@ export function PracticeProvider({ children }) {
             ? Math.round((last5.reduce((a, b) => a + b, 0) / last5.length) - (prev5.reduce((a, b) => a + b, 0) / prev5.length))
             : 0
 
+        const recentPractices = completedPractices
+            .sort((a, b) => new Date(a.completedAt || a.startedAt) - new Date(b.completedAt || b.startedAt))
+            .slice(-10)
+
         return {
             totalPractices: completedPractices.length,
             averageScore,
@@ -558,6 +564,7 @@ export function PracticeProvider({ children }) {
             moduleCCount: completedPractices.filter(p => p.type === 'module-c').length,
             simulationCount: completedPractices.filter(p => p.type === 'simulation').length,
             recentScores: scores.slice(0, 10).reverse(),
+            recentPractices,
             improvement
         }
     }
