@@ -14,6 +14,7 @@ import AnalysisPage from './components/Analysis/AnalysisPage'
 import HistoryPage from './components/History/HistoryPage'
 import ProfilePage from './components/Profile/ProfilePage'
 import AdminDashboard from './components/Admin/AdminDashboard'
+import StatisticsPage from './components/Statistics/StatisticsPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -57,9 +58,12 @@ function AdminRoute({ children }) {
   return user?.isAdmin ? children : <Navigate to="/dashboard" />
 }
 
+import ScrollToTop from './components/ScrollToTop'
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <PracticeProvider>
           <Routes>
@@ -90,6 +94,7 @@ function App() {
               <Route path="practice/simulation" element={<Simulation />} />
               <Route path="analysis/:id" element={<AnalysisPage />} />
               <Route path="history" element={<HistoryPage />} />
+              <Route path="statistics" element={<StatisticsPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
 

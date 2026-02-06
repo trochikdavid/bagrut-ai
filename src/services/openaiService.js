@@ -1373,9 +1373,10 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
  * @param {string} params.videoTranscript - The transcript of the YouTube video
  * @returns {Promise<{topicDevelopment: object, fluency: object, vocabulary: object, grammar: object, totalScore: number}>}
  */
-export async function analyzeAnswerModuleC({ question, studentTranscript, videoTranscript }) {
+export async function analyzeAnswerModuleC({ question, studentTranscript, videoTranscript, pronunciationMetrics = null }) {
     console.log('📊 Starting Module C answer analysis...')
     console.log(`   Video transcript available: ${videoTranscript ? 'Yes' : 'No'} (${videoTranscript?.length || 0} chars)`)
+    console.log('📊 Pronunciation metrics available:', !!pronunciationMetrics)
 
     // Check if no speech was detected - return all zeros
     const noSpeechIndicators = [
@@ -1403,10 +1404,18 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
                 improvements: ['יש להקליט תשובה מדוברת לשאלה'],
                 generalFeedback: 'לא זוהה דיבור בהקלטה. אנא נסה להקליט שוב ולדבר בקול ברור.'
             },
-            fluency: null, // Module C does not have fluency
+            fluency: {
+                score: 0,
+                weight: 15,
+                range: '0-0',
+                feedback: 'לא זוהה דיבור בהקלטה',
+                strengths: [],
+                improvements: [],
+                generalFeedback: ''
+            },
             vocabulary: {
                 score: 0,
-                weight: 25,
+                weight: 20,
                 range: '0-0',
                 feedback: 'לא זוהה דיבור בהקלטה',
                 strengths: [],
@@ -1415,7 +1424,7 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             },
             grammar: {
                 score: 0,
-                weight: 25,
+                weight: 15,
                 range: '0-0',
                 feedback: 'לא זוהה דיבור בהקלטה',
                 strengths: [],
@@ -1433,8 +1442,8 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
 
     // Run all scoring in parallel for better performance
     // Topic Development uses Module C specific assistant with video transcript
-    // Vocabulary and Language use regular assistants
-    const [topicDevelopmentResult, vocabularyResult, languageResult] = await Promise.all([
+    // Vocabulary, Language, and Fluency use regular logic
+    const [topicDevelopmentResult, vocabularyResult, languageResult, fluencyResult] = await Promise.all([
         // Topic Development - Uses Module C specific assistant with video transcript
         scoreModuleCTopicDevelopment({
             question,
@@ -1453,18 +1462,26 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
         scoreLanguage(question, studentTranscript).catch(error => {
             console.error('Failed to get Language score:', error)
             return { range: '55-75', score: 65, justification: 'שגיאה בניתוח Language' }
-        })
+        }),
+        // Fluency/Delivery - only if pronunciation metrics available
+        pronunciationMetrics
+            ? scoreFluency(question, studentTranscript, pronunciationMetrics).catch(error => {
+                console.error('Failed to get Fluency score:', error)
+                return { range: '55-75', score: 65, justification: 'Error analyzing Fluency' }
+            })
+            : Promise.resolve({ range: '55-75', score: 65, justification: 'No pronunciation metrics available' })
     ])
 
     console.log('✅ All Module C scoring completed')
     console.log(`   Topic Development: ${topicDevelopmentResult.score}`)
+    console.log(`   Fluency: ${fluencyResult.score}`)
     console.log(`   Vocabulary: ${vocabularyResult.score}`)
     console.log(`   Language: ${languageResult.score}`)
 
     // Get detailed feedback from all Feedback Assistants (in parallel)
     // Topic Development uses Module C specific feedback assistant
     console.log('🔄 Getting detailed feedback from all Feedback Assistants...')
-    const [topicFeedback, vocabularyFeedback, languageFeedback] = await Promise.all([
+    const [topicFeedback, vocabularyFeedback, languageFeedback, fluencyFeedback] = await Promise.all([
         // Topic Development Feedback - Uses Module C specific assistant with video transcript
         getModuleCTopicFeedback({
             question,
@@ -1495,7 +1512,20 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
         }).catch(error => {
             console.error('Failed to get Language feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
-        })
+        }),
+        // Fluency/Delivery Feedback - only if pronunciation metrics available
+        pronunciationMetrics
+            ? getFluencyFeedback({
+                question,
+                score: fluencyResult.score,
+                range: fluencyResult.range,
+                transcript: studentTranscript,
+                pronunciationMetrics
+            }).catch(error => {
+                console.error('Failed to get Fluency feedback:', error)
+                return { strengths: [], improvements: [], generalFeedback: '' }
+            })
+            : Promise.resolve({ strengths: [], improvements: [], generalFeedback: 'No pronunciation metrics available' })
     ])
 
     console.log('✅ All Module C feedback received')
@@ -1504,24 +1534,27 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
     const allStrengths = [
         ...(topicFeedback.strengths || []),
         ...(vocabularyFeedback.strengths || []),
-        ...(languageFeedback.strengths || [])
+        ...(languageFeedback.strengths || []),
+        ...(fluencyFeedback.strengths || [])
     ]
     const allImprovements = [
         ...(topicFeedback.improvements || []),
         ...(vocabularyFeedback.improvements || []),
-        ...(languageFeedback.improvements || [])
+        ...(languageFeedback.improvements || []),
+        ...(fluencyFeedback.improvements || [])
     ]
 
     // Calculate weighted total score for Module C
-    // Module C uses only 3 criteria: Topic Development 50%, Vocabulary 25%, Grammar 25%
-    // NO FLUENCY for Module C (as per user specification)
+    // Updated weights to match Module A/B/Simulation standard:
+    // Topic Development: 50%, Fluency: 15%, Vocabulary: 20%, Grammar: 15%
     const totalScore = Math.round(
         topicDevelopmentResult.score * 0.50 +
-        vocabularyResult.score * 0.25 +
-        languageResult.score * 0.25
+        fluencyResult.score * 0.15 +
+        vocabularyResult.score * 0.20 +
+        languageResult.score * 0.15
     )
 
-    console.log(`📊 Module C Final Score: ${totalScore} (TD: ${topicDevelopmentResult.score}*50% + Vocab: ${vocabularyResult.score}*25% + Grammar: ${languageResult.score}*25%)`)
+    console.log(`📊 Module C Final Score: ${totalScore} (TD: ${topicDevelopmentResult.score}*50% + Fluency: ${fluencyResult.score}*15% + Vocab: ${vocabularyResult.score}*20% + Grammar: ${languageResult.score}*15%)`)
 
     return {
         topicDevelopment: {
@@ -1533,11 +1566,18 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             improvements: topicFeedback.improvements || [],
             generalFeedback: topicFeedback.generalFeedback || ''
         },
-        // Module C does NOT have fluency criterion - set to null to indicate this
-        fluency: null,
+        fluency: {
+            score: fluencyResult.score,
+            weight: 15,
+            range: fluencyResult.range,
+            feedback: fluencyResult.justification,
+            strengths: fluencyFeedback.strengths || [],
+            improvements: fluencyFeedback.improvements || [],
+            generalFeedback: fluencyFeedback.generalFeedback || ''
+        },
         vocabulary: {
             score: vocabularyResult.score,
-            weight: 25,
+            weight: 20,
             range: vocabularyResult.range,
             feedback: vocabularyResult.justification,
             strengths: vocabularyFeedback.strengths || [],
@@ -1546,7 +1586,7 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
         },
         grammar: {
             score: languageResult.score,
-            weight: 25,
+            weight: 15,
             range: languageResult.range,
             feedback: languageResult.justification,
             strengths: languageFeedback.strengths || [],

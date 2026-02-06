@@ -102,189 +102,19 @@ export const mockQuestions = {
     ]
 }
 
-// Generate feedback for specific criteria based on rubric
-const generateCriteriaFeedback = (criteriaName, score) => {
-    const rubric = {
-        topicDevelopment: {
-            high: {
-                feedback: 'תשובה מפותחת היטב עם דוגמאות רלוונטיות. הרעיונות מאורגנים באופן לוגי וברור.',
-                examples: [
-                    'השתמשת בדוגמה אישית מצוינת לתמיכה בטיעון',
-                    'הפיתוח של הרעיון היה מעמיק ומפורט',
-                    'הארגון של התשובה היה ברור ומובנה'
-                ],
-                improvements: []
-            },
-            medium: {
-                feedback: 'התשובה רלוונטית ברובה אך חסרה עומק בחלק מהמקומות.',
-                examples: [
-                    'הרעיון המרכזי הובע בצורה סבירה'
-                ],
-                improvements: [
-                    'נסה/י להוסיף דוגמאות ספציפיות יותר',
-                    'הרחב/י את ההסבר עם פרטים נוספים',
-                    'חשוב/י על ארגון ברור יותר של הרעיונות'
-                ]
-            },
-            low: {
-                feedback: 'התשובה קצרה ולא מפותחת מספיק.',
-                examples: [],
-                improvements: [
-                    'התשובה צריכה להיות ארוכה ומפורטת יותר',
-                    'חסרות דוגמאות לתמיכה בטיעונים',
-                    'הקשר לנושא השאלה לא ברור מספיק',
-                    'נסה/י לארגן את הרעיונות בצורה ברורה יותר'
-                ]
-            }
-        },
-        fluency: {
-            high: {
-                feedback: 'דיבור שוטף וברור עם קצב טבעי ואינטונציה טובה.',
-                examples: [
-                    'הקצב היה טבעי ונעים להאזנה',
-                    'ההגייה הייתה ברורה ומובנת'
-                ],
-                improvements: []
-            },
-            medium: {
-                feedback: 'הדיבור מובן ברובו אך ישנן הססות מסוימות.',
-                examples: [],
-                improvements: [
-                    'נסה/י להפחית את השימוש ב-"um" ו-"uh"',
-                    'תרגל/י את הקטע מספר פעמים לפני הקלטה',
-                    'שים/י לב לקצב - לפעמים מהיר מדי'
-                ]
-            },
-            low: {
-                feedback: 'הדיבור מהוסס ולא רציף, עם קשיים בהבנה.',
-                examples: [],
-                improvements: [
-                    'יש לתרגל את השטף - הססות רבות מקשות על ההבנה',
-                    'נסה/י להאט ולדבר בצורה ברורה יותר',
-                    'תרגול יומי קצר ישפר את השטף משמעותית',
-                    'הקשב/י לאנגלית מדוברת (פודקאסטים, סרטים) לשיפור האינטונציה'
-                ]
-            }
-        },
-        vocabulary: {
-            high: {
-                feedback: 'שימוש מגוון ומדויק באוצר מילים עשיר.',
-                examples: [
-                    'שימוש מצוין בביטויים מתקדמים',
-                    'מילים מדויקות והולמות להקשר'
-                ],
-                improvements: []
-            },
-            medium: {
-                feedback: 'אוצר מילים סביר עם חזרות מסוימות.',
-                examples: [],
-                improvements: [
-                    'נסה/י להשתמש במילים מגוונות יותר במקום לחזור על אותן מילים',
-                    'למד/י ביטויים חדשים לנושא זה',
-                    'השתמש/י במילות קישור מגוונות (however, moreover, in addition)'
-                ]
-            },
-            low: {
-                feedback: 'אוצר מילים בסיסי מאוד עם חזרות רבות.',
-                examples: [],
-                improvements: [
-                    'יש להרחיב את אוצר המילים - שימוש חוזר באותן מילים בסיסיות',
-                    'למד/י 5 מילים חדשות ביום בנושא זה',
-                    'נסה/י להחליף מילים כמו "good" ב-"excellent", "amazing", "beneficial"',
-                    'השתמש/י באפליקציות לאוצר מילים כמו Quizlet'
-                ]
-            }
-        },
-        grammar: {
-            high: {
-                feedback: 'שימוש נכון במבני משפט מגוונים עם מעט מאוד שגיאות.',
-                examples: [
-                    'שימוש נכון בזמנים שונים',
-                    'מבני משפט מורכבים ונכונים'
-                ],
-                improvements: []
-            },
-            medium: {
-                feedback: 'שימוש סביר בדקדוק עם מספר שגיאות.',
-                examples: [],
-                improvements: [
-                    'שים/י לב לשימוש נכון ב-Present Perfect vs Past Simple',
-                    'התאמת נושא ונשוא - "he goes" ולא "he go"',
-                    'שימוש נכון ב-articles (a/an/the)'
-                ]
-            },
-            low: {
-                feedback: 'שגיאות דקדוקיות רבות המקשות על ההבנה.',
-                examples: [],
-                improvements: [
-                    'יש לחזור על כללי הזמנים באנגלית',
-                    'שגיאות בהתאמת נושא ונשוא - תרגל/י את הכלל הבסיסי',
-                    'מבנה המשפטים לא תקין - Subject + Verb + Object',
-                    'למד/י מחדש את השימוש ב-articles (a/an/the)'
-                ]
-            }
-        },
-        pronunciation: {
-            high: {
-                feedback: 'הגייה ברורה ומובנת עם הטעמה נכונה.',
-                examples: [
-                    'הגייה ברורה של כל המילים',
-                    'הטעמה נכונה במילים רב-הברתיות'
-                ],
-                improvements: []
-            },
-            medium: {
-                feedback: 'הגייה מובנת ברובה עם קשיים במילים מסוימות.',
-                examples: [],
-                improvements: [
-                    'שים/י לב להגייה נכונה של צלילי "th"',
-                    'תרגל/י הטעמה נכונה במילים ארוכות',
-                    'השתמש/י ב-Google Translate לשמוע הגייה נכונה'
-                ]
-            },
-            low: {
-                feedback: 'קשיים משמעותיים בהגייה.',
-                examples: [],
-                improvements: [
-                    'יש לתרגל הגייה - קשה להבין חלק מהמילים',
-                    'הקשב/י להגייה נכונה והקלט/י את עצמך',
-                    'התמקד/י בצלילים שאינם קיימים בעברית',
-                    'השתמש/י באפליקציות כמו ELSA Speak לתרגול הגייה'
-                ]
-            }
-        }
-    }
+// Helper to generate empty feedback structure
+const getEmptyFeedback = (weight) => ({
+    score: 0,
+    weight,
+    feedback: '',
+    examples: [],
+    improvements: []
+})
 
-    const level = score >= 76 ? 'high' : score >= 55 ? 'medium' : 'low'
-    return rubric[criteriaName]?.[level] || { feedback: '', examples: [], improvements: [] }
-}
-
-// Mock Analysis Generator - Enhanced version per PRD
+// Mock Analysis Generator - Returns empty/zero data as requested
 export function generateMockAnalysis(practice) {
-    const baseScore = 60 + Math.random() * 30
-
     // Generate per-question analysis for each recording
     const questionAnalyses = practice.questions.map((question, index) => {
-        const topicDevelopment = Math.round(Math.max(40, Math.min(100, baseScore + (Math.random() - 0.5) * 20)))
-        const fluency = Math.round(Math.max(40, Math.min(100, baseScore + (Math.random() - 0.5) * 25)))
-        const vocabulary = Math.round(Math.max(40, Math.min(100, baseScore + (Math.random() - 0.5) * 20)))
-        const grammar = Math.round(Math.max(40, Math.min(100, baseScore + (Math.random() - 0.5) * 25)))
-
-        // Calculate weighted score
-        const questionScore = Math.round(
-            topicDevelopment * 0.5 +
-            fluency * 0.15 +
-            vocabulary * 0.2 +
-            grammar * 0.15
-        )
-
-        // Generate mock transcript
-        const transcripts = [
-            "I think that this is a really important topic. In my opinion, there are many factors to consider. For example, when I think about my own experience, I remember that it had a significant impact on my life. The main reason is that it helped me understand better how things work in the real world.",
-            "Well, let me tell you about this. First of all, I believe that everyone has their own perspective. From my point of view, the most important thing is to stay focused and work hard. Additionally, I think that having support from family and friends makes a big difference.",
-            "This is something I feel strongly about. Based on what I have learned, there are several key points to mention. The first point is about understanding the basics. The second point relates to practical application. Overall, I think this approach is very effective."
-        ]
-
         // Find the recording for this question
         const recording = practice.recordings?.find(r => r.questionId === question.id)
 
@@ -295,153 +125,58 @@ export function generateMockAnalysis(practice) {
             questionText: question.text,
             audioUrl: recording?.storagePath || null,
             recordingUrl: recording?.storagePath || null, // For DB saving consistency
-            transcript: transcripts[Math.floor(Math.random() * transcripts.length)],
-            duration: recording?.duration || Math.round(30 + Math.random() * 90),
-            totalScore: Math.round(
-                (topicDevelopment * 0.5) +
-                (fluency * 0.15) +
-                (vocabulary * 0.20) +
-                (grammar * 0.15)
-            ),
+            transcript: null, // No fake transcript
+            duration: recording?.duration || 0,
+            totalScore: 0,
             scores: {
-                topicDevelopment,
-                fluency,
-                vocabulary,
-                grammar
+                topicDevelopment: 0,
+                fluency: 0,
+                vocabulary: 0,
+                grammar: 0
             },
             feedback: {
-                topicDevelopment: {
-                    score: topicDevelopment,
-                    weight: 50,
-                    ...generateCriteriaFeedback('topicDevelopment', topicDevelopment)
-                },
-                fluency: {
-                    score: fluency,
-                    weight: 15,
-                    ...generateCriteriaFeedback('fluency', fluency)
-                },
-                vocabulary: {
-                    score: vocabulary,
-                    weight: 20,
-                    ...generateCriteriaFeedback('vocabulary', vocabulary)
-                },
-                grammar: {
-                    score: grammar,
-                    weight: 15,
-                    ...generateCriteriaFeedback('grammar', grammar)
-                }
+                videoUrl: question.videoUrl,
+                topicDevelopment: getEmptyFeedback(50),
+                fluency: getEmptyFeedback(15),
+                vocabulary: getEmptyFeedback(20),
+                grammar: getEmptyFeedback(15)
             },
-            totalScore: questionScore
+            totalScore: 0
         }
     })
 
     // Calculate module scores for simulation
     let moduleScores = null
     if (practice.type === 'simulation') {
-        // Assuming first question is A, second is B, rest are C
-        const moduleAScore = questionAnalyses[0]?.totalScore || 0
-        const moduleBScore = questionAnalyses[1]?.totalScore || 0
-        const moduleCScores = questionAnalyses.slice(2).map(q => q.totalScore)
-        const moduleCAvg = moduleCScores.length > 0
-            ? Math.round(moduleCScores.reduce((a, b) => a + b, 0) / moduleCScores.length)
-            : 0
-
         moduleScores = {
-            moduleA: { score: moduleAScore, weight: 25 },
-            moduleB: { score: moduleBScore, weight: 25 },
-            moduleC: { score: moduleCAvg, weight: 50 }
+            moduleA: { score: 0, weight: 25 },
+            moduleB: { score: 0, weight: 25 },
+            moduleC: { score: 0, weight: 50 }
         }
     }
 
-    // Calculate total score
-    const totalScore = moduleScores
-        ? Math.round(
-            moduleScores.moduleA.score * 0.25 +
-            moduleScores.moduleB.score * 0.25 +
-            moduleScores.moduleC.score * 0.50
-        )
-        : questionAnalyses.length > 0
-            ? Math.round(questionAnalyses.reduce((sum, q) => sum + q.totalScore, 0) / questionAnalyses.length)
-            : 0
-
-    // Aggregate feedback
-    const avgScores = {
-        topicDevelopment: Math.round(questionAnalyses.reduce((s, q) => s + q.scores.topicDevelopment, 0) / questionAnalyses.length) || 0,
-        fluency: Math.round(questionAnalyses.reduce((s, q) => s + q.scores.fluency, 0) / questionAnalyses.length) || 0,
-        vocabulary: Math.round(questionAnalyses.reduce((s, q) => s + q.scores.vocabulary, 0) / questionAnalyses.length) || 0,
-        grammar: Math.round(questionAnalyses.reduce((s, q) => s + q.scores.grammar, 0) / questionAnalyses.length) || 0
-    }
-
-    const totalDuration = questionAnalyses.reduce((s, q) => s + q.duration, 0)
-
-    // Collect all improvements and strengths
-    const allImprovements = []
-    const allStrengths = []
-
-    questionAnalyses.forEach(q => {
-        Object.values(q.feedback).forEach(f => {
-            if (f.improvements) allImprovements.push(...f.improvements)
-            if (f.examples) allStrengths.push(...f.examples)
-        })
-    })
-
-    // Deduplicate and limit
-    const uniqueImprovements = [...new Set(allImprovements)].slice(0, 5)
-    const uniqueStrengths = [...new Set(allStrengths)].slice(0, 3)
-
     return {
-        totalScore,
+        totalScore: 0,
         questionAnalyses,
         moduleScores,
-        scores: avgScores,
-        feedback: {
-            topicDevelopment: {
-                score: avgScores.topicDevelopment,
-                weight: 50,
-                ...generateCriteriaFeedback('topicDevelopment', avgScores.topicDevelopment)
-            },
-            fluency: {
-                score: avgScores.fluency,
-                weight: 15,
-                ...generateCriteriaFeedback('fluency', avgScores.fluency)
-            },
-            vocabulary: {
-                score: avgScores.vocabulary,
-                weight: 20,
-                ...generateCriteriaFeedback('vocabulary', avgScores.vocabulary)
-            },
-            grammar: {
-                score: avgScores.grammar,
-                weight: 15,
-                ...generateCriteriaFeedback('grammar', avgScores.grammar)
-            }
+        scores: {
+            topicDevelopment: 0,
+            fluency: 0,
+            vocabulary: 0,
+            grammar: 0
         },
-        improvements: uniqueImprovements,
-        strengths: uniqueStrengths,
-        duration: totalDuration
+        feedback: {
+            topicDevelopment: getEmptyFeedback(50),
+            fluency: getEmptyFeedback(15),
+            vocabulary: getEmptyFeedback(20),
+            grammar: getEmptyFeedback(15)
+        },
+        improvements: [],
+        strengths: [],
+        duration: questionAnalyses.reduce((s, q) => s + q.duration, 0)
     }
 }
 
-// Mock Users for Admin Panel
-export const mockUsers = [
-    { id: '1', name: 'יוסי כהן', email: 'yossi@example.com', practiceCount: 15, avgScore: 78, lastActive: '2026-01-13' },
-    { id: '2', name: 'מיכל לוי', email: 'michal@example.com', practiceCount: 23, avgScore: 85, lastActive: '2026-01-12' },
-    { id: '3', name: 'דני רוזן', email: 'dani@example.com', practiceCount: 8, avgScore: 65, lastActive: '2026-01-11' },
-    { id: '4', name: 'שירה גולד', email: 'shira@example.com', practiceCount: 31, avgScore: 92, lastActive: '2026-01-13' },
-    { id: '5', name: 'אורן ברק', email: 'oren@example.com', practiceCount: 12, avgScore: 71, lastActive: '2026-01-10' }
-]
+// Mock Users and Admin Stats were removed as they are no longer used.
+// Real data is fetched via adminService.js
 
-// Admin Statistics
-export const mockAdminStats = {
-    totalUsers: 156,
-    activeToday: 42,
-    totalPractices: 1847,
-    avgSessionTime: '8:32',
-    practicesThisWeek: [120, 145, 132, 168, 155, 98, 142],
-    scoreDistribution: {
-        excellent: 23,
-        good: 45,
-        average: 25,
-        needsWork: 7
-    }
-}

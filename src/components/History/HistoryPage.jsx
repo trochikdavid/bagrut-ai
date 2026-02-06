@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePractice } from '../../context/PracticeContext'
-import { FiClock, FiCalendar, FiChevronLeft, FiMic, FiPlay, FiAward } from 'react-icons/fi'
+import { FiClock, FiCalendar, FiChevronLeft, FiMic, FiPlay, FiAward, FiArrowRight } from 'react-icons/fi'
 import './History.css'
 
 export default function HistoryPage() {
@@ -60,8 +60,17 @@ export default function HistoryPage() {
     return (
         <div className="page animate-fade-in">
             <div className="history-page">
-                <header className="history-header">
-                    <h1 className="page-title">היסטוריית תרגול</h1>
+                <header className="history-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 'var(--space-sm)' }}>
+                        <Link
+                            to="/dashboard"
+                            className="btn btn-ghost btn-sm btn-back-nav"
+                        >
+                            <FiArrowRight />
+                            חזרה למסך הראשי
+                        </Link>
+                    </div>
+                    <h1 className="page-title" style={{ margin: 0 }}>היסטוריית תרגול</h1>
                 </header>
 
                 <div className="history-filters">
@@ -101,8 +110,18 @@ export default function HistoryPage() {
                     {filteredPractices.length === 0 ? (
                         <div className="history-empty card">
                             <FiClock style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }} />
-                            <h3>אין היסטוריית תרגול</h3>
-                            <p>כאן יופיעו התרגולים שתבצעו במערכת</p>
+                            {filter === 'all' ? (
+                                <>
+                                    <h3>עדיין לא התחלת לתרגל</h3>
+                                    <p>ההיסטוריה שלך ריקה כרגע.</p>
+                                    <p style={{ marginTop: '0.5rem', fontWeight: 500, textAlign: 'center' }}>בוא נתחיל את התרגול הראשון!</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h3>עדיין לא תרגלת מודול זה</h3>
+                                    <p style={{ marginTop: '0.5rem', fontWeight: 500, textAlign: 'center' }}>בוא נתחיל את התרגול הראשון!</p>
+                                </>
+                            )}
                             <Link to="/practice" className="btn btn-primary mt-lg">
                                 התחל לתרגל
                             </Link>
@@ -114,33 +133,40 @@ export default function HistoryPage() {
                                 to={`/analysis/${practice.id}`}
                                 className="history-item"
                             >
-                                <div className="history-icon">
-                                    {getIcon(practice.type)}
+                                <div className="history-main-row">
+                                    <div className="history-icon">
+                                        {getIcon(practice.type)}
+                                    </div>
+                                    <div className="history-info">
+                                        <span className="history-title">{getTitle(practice.type)}</span>
+                                        <span className="history-date">
+                                            <FiCalendar className="inline-icon" /> {formatDate(practice.completedAt || practice.startedAt)}
+                                        </span>
+                                    </div>
+
+                                    <div className="history-meta">
+                                        {practice.duration && (
+                                            <div className="meta-item">
+                                                <FiClock />
+                                                {Math.round(practice.duration / 60)} דק׳
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="history-score">
+                                        <span className={`score-value ${getScoreClass(practice.totalScore)}`}>
+                                            {practice.totalScore ?? '-'}
+                                        </span>
+                                        <span className="score-label">ציון</span>
+                                    </div>
                                 </div>
-                                <div className="history-info">
-                                    <span className="history-title">{getTitle(practice.type)}</span>
-                                    <span className="history-date">
-                                        <FiCalendar className="inline-icon" /> {formatDate(practice.completedAt || practice.startedAt)}
+
+                                <div className="history-footer">
+                                    <span className="history-details-btn">
+                                        לצפייה במשוב המלא
+                                        <FiChevronLeft className="btn-icon" />
                                     </span>
                                 </div>
-
-                                <div className="history-meta">
-                                    {practice.duration && (
-                                        <div className="meta-item">
-                                            <FiClock />
-                                            {Math.round(practice.duration / 60)} דק׳
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="history-score">
-                                    <span className={`score-value ${getScoreClass(practice.totalScore)}`}>
-                                        {practice.totalScore ?? '-'}
-                                    </span>
-                                    <span className="score-label">ציון</span>
-                                </div>
-
-                                <FiChevronLeft className="history-arrow" />
                             </Link>
                         ))
                     )}

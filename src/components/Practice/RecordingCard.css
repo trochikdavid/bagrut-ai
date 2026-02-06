@@ -1,0 +1,315 @@
+/* Recording Card - Single Component Design */
+.recording-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    width: 100%;
+    /* Removed max-width to match parent/question card */
+    height: 320px;
+    /* Fixed height for stability */
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+.recording-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+}
+
+/* Common Layout Helpers */
+.rc-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* =========================================
+   State 1: Start/Idle
+   ========================================= */
+.rc-start-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.0);
+}
+
+.rc-start-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
+}
+
+.rc-instruction {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 1.125rem;
+    text-align: center;
+}
+
+/* =========================================
+   State 2: Active / Recording
+   ========================================= */
+.rc-timer {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin: var(--space-md) 0;
+}
+
+.rc-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--error);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rc-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--error);
+    border-radius: 50%;
+    animation: pulse-red 1.5s infinite;
+}
+
+.rc-controls-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    justify-content: center;
+    margin-top: auto;
+}
+
+/* New labeled buttons for recording state */
+.rc-control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.rc-control-btn.pause {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+
+.rc-control-btn.pause:hover {
+    background: var(--bg-tertiary);
+}
+
+.rc-control-btn.stop {
+    background: var(--error);
+    color: white;
+    border-color: var(--error);
+}
+
+.rc-control-btn.stop:hover {
+    background: #d93d3d;
+    /* slightly darker red */
+    transform: translateY(-1px);
+}
+
+
+/* =========================================
+   State 3: Review
+   ========================================= */
+.rc-playback-container {
+    width: 100%;
+    background: var(--bg-tertiary);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    direction: ltr;
+    /* Force LTR for tracking bar */
+}
+
+.rc-play-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    flex-shrink: 0;
+}
+
+.rc-play-btn:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.rc-scrubber {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.rc-scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.rc-scrubber::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+}
+
+.rc-time-display {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 80px;
+    /* Increased to fit 00:00 / 00:00 */
+    text-align: center;
+}
+
+.rc-review-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: -10px;
+}
+
+/* =========================================
+   State 4: Completed
+   ========================================= */
+.rc-success-icon {
+    width: 80px;
+    height: 80px;
+    background: #DCFCE7;
+    color: #166534;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    aspect-ratio: 1 / 1;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, pulse-green 2s infinite 0.5s;
+}
+
+.rc-success-icon svg {
+    animation: checkScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+}
+
+.rc-success-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.rc-success-sub {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+/* Animations */
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+@keyframes checkScale {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

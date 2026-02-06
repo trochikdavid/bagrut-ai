@@ -12,6 +12,7 @@ export default function ModuleB() {
     const [hasRecording, setHasRecording] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [loadingQuestions, setLoadingQuestions] = useState(true)
+    const [showExitConfirm, setShowExitConfirm] = useState(false)
 
     useEffect(() => {
         const loadQuestion = async () => {
@@ -28,17 +29,11 @@ export default function ModuleB() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const handleRecordingComplete = (audioBlob, duration) => {
-        saveRecording(question.id, audioBlob, duration)
-        setHasRecording(true)
-    }
+    const handleRecordingComplete = async (audioBlob, duration) => {
+        // 1. Save locally
+        await saveRecording(question.id, audioBlob, duration)
 
-    const handleDeleteRecording = () => {
-        deleteRecording(question.id)
-        setHasRecording(false)
-    }
-
-    const handleSubmit = async () => {
+        // 2. Submit immediately
         setSubmitting(true)
         const result = await submitPractice()
         if (result) {
@@ -51,7 +46,7 @@ export default function ModuleB() {
             <div className="loading-overlay">
                 <div className="loading-spinner"></div>
                 <p className="loading-text">{submitting ? 'מנתח את ההקלטה...' : 'טוען שאלות...'}</p>
-                <p className="loading-subtext">{submitting ? 'זה עשוי לקחת מספר שניות' : ''}</p>
+                <p className="loading-subtext">{submitting ? 'זה עשוי לקחת מספר דקות. אין לסגור את הדף.' : ''}</p>
             </div>
         )
     }
@@ -65,57 +60,71 @@ export default function ModuleB() {
     }
 
     return (
-        <div className="page animate-fade-in">
+        <div className="page" style={{ paddingTop: 0 }}>
             <div className="practice-session">
-                <header className="practice-header">
-                    <Link to="/practice" className="back-button">
-                        <FiArrowRight />
-                        חזרה
-                    </Link>
-                    <span className="badge badge-primary">מודול B • 25%</span>
+                <header className="practice-header simulation-header">
+                    <div style={{ width: '80px' }}></div>
+                    <span className="simulation-header-title">מודול B</span>
+                    <button
+                        className="exit-button"
+                        onClick={() => setShowExitConfirm(true)}
+                        title="יציאה"
+                    >
+                        ✕
+                    </button>
                 </header>
 
-                <div className="practice-info card" style={{ marginBottom: 'var(--space-xl)' }}>
-                    <p>
-                        <strong>📝 שאלה על הפרויקט</strong><br />
-                        מענה על השאלה לפי הפרויקט האישי
-                    </p>
+                <div className="animate-fade-in" style={{ marginTop: '60px' }}>
+                    <div className="practice-info card" style={{ marginBottom: 'var(--space-xl)' }}>
+                        <p>
+                            <strong>📝 שאלה על הפרויקט</strong><br />
+                            מענה על השאלה לפי הפרויקט האישי
+                        </p>
+                    </div>
+
+                    <div className="question-card card">
+                        <span className="question-number">שאלה</span>
+                        <p className="question-text">{question.text}</p>
+                    </div>
+
+                    <AudioRecorder
+                        onRecordingComplete={handleRecordingComplete}
+                        submitLabel="שלח לניתוח"
+                    />
                 </div>
+            </div>
 
-                <div className="question-card card">
-                    <span className="question-number">שאלה</span>
-                    <p className="question-text">{question.text}</p>
-                </div>
-
-                <AudioRecorder onRecordingComplete={handleRecordingComplete} key={hasRecording ? 'recorded' : 'new'} />
-
-                {hasRecording && getRecordingForQuestion(question.id)?.audioBlob && (
-                    <div className="recording-preview card animate-slide-up">
-                        <div className="preview-header">
-                            <h4>הקלטה שמורה</h4>
-                        </div>
-                        <audio
-                            controls
-                            className="audio-player"
-                            src={URL.createObjectURL(getRecordingForQuestion(question.id).audioBlob)}
-                        />
-                        <div className="preview-actions">
+            {/* Exit Confirmation Modal */}
+            {showExitConfirm && (
+                <div className="modal-overlay" onClick={() => setShowExitConfirm(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', textAlign: 'center' }}>🤔</div>
+                        <h3 style={{ marginBottom: 'var(--space-md)', textAlign: 'center' }}>רגע, בטוח?</h3>
+                        <p style={{
+                            color: 'var(--text-secondary)',
+                            marginBottom: 'var(--space-xl)',
+                            textAlign: 'center',
+                            lineHeight: 1.6
+                        }}>
+                            אם תצאו עכשיו, ההקלטות שעשיתם לא יישמרו ותצטרכו להתחיל מחדש
+                        </p>
+                        <div className="modal-actions">
                             <button
                                 className="btn btn-secondary"
-                                onClick={handleDeleteRecording}
+                                onClick={() => setShowExitConfirm(false)}
                             >
-                                <FiTrash2 /> מחק והקלט מחדש
+                                המשך להתאמן
                             </button>
-                            <button
-                                className="btn btn-primary btn-lg"
-                                onClick={handleSubmit}
+                            <Link
+                                to="/practice"
+                                className="btn btn-danger"
                             >
-                                שלח לניתוח
-                            </button>
+                                יציאה
+                            </Link>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -361,7 +361,8 @@ export function PracticeProvider({ children }) {
                                         aiAnalysis = await openaiService.analyzeAnswerModuleC({
                                             question: qa.questionText,
                                             studentTranscript: transcription.text,
-                                            videoTranscript
+                                            videoTranscript,
+                                            pronunciationMetrics: transcription.pronunciationAssessment
                                         })
                                     } else {
                                         // Regular analysis for Module A/B with pronunciation metrics
@@ -380,7 +381,11 @@ export function PracticeProvider({ children }) {
                                         grammar: aiAnalysis.grammar.score
                                     }
                                     qa.totalScore = aiAnalysis.totalScore
+                                    // Preserve videoUrl if it exists (for Module C)
+                                    const originalQuestion = currentPractice.questions?.find(q => q.id === qa.questionId)
+
                                     qa.feedback = {
+                                        videoUrl: originalQuestion?.videoUrl || qa.feedback?.videoUrl,
                                         topicDevelopment: aiAnalysis.topicDevelopment,
                                         fluency: aiAnalysis.fluency, // May be null for Module C
                                         vocabulary: aiAnalysis.vocabulary,
@@ -429,12 +434,18 @@ export function PracticeProvider({ children }) {
                         )
                         analysis.totalScore = avgScore
 
-                        // Recalculate average scores per criteria
+                        // Recalculate average scores per criteria (ignoring nulls)
+                        const calculateAverage = (questions, key) => {
+                            const validQuestions = questions.filter(q => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
+                            if (validQuestions.length === 0) return 0
+                            return Math.round(validQuestions.reduce((sum, q) => sum + q.scores[key], 0) / validQuestions.length)
+                        }
+
                         analysis.scores = {
-                            topicDevelopment: Math.round(savedQuestions.reduce((s, q) => s + (q.scores?.topicDevelopment || 0), 0) / savedQuestions.length),
-                            fluency: Math.round(savedQuestions.reduce((s, q) => s + (q.scores?.fluency || 0), 0) / savedQuestions.length),
-                            vocabulary: Math.round(savedQuestions.reduce((s, q) => s + (q.scores?.vocabulary || 0), 0) / savedQuestions.length),
-                            grammar: Math.round(savedQuestions.reduce((s, q) => s + (q.scores?.grammar || 0), 0) / savedQuestions.length)
+                            topicDevelopment: calculateAverage(savedQuestions, 'topicDevelopment'),
+                            fluency: calculateAverage(savedQuestions, 'fluency'),
+                            vocabulary: calculateAverage(savedQuestions, 'vocabulary'),
+                            grammar: calculateAverage(savedQuestions, 'grammar')
                         }
 
                         // Aggregate all preservation and improvement points from all questions

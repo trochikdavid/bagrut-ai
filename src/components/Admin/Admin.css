@@ -461,35 +461,7 @@
     margin-bottom: var(--space-lg);
 }
 
-/* Modal Improvements */
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--gray-700);
-}
-
-.modal-header h3 {
-    margin: 0;
-}
-
-.modal-lg {
-    max-width: 600px;
-}
-
-.modal-actions {
-    display: flex;
-    gap: var(--space-md);
-    margin-top: var(--space-lg);
-    padding-top: var(--space-lg);
-    border-top: 1px solid var(--gray-700);
-}
-
-.modal-actions .btn {
-    flex: 1;
-}
+/* Modals are now global in index.css */
 
 /* Form Improvements */
 .form-row {

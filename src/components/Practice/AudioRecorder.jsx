@@ -1,41 +1,62 @@
 import { useState, useRef, useEffect } from 'react'
-import { FiMic, FiSquare, FiPause, FiPlay, FiTrash2, FiCheck } from 'react-icons/fi'
+import { FiMic, FiSquare, FiPause, FiPlay, FiCheck, FiRefreshCw, FiArrowLeft, FiHeadphones } from 'react-icons/fi'
+import './RecordingCard.css'
 
-export default function AudioRecorder({ onRecordingComplete, disabled }) {
-    const [isRecording, setIsRecording] = useState(false)
+export default function AudioRecorder({ onRecordingComplete, disabled, submitLabel = "אשר ושלח", initialAudioBlob, initialDuration }) {
+    // State Machine: 'idle' | 'recording' | 'review' | 'completed'
+    const [status, setStatus] = useState(initialAudioBlob ? 'review' : 'idle')
     const [isPaused, setIsPaused] = useState(false)
+
+    // Recording State
+
+    // Recording State
     const [recordingTime, setRecordingTime] = useState(0)
     const [audioBlob, setAudioBlob] = useState(null)
     const [audioUrl, setAudioUrl] = useState(null)
-    const [isSubmitted, setIsSubmitted] = useState(false)
 
+    // Playback State
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [currentTime, setCurrentTime] = useState(0)
+    const [totalDuration, setTotalDuration] = useState(0)
+
+    // Refs
     const mediaRecorderRef = useRef(null)
     const chunksRef = useRef([])
     const timerRef = useRef(null)
     const streamRef = useRef(null)
+    const audioPlayerRef = useRef(null)
+    const durationRef = useRef(0)
 
+    // Cleanup on mount/unmount
     useEffect(() => {
         return () => {
-            if (timerRef.current) clearInterval(timerRef.current)
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => track.stop())
-            }
+            stopTimer()
+            stopTracks()
             if (audioUrl) URL.revokeObjectURL(audioUrl)
         }
     }, [audioUrl])
 
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-    }
+    // Handle initial recording from props
+    useEffect(() => {
+        if (initialAudioBlob) {
+            // Avoid recreating URL if blob hasn't changed (though blob reference might change even if content is same)
+            // But we always want to reflect the prop if it's provided.
+            const url = URL.createObjectURL(initialAudioBlob)
+            setAudioBlob(initialAudioBlob)
+            setAudioUrl(url)
+            setTotalDuration(initialDuration || 0)
+            setStatus('review')
+            setCurrentTime(0)
+        }
+    }, [initialAudioBlob, initialDuration])
+
+    // --- Media Recorder Logic ---
 
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
             streamRef.current = stream
 
-            // Determine supported mime type
             const mimeType = [
                 'audio/webm;codecs=opus',
                 'audio/webm',
@@ -44,167 +65,240 @@ export default function AudioRecorder({ onRecordingComplete, disabled }) {
                 ''
             ].find(type => MediaRecorder.isTypeSupported(type))
 
-            console.log('🎤 Using mimeType:', mimeType)
-
-            const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {})
-            mediaRecorderRef.current = mediaRecorder
+            const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {})
+            mediaRecorderRef.current = recorder
             chunksRef.current = []
 
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    chunksRef.current.push(e.data)
-                }
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunksRef.current.push(e.data)
             }
 
-            mediaRecorder.onstop = () => {
-                // Use the same mimeType for the blob, or default if empty
-                const blobType = mimeType || 'audio/webm'
-                const blob = new Blob(chunksRef.current, { type: blobType })
-                console.log('🎤 Finished recording. Blob size:', blob.size, 'Type:', blob.type)
+            recorder.onstop = () => {
+                const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' })
+                const url = URL.createObjectURL(blob)
                 setAudioBlob(blob)
-                setAudioUrl(URL.createObjectURL(blob))
-
-                if (streamRef.current) {
-                    streamRef.current.getTracks().forEach(track => track.stop())
-                }
+                setAudioUrl(url)
+                setTotalDuration(durationRef.current) // Use ref for accurate final duration
+                setStatus('review') // Transition to Review
+                stopTracks()
             }
 
-            mediaRecorder.start()
-            setIsRecording(true)
+            recorder.start()
+            setStatus('recording')
             setIsPaused(false)
             setRecordingTime(0)
-
-            timerRef.current = setInterval(() => {
-                setRecordingTime(prev => prev + 1)
-            }, 1000)
+            durationRef.current = 0
+            startTimer()
 
         } catch (err) {
-            console.error('Error accessing microphone:', err)
-            alert('לא ניתן לגשת למיקרופון. אנא אשר/י גישה למיקרופון בהגדרות הדפדפן.')
+            console.error('Microphone error:', err)
+            alert('Unable to access microphone. Please check permissions.')
         }
     }
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
+        if (mediaRecorderRef.current && status === 'recording') {
             mediaRecorderRef.current.stop()
-            setIsRecording(false)
-            setIsPaused(false)
-            if (timerRef.current) clearInterval(timerRef.current)
+            stopTimer()
         }
     }
 
-    const pauseRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
+    const togglePause = () => {
+        if (mediaRecorderRef.current && status === 'recording') {
             if (isPaused) {
                 mediaRecorderRef.current.resume()
-                timerRef.current = setInterval(() => {
-                    setRecordingTime(prev => prev + 1)
-                }, 1000)
+                startTimer()
             } else {
                 mediaRecorderRef.current.pause()
-                if (timerRef.current) clearInterval(timerRef.current)
+                stopTimer()
             }
             setIsPaused(!isPaused)
         }
     }
 
-    const deleteRecording = () => {
+    const resetRecording = () => {
         if (audioUrl) URL.revokeObjectURL(audioUrl)
         setAudioBlob(null)
         setAudioUrl(null)
         setRecordingTime(0)
+        setCurrentTime(0)
+        durationRef.current = 0
+        setStatus('idle')
     }
 
-    const submitRecording = () => {
+    const confirmSubmission = () => {
         if (audioBlob && onRecordingComplete) {
-            onRecordingComplete(audioBlob, recordingTime)
-            setIsSubmitted(true)
+            // Show success state first
+            setStatus('completed')
+
+            // Wait for animation to play before notifying parent
+            setTimeout(() => {
+                onRecordingComplete(audioBlob, recordingTime)
+            }, 1500)
         }
     }
 
+    // --- Timer Helpers ---
+    const startTimer = () => {
+        if (timerRef.current) clearInterval(timerRef.current)
+        timerRef.current = setInterval(() => {
+            durationRef.current += 1
+            setRecordingTime(durationRef.current)
+        }, 1000)
+    }
+
+    const stopTimer = () => {
+        if (timerRef.current) clearInterval(timerRef.current)
+    }
+
+    const stopTracks = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop())
+        }
+    }
+
+    const formatTime = (seconds) => {
+        if (!seconds && seconds !== 0) return "00:00"
+        const m = Math.floor(seconds / 60)
+        const s = Math.floor(seconds % 60)
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
+
+    // --- Audio Player Logic ---
+    const togglePlayback = () => {
+        if (!audioPlayerRef.current) return
+        if (isPlaying) {
+            audioPlayerRef.current.pause()
+        } else {
+            audioPlayerRef.current.play()
+        }
+        setIsPlaying(!isPlaying)
+    }
+
+    const handleTimeUpdate = () => {
+        if (audioPlayerRef.current) {
+            setCurrentTime(audioPlayerRef.current.currentTime)
+        }
+    }
+
+    const handleSeek = (e) => {
+        const time = Number(e.target.value)
+        setCurrentTime(time)
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.currentTime = time
+        }
+    }
+
+    const handleAudioEnded = () => {
+        setIsPlaying(false)
+        setCurrentTime(0)
+    }
+
+    // --- Render States ---
+
+    const renderIdle = () => (
+        <div className="rc-content">
+            <button className="rc-start-btn" onClick={startRecording} disabled={disabled} title="התחל הקלטה">
+                <FiMic />
+            </button>
+            <div className="rc-instruction">לחצו על המיקרופון כדי להתחיל להקליט</div>
+        </div>
+    )
+
+    const renderRecording = () => (
+        <div className="rc-content">
+            <div className="rc-status-indicator">
+                {!isPaused && <div className="rc-dot"></div>}
+                <span>{isPaused ? 'מושהה' : 'מקליט...'}</span>
+            </div>
+
+            <div className="rc-timer">{formatTime(recordingTime)}</div>
+
+            <div className="rc-controls-row">
+                <button className="rc-control-btn pause" onClick={togglePause} title={isPaused ? "המשך" : "השהה"}>
+                    {isPaused ? <FiPlay /> : <FiPause />}
+                    {isPaused ? "המשך" : "השהה"}
+                </button>
+                <button className="rc-control-btn stop" onClick={stopRecording}>
+                    <FiSquare />
+                    סיום הקלטה
+                </button>
+            </div>
+        </div>
+    )
+
+    const renderReview = () => (
+        <div className="rc-content">
+            <div className="rc-review-title">בדיקת הקלטה</div>
+            <div className="rc-instruction" style={{ fontSize: '0.9rem' }}>האזינו להקלטה לפני השליחה</div>
+
+            <div className="rc-playback-container">
+                <button className="rc-play-btn" onClick={togglePlayback}>
+                    {isPlaying ? <FiPause /> : <FiPlay style={{ marginLeft: '2px' }} />}
+                </button>
+
+                <input
+                    type="range"
+                    min="0"
+                    max={totalDuration > 0 ? totalDuration : 0}
+                    step="0.1" // Allow smoother seeking
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="rc-scrubber"
+                    style={{
+                        background: `linear-gradient(to right, var(--primary) ${Math.min((currentTime / (totalDuration || 1)) * 100, 100)}%, #CBD5E1 ${Math.min((currentTime / (totalDuration || 1)) * 100, 100)}%)`
+                    }}
+                />
+
+                <div className="rc-time-display">
+                    {formatTime(currentTime)} / {formatTime(totalDuration)}
+                </div>
+            </div>
+
+            <div className="rc-controls-row">
+                <button className="btn btn-ghost text-muted" onClick={resetRecording}>
+                    <FiRefreshCw className="icon-right" />
+                    הקלט מחדש
+                </button>
+                <button className="btn btn-primary text-white" onClick={confirmSubmission}>
+                    <FiCheck className="icon-right" />
+                    {submitLabel}
+                </button>
+            </div>
+
+            {/* Hidden Audio Element */}
+            <audio
+                ref={audioPlayerRef}
+                key={audioUrl} // Force re-mount on new recording to fix first-play issues
+                src={audioUrl}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={handleAudioEnded}
+                onLoadedMetadata={(e) => {
+                    const duration = e.target.duration
+                    if (isFinite(duration) && duration > 0) {
+                        setTotalDuration(duration)
+                    }
+                }}
+            />
+        </div>
+    )
+
+    const renderCompleted = () => (
+        <div className="rc-content">
+            <div className="rc-success-icon">
+                <FiCheck />
+            </div>
+            <div className="rc-success-title">ההקלטה נשמרה!</div>
+            <div className="rc-success-sub">מיד ממשיכים...</div>
+        </div>
+    )
+
     return (
-        <div className="recorder-container">
-            {!audioUrl ? (
-                <div className={`recorder-card card ${isRecording ? 'recording' : ''}`}>
-                    <div className="recorder-visualizer">
-                        {[...Array(20)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="visualizer-bar"
-                                style={{
-                                    '--i': i,
-                                    height: isRecording && !isPaused ? `${20 + Math.random() * 40}px` : '20px'
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="recorder-status">
-                        {!isRecording && 'לחץ/י להתחלת הקלטה'}
-                        {isRecording && !isPaused && '🔴 מקליט...'}
-                        {isRecording && isPaused && '⏸️ מושהה'}
-                    </div>
-
-                    <div className="recorder-time">{formatTime(recordingTime)}</div>
-
-                    <div className="recorder-controls">
-                        {!isRecording ? (
-                            <button
-                                className="record-btn record-btn-start"
-                                onClick={startRecording}
-                                disabled={disabled}
-                            >
-                                <FiMic />
-                            </button>
-                        ) : (
-                            <>
-                                <button
-                                    className="btn btn-secondary btn-icon"
-                                    onClick={pauseRecording}
-                                >
-                                    {isPaused ? <FiPlay /> : <FiPause />}
-                                </button>
-                                <button
-                                    className="record-btn record-btn-stop"
-                                    onClick={stopRecording}
-                                >
-                                    <FiSquare />
-                                </button>
-                            </>
-                        )}
-                    </div>
-
-                    {isRecording && (
-                        <p className="mt-md text-muted" style={{ fontSize: '0.75rem' }}>
-                            ניתן לעשות השהייה אחת במהלך ההקלטה
-                        </p>
-                    )}
-                </div>
-            ) : (
-                <div className="recording-preview card">
-                    <div className="preview-header">
-                        <h4>{isSubmitted ? '✓ הקלטה נשמרה' : 'הקלטה מוכנה'}</h4>
-                        <span className="text-muted">{formatTime(recordingTime)}</span>
-                    </div>
-
-                    <audio controls className="audio-player" src={audioUrl}>
-                        הדפדפן שלך לא תומך בהשמעת אודיו
-                    </audio>
-
-                    {!isSubmitted && (
-                        <div className="preview-actions">
-                            <button className="btn btn-secondary" onClick={deleteRecording}>
-                                <FiTrash2 />
-                                הקלט מחדש
-                            </button>
-                            <button className="btn btn-primary" onClick={submitRecording}>
-                                <FiCheck />
-                                אשר הקלטה
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+        <div className="recording-card">
+            {status === 'idle' && renderIdle()}
+            {status === 'recording' && renderRecording()}
+            {status === 'review' && renderReview()}
+            {status === 'completed' && renderCompleted()}
         </div>
     )
 }

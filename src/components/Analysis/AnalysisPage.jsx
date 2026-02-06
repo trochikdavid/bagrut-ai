@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { usePractice } from '../../context/PracticeContext'
 import { getRecordingUrl } from '../../services/storageService'
-import { FiArrowRight, FiClock, FiPlay, FiCheckCircle, FiAlertCircle, FiTrendingUp, FiVolume2, FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import { FiArrowRight, FiClock, FiPlay, FiCheckCircle, FiAlertCircle, FiTrendingUp, FiVolume2, FiChevronDown, FiChevronUp, FiTarget, FiBookOpen, FiZap } from 'react-icons/fi'
 import './Analysis.css'
 
 export default function AnalysisPage() {
@@ -70,10 +70,10 @@ export default function AnalysisPage() {
     }
 
     const getScoreLabel = (score) => {
-        if (score >= 76) return 'מצוין (76-100)'
-        if (score >= 55) return 'טוב (55-75)'
-        if (score >= 26) return 'בינוני (26-54)'
-        return 'דרוש שיפור (0-25)'
+        if (score >= 76) return 'מצוין'
+        if (score >= 55) return 'טוב'
+        if (score >= 26) return 'בינוני'
+        return 'דרוש שיפור'
     }
 
     const getModuleLabel = (type) => {
@@ -101,25 +101,19 @@ export default function AnalysisPage() {
         return ((score * weight) / 100).toFixed(1)
     }
 
-    // Get criteria labels with weights - Module C has different weights (no fluency)
+    // Get criteria labels with weights - standardized for all modules
     const getCriteriaLabels = (isModuleC = false) => {
-        if (isModuleC) {
-            return {
-                topicDevelopment: { name: 'פיתוח נושא', en: 'Topic Development', weight: 50 },
-                vocabulary: { name: 'אוצר מילים', en: 'Vocabulary', weight: 25 },
-                grammar: { name: 'דקדוק', en: 'Language', weight: 25 }
-            }
-        }
+        // Now all modules (including C) use the same standard weights
         return {
-            topicDevelopment: { name: 'פיתוח נושא', en: 'Topic Development', weight: 50 },
-            fluency: { name: 'שטף דיבור', en: 'Delivery', weight: 15 },
-            vocabulary: { name: 'אוצר מילים', en: 'Vocabulary', weight: 20 },
-            grammar: { name: 'דקדוק', en: 'Language', weight: 15 }
+            topicDevelopment: { name: 'פיתוח נושא', en: 'Topic Development', weight: 50, icon: <FiTarget /> },
+            fluency: { name: 'שטף דיבור', en: 'Delivery', weight: 15, icon: <FiZap /> },
+            vocabulary: { name: 'אוצר מילים', en: 'Vocabulary', weight: 20, icon: <FiBookOpen /> },
+            grammar: { name: 'דקדוק', en: 'Language', weight: 15, icon: <FiCheckCircle /> }
         }
     }
 
-    // Default criteria labels for backward compatibility
-    const criteriaLabels = getCriteriaLabels(practice?.type === 'module-c')
+    // Default criteria labels
+    const criteriaLabels = getCriteriaLabels()
 
     if (loading) {
         return (
@@ -151,27 +145,49 @@ export default function AnalysisPage() {
                         <FiArrowRight />
                         חזרה
                     </Link>
-                    <span className="badge badge-primary">{getModuleLabel(practice.type)}</span>
+
                 </header>
 
                 {/* Score Hero */}
-                <div className="score-hero card card-glow">
-                    <div className={`score-circle ${getScoreClass(practice.totalScore)}`}>
-                        <span className="score-value">{practice.totalScore}</span>
-                        <span className="score-max">/100</span>
-                    </div>
-                    <div className="score-details">
-                        <span className={`score-label ${getScoreClass(practice.totalScore)}`}>
-                            {getScoreLabel(practice.totalScore)}
-                        </span>
-                        <div className="score-meta">
-                            <span><FiClock /> {formatDuration(practice.duration)}</span>
-                            <span>
-                                {practice.completedAt && new Date(practice.completedAt).getFullYear() >= 2000
-                                    ? new Date(practice.completedAt).toLocaleDateString('he-IL')
-                                    : 'לא זמין'
-                                }
-                            </span>
+                <div className="score-hero-wrapper">
+                    <div className="score-hero card">
+                        <div className={`score-circle ${getScoreClass(practice.totalScore)}`}>
+                            <span className="score-value">{practice.totalScore}</span>
+                            <span className="score-max">/100</span>
+                        </div>
+                        <div className="score-details">
+                            <div className="score-header-row">
+                                <span className={`score-label ${getScoreClass(practice.totalScore)}`}>
+                                    {getScoreLabel(practice.totalScore)}
+                                </span>
+                                <span className="score-type-badge">{getModuleLabel(practice.type)}</span>
+                            </div>
+                            {(() => {
+                                let emoji, text;
+                                if (practice.totalScore >= 76) { emoji = '🎉'; text = 'עבודה מצוינת! כל הכבוד על ההשקעה!'; }
+                                else if (practice.totalScore >= 55) { emoji = '👍'; text = 'ביצוע טוב! התקדמות יפה בדרך למצוינות'; }
+                                else if (practice.totalScore >= 26) { emoji = '💪'; text = 'יש פוטנציאל! מומלץ להמשיך לתרגל'; }
+                                else { emoji = '🚀'; text = 'כל התחלה קשה, אבל הכיוון נכון!'; }
+
+                                return (
+                                    <p className="score-motivation">
+                                        {text}
+                                        <span className="motivation-emoji" style={{ marginRight: '0.5rem' }}>{emoji}</span>
+                                    </p>
+                                )
+                            })()}
+                            <div className="score-meta">
+                                <span className="meta-item meta-duration"><FiClock /> {formatDuration(practice.duration)}</span>
+                                <span className="meta-item meta-date">
+                                    {practice.completedAt && new Date(practice.completedAt).getFullYear() >= 2000
+                                        ? new Date(practice.completedAt).toLocaleString('he-IL', { dateStyle: 'medium', timeStyle: 'short' })
+                                        : 'לא זמין'
+                                    }
+                                </span>
+                                <span className="meta-item meta-questions">
+                                    <FiCheckCircle /> {practice.questionAnalyses?.length || 0} שאלות
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -269,6 +285,22 @@ export default function AnalysisPage() {
                                                 <p className="qa-question-en">{qa.questionText}</p>
                                             </div>
 
+                                            {/* Video Link */}
+                                            {qa.feedback?.videoUrl && (
+                                                <div className="qa-video-link" style={{ marginBottom: '1rem' }}>
+                                                    <a
+                                                        href={qa.feedback.videoUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn btn-outline btn-sm"
+                                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}
+                                                    >
+                                                        <FiPlay />
+                                                        צפייה בסרטון המקורי
+                                                    </a>
+                                                </div>
+                                            )}
+
                                             {/* Audio Playback */}
                                             <div className="qa-audio-section">
                                                 <div className="qa-audio-player">
@@ -287,7 +319,7 @@ export default function AnalysisPage() {
                                                             הקלטה לא זמינה
                                                         </div>
                                                     )}
-                                                    <span className="qa-duration">{formatDuration(qa.duration)}</span>
+
                                                 </div>
                                             </div>
 
@@ -318,12 +350,12 @@ export default function AnalysisPage() {
                                                         <span>קריטריון</span>
                                                         <span>ציון</span>
                                                         <span>משקל</span>
-                                                        <span>תרומה</span>
+                                                        <span>ניקוד</span>
                                                     </div>
 
                                                     {/* Use dynamic criteria based on whether this is a Module C question */}
                                                     {(() => {
-                                                        const isModuleCQuestion = qa.module === 'C' || qa.moduleType === 'module-c'
+                                                        const isModuleCQuestion = qa.module === 'C' || qa.moduleType === 'module-c' || practice.type === 'module-c'
                                                         const qaCriteria = getCriteriaLabels(isModuleCQuestion)
                                                         return Object.entries(qaCriteria)
                                                             .filter(([key]) => qa.scores[key] !== null && qa.scores[key] !== undefined)
@@ -356,13 +388,15 @@ export default function AnalysisPage() {
                                             {/* Detailed Feedback per Criteria */}
                                             <div className="qa-detailed-feedback">
                                                 <h5>פידבק מפורט</h5>
-                                                {Object.entries(qa.feedback)
-                                                    .filter(([key, data]) => key !== 'pronunciation' && data !== null) // Skip fluency if null (Module C)
-                                                    .map(([key, data]) => (
+                                                {/* Fixed order: topicDevelopment -> vocabulary -> grammar -> fluency */}
+                                                {['topicDevelopment', 'vocabulary', 'grammar', 'fluency']
+                                                    .filter(key => key !== 'pronunciation' && qa.feedback[key] !== null && qa.feedback[key] !== undefined)
+                                                    .map(key => ({ key, data: qa.feedback[key] }))
+                                                    .map(({ key, data }) => (
                                                         <div key={key} className="qa-feedback-item">
                                                             <div className="qa-feedback-header">
                                                                 <span className="qa-feedback-name">{criteriaLabels[key]?.name}</span>
-                                                                <div className="progress-bar" style={{ flex: 1, margin: '0 1rem' }}>
+                                                                <div className="progress-bar">
                                                                     <div
                                                                         className={`progress-bar-fill ${getScoreClass(data.score)}`}
                                                                         style={{ width: `${data.score}%` }}
@@ -372,12 +406,9 @@ export default function AnalysisPage() {
                                                                     {data.score}
                                                                 </span>
                                                             </div>
-                                                            <p className="qa-feedback-text">{data.feedback}</p>
 
-                                                            {/* General feedback for all criteria with feedback assistants */}
-                                                            {(key === 'topicDevelopment' || key === 'vocabulary' || key === 'grammar' || key === 'fluency') && data.generalFeedback && (
-                                                                <p className="qa-general-feedback">{data.generalFeedback}</p>
-                                                            )}
+                                                            {/* Feedback text - shown first, before strengths/improvements */}
+                                                            <p className="qa-feedback-text">{data.feedback}</p>
 
                                                             {/* Strengths for all criteria with feedback assistants */}
                                                             {(key === 'topicDevelopment' || key === 'vocabulary' || key === 'grammar' || key === 'fluency') && data.strengths && data.strengths.length > 0 && (
@@ -403,6 +434,11 @@ export default function AnalysisPage() {
                                                                         </div>
                                                                     ))}
                                                                 </div>
+                                                            )}
+
+                                                            {/* General feedback - shown at the end after strengths/improvements */}
+                                                            {(key === 'topicDevelopment' || key === 'vocabulary' || key === 'grammar' || key === 'fluency') && data.generalFeedback && (
+                                                                <p className="qa-general-feedback">{data.generalFeedback}</p>
                                                             )}
 
                                                             {data.examples && data.examples.length > 0 && (
@@ -439,7 +475,7 @@ export default function AnalysisPage() {
                                     <span>מודול</span>
                                     <span>ציון</span>
                                     <span>משקל</span>
-                                    <span>תרומה</span>
+                                    <span>ניקוד</span>
                                 </div>
 
                                 {practice.questionAnalyses.map((qa, idx) => {
@@ -481,23 +517,17 @@ export default function AnalysisPage() {
 
                             {/* Module Breakdown - Calculate from actual question scores */}
                             {(() => {
-                                // Calculate real module scores from questions
-                                const questions = practice.questionsAnswered || []
+                                // Calculate real module scores from questionAnalyses
+                                const qa = practice.questionAnalyses || []
 
-                                // Module A: 1 question, 25% weight
-                                const moduleAQuestions = questions.filter(q => q.module === 'A')
-                                const moduleAScore = moduleAQuestions.length > 0
-                                    ? Math.round(moduleAQuestions.reduce((sum, q) => sum + (q.totalScore || 0), 0) / moduleAQuestions.length)
-                                    : 0
+                                // Module A: index 0, 25% weight
+                                const moduleAScore = qa.length > 0 ? (qa[0]?.totalScore || 0) : 0
 
-                                // Module B: 1 question, 25% weight
-                                const moduleBQuestions = questions.filter(q => q.module === 'B')
-                                const moduleBScore = moduleBQuestions.length > 0
-                                    ? Math.round(moduleBQuestions.reduce((sum, q) => sum + (q.totalScore || 0), 0) / moduleBQuestions.length)
-                                    : 0
+                                // Module B: index 1, 25% weight
+                                const moduleBScore = qa.length > 1 ? (qa[1]?.totalScore || 0) : 0
 
-                                // Module C: 2 questions, 50% weight total (25% each)
-                                const moduleCQuestions = questions.filter(q => q.module === 'C')
+                                // Module C: index 2+, 50% weight total (average of remaining questions)
+                                const moduleCQuestions = qa.slice(2)
                                 const moduleCScore = moduleCQuestions.length > 0
                                     ? Math.round(moduleCQuestions.reduce((sum, q) => sum + (q.totalScore || 0), 0) / moduleCQuestions.length)
                                     : 0
@@ -552,25 +582,58 @@ export default function AnalysisPage() {
                 {/* Non-simulation: Overall Score Summary */}
                 {practice.type !== 'simulation' && (
                     <section className="analysis-section">
-                        <h3 className="section-title">סיכום ציון</h3>
-                        <div className="overall-score-card card">
-                            <div className="overall-calculation">
-                                {Object.entries(criteriaLabels)
-                                    .filter(([key]) => practice.scores?.[key] !== null && practice.scores?.[key] !== undefined)
-                                    .map(([key, criteria]) => {
-                                        const score = practice.scores?.[key] || 0
-                                        const contribution = calculateWeightedContribution(score, criteria.weight)
-                                        return (
-                                            <div key={key} className="calc-row">
-                                                <span>{criteria.name}</span>
-                                                <span>{score} × {criteria.weight}% = <strong>{contribution}</strong></span>
+                        <h3 className="section-title">סיכום ציון משוקלל</h3>
+                        <div className="criteria-summary-grid">
+                            {Object.entries(criteriaLabels)
+                                .filter(([key]) => practice.scores?.[key] !== null && practice.scores?.[key] !== undefined)
+                                .map(([key, criteria]) => {
+                                    const score = practice.scores?.[key] || 0
+                                    const contribution = calculateWeightedContribution(score, criteria.weight)
+                                    return (
+                                        <div key={key} className="criteria-summary-card">
+                                            <div className="criteria-summary-header">
+                                                <div className="criteria-summary-title">
+                                                    <span className="criteria-icon">{criteria.icon}</span>
+                                                    <div className="criteria-names">
+                                                        <span className="name-he">{criteria.name}</span>
+                                                        <span className="name-en">{criteria.en}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`criteria-summary-score ${getScoreClass(score)}`}>
+                                                    {score}
+                                                </div>
                                             </div>
-                                        )
-                                    })}
-                                <div className="calc-total">
-                                    <span>ציון סופי</span>
-                                    <span className={getScoreClass(practice.totalScore)}>{practice.totalScore}</span>
-                                </div>
+
+                                            <div className="criteria-summary-progress">
+                                                <div
+                                                    className={`progress-fill ${getScoreClass(score)}`}
+                                                    style={{ width: `${score}%` }}
+                                                ></div>
+                                            </div>
+
+                                            <div className="criteria-summary-footer">
+                                                <div className="footer-stat-box">
+                                                    <span className="stat-label">משקל</span>
+                                                    <span className="stat-value">{criteria.weight}%</span>
+                                                </div>
+                                                <div className="footer-stat-box">
+                                                    <span className="stat-label">ניקוד</span>
+                                                    <span className="stat-value contribution-val">{contribution}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                        </div>
+
+                        <div className="final-summary-total card">
+                            <div className="total-label">
+                                <FiTrendingUp className="text-primary" />
+                                <span>ציון סופי משוקלל</span>
+                            </div>
+                            <div className={`total-value ${getScoreClass(practice.totalScore)}`}>
+                                {practice.totalScore}
+                                <span className="total-max">/100</span>
                             </div>
                         </div>
                     </section>

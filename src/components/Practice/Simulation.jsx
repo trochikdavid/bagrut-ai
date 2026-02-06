@@ -171,6 +171,7 @@ export default function Simulation() {
         const moduleCQuestionsWithTranscript = moduleCQuestions.map(cq => ({
             ...cq,
             videoTranscript: moduleCContent?.videoTranscript || '',
+            videoUrl: moduleCContent?.videoUrl,
             moduleType: 'module-c'
         }))
 
@@ -185,6 +186,8 @@ export default function Simulation() {
     const handleModuleARecording = (audioBlob, duration) => {
         saveRecording(selectedModuleAQuestion.id, audioBlob, duration)
         setModuleARecorded(true)
+        // Auto-advance to Module B
+        goToModuleB()
     }
 
     const goToModuleB = () => {
@@ -200,6 +203,8 @@ export default function Simulation() {
     const handleModuleBRecording = (audioBlob, duration) => {
         saveRecording(moduleBQuestion.id, audioBlob, duration)
         setModuleBRecorded(true)
+        // Auto-advance to Module C
+        goToModuleC()
     }
 
     const goToModuleC = () => {
@@ -216,21 +221,15 @@ export default function Simulation() {
         const questions = moduleCContent?.questions || []
         const currentQuestion = questions[currentCQuestion]
 
-        console.log('🎤 Module C Recording:', {
-            currentCQuestion,
-            questionCount: questions.length,
-            currentQuestion,
-            hasId: !!currentQuestion?.id
-        })
-
         if (currentQuestion) {
-            // Use generated ID or create one from index
             const questionId = currentQuestion.id || `moduleC-q${currentCQuestion}`
             saveRecording(questionId, audioBlob, duration)
             setModuleCRecordings(prev => ({ ...prev, [currentCQuestion]: true }))
-            console.log('✅ Module C recording saved for question', currentCQuestion)
-        } else {
-            console.error('❌ Module C question not found:', currentCQuestion, moduleCContent)
+
+            // Auto advance if not last
+            if (currentCQuestion < questions.length - 1) {
+                setTimeout(() => nextCQuestion(), 500) // Small delay for visual comfort
+            }
         }
     }
 
@@ -274,7 +273,7 @@ export default function Simulation() {
     }
 
     return (
-        <div className="page animate-fade-in" style={{ paddingTop: 0 }}>
+        <div className="page" style={{ paddingTop: 0 }}>
             <div className="practice-session">
                 <header className="practice-header simulation-header">
                     {/* Back button - RIGHT corner (first in DOM for RTL) */}
@@ -355,31 +354,33 @@ export default function Simulation() {
                 {/* Intro Phase */}
                 {phase === 'intro' && (
                     <div className="animate-fade-in">
-                        <div className="question-card card" style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>🎯</div>
-                            <h2 style={{ marginBottom: 'var(--space-sm)', fontSize: '1.25rem' }}>סימולציית בגרות בעל-פה</h2>
-                            <p className="text-secondary" style={{ marginBottom: 'var(--space-md)', fontSize: '0.875rem' }}>
+                        <div className="question-card card intro-content">
+                            <div className="intro-icon">🎯</div>
+                            <h2 className="intro-title">סימולציית בגרות בעל-פה</h2>
+                            <p style={{
+                                marginBottom: 'var(--space-md)',
+                                fontSize: '0.875rem',
+                                color: 'black',
+                                textAlign: 'center',
+                                width: '100%',
+                                display: 'block',
+                                margin: '0 auto var(--space-md)'
+                            }}>
                                 כל 3 המודולים • 30 דקות
                             </p>
 
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 'var(--space-sm)',
-                                marginBottom: 'var(--space-lg)',
-                                textAlign: 'right'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-sm) var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
-                                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>שאלה כללית או דעה</span>
-                                    <strong style={{ fontSize: '0.875rem' }}>מודול A (25%)</strong>
+                            <div className="intro-list">
+                                <div className="intro-list-item">
+                                    <span style={{ fontSize: '0.8rem', color: 'black' }}>שאלה כללית או דעה</span>
+                                    <strong style={{ fontSize: '0.875rem', color: 'black' }}>מודול A (25%)</strong>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-sm) var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
-                                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>שאלה על הפרויקט</span>
-                                    <strong style={{ fontSize: '0.875rem' }}>מודול B (25%)</strong>
+                                <div className="intro-list-item">
+                                    <span style={{ fontSize: '0.8rem', color: 'black' }}>שאלה על הפרויקט</span>
+                                    <strong style={{ fontSize: '0.875rem', color: 'black' }}>מודול B (25%)</strong>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-sm) var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
-                                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>סרטון + 2 שאלות הבנה</span>
-                                    <strong style={{ fontSize: '0.875rem' }}>מודול C (50%)</strong>
+                                <div className="intro-list-item">
+                                    <span style={{ fontSize: '0.8rem', color: 'black' }}>סרטון + 2 שאלות הבנה</span>
+                                    <strong style={{ fontSize: '0.875rem', color: 'black' }}>מודול C (50%)</strong>
                                 </div>
                             </div>
 
@@ -417,24 +418,8 @@ export default function Simulation() {
 
                         {!selectedModuleAQuestion ? (
                             <>
-                                <div className="question-selector-card card" style={{
-                                    background: 'linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface) 100%)',
-                                    border: '2px solid var(--primary)',
-                                    textAlign: 'center',
-                                    padding: 'var(--space-md)'
-                                }}>
-                                    <div style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        background: 'var(--primary)',
-                                        color: 'white',
-                                        padding: 'var(--space-xs) var(--space-md)',
-                                        borderRadius: 'var(--radius-full)',
-                                        fontSize: '0.8rem',
-                                        fontWeight: '600',
-                                        marginBottom: 'var(--space-sm)'
-                                    }}>
+                                <div className="question-selector-card card">
+                                    <div className="question-selector-badge">
                                         <span>מודול A</span>
                                         <span>•</span>
                                         <span dir="ltr">25%</span>
@@ -444,9 +429,11 @@ export default function Simulation() {
                                         marginBottom: 'var(--space-xs)',
                                         color: 'var(--text-primary)'
                                     }}>בחירת שאלה</h3>
-                                    <p className="text-secondary" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
-                                        יש לבחור אחת משתי האפשרויות
-                                    </p>
+                                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
+                                        <p className="text-secondary" style={{ fontSize: '0.9rem', margin: 0, textAlign: 'center' }}>
+                                            יש לבחור אחת משתי האפשרויות
+                                        </p>
+                                    </div>
                                 </div>
                                 <div className="question-choices" style={{
                                     display: 'flex',
@@ -459,30 +446,13 @@ export default function Simulation() {
                                             key={q.id}
                                             className="question-choice card"
                                             onClick={() => handleSelectModuleAQuestion(q)}
-                                            style={{
-                                                textAlign: 'right',
-                                                padding: 'var(--space-lg)',
-                                                cursor: 'pointer',
-                                                transition: 'all var(--transition)',
-                                                border: '1px solid var(--border)',
-                                                background: 'var(--surface)'
-                                            }}
                                         >
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'flex-start',
                                                 gap: 'var(--space-md)'
                                             }}>
-                                                <span style={{
-                                                    background: 'var(--primary-light)',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.75rem',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
-                                                }}>
+                                                <span className="question-choice-badge">
                                                     <span>שאלה {idx + 1}</span>
                                                     <span>•</span>
                                                     <span dir="ltr">25%</span>
@@ -504,49 +474,17 @@ export default function Simulation() {
                                     <p className="question-text">{selectedModuleAQuestion.text}</p>
                                 </div>
 
-                                {/* Show existing recording if we have one */}
-                                {moduleARecorded && getRecordingForQuestion(selectedModuleAQuestion.id)?.audioBlob ? (
-                                    <div className="recording-preview card">
-                                        <div className="preview-header">
-                                            <h4>הקלטה שמורה</h4>
-                                            <span className="text-muted">מודול A</span>
-                                        </div>
-                                        <audio
-                                            controls
-                                            className="audio-player"
-                                            src={URL.createObjectURL(getRecordingForQuestion(selectedModuleAQuestion.id).audioBlob)}
-                                        />
-                                        <div className="preview-actions">
-                                            <button
-                                                className="btn btn-secondary"
-                                                onClick={() => {
-                                                    deleteRecording(selectedModuleAQuestion.id)
-                                                    setModuleARecorded(false)
-                                                }}
-                                            >
-                                                <FiTrash2 /> מחק והקלט מחדש
-                                            </button>
-                                            <button className="btn btn-primary btn-lg" onClick={goToModuleB}>
-                                                המשך למודול B
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <AudioRecorder
-                                            onRecordingComplete={handleModuleARecording}
-                                            key={`moduleA-${moduleARecorded ? 'recorded' : 'new'}`}
-                                        />
-                                        {moduleARecorded && (
-                                            <div className="submit-section animate-slide-up">
-                                                <p className="text-success"><FiCheck /> מודול A הושלם!</p>
-                                                <button className="btn btn-primary btn-lg" onClick={goToModuleB}>המשך למודול B</button>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
+                                {/* Show Recorder */}
+                                <AudioRecorder
+                                    onRecordingComplete={handleModuleARecording}
+                                    submitLabel="המשך למודול B"
+                                    key={selectedModuleAQuestion.id} // Reset if question changes
+                                    initialAudioBlob={getRecordingForQuestion(selectedModuleAQuestion.id)?.audioBlob}
+                                    initialDuration={getRecordingForQuestion(selectedModuleAQuestion.id)?.duration}
+                                />
                             </>
                         )}
+
                     </div>
                 )}
 
@@ -571,6 +509,9 @@ export default function Simulation() {
                         </div>
 
                         <>
+                            {/* Power Sentence */}
+                            {/* <div className="practice-info card" ... /> (It was not here in Simulation but in ModuleB.jsx, here just Question Card) */}
+
                             <div className="question-card card">
                                 <span className="question-number" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                     <span>מודול B</span>
@@ -580,47 +521,13 @@ export default function Simulation() {
                                 <p className="question-text">{moduleBQuestion?.text}</p>
                             </div>
 
-                            {/* Show existing recording if we have one */}
-                            {moduleBRecorded && moduleBQuestion && getRecordingForQuestion(moduleBQuestion.id)?.audioBlob ? (
-                                <div className="recording-preview card">
-                                    <div className="preview-header">
-                                        <h4>הקלטה שמורה</h4>
-                                        <span className="text-muted">מודול B</span>
-                                    </div>
-                                    <audio
-                                        controls
-                                        className="audio-player"
-                                        src={URL.createObjectURL(getRecordingForQuestion(moduleBQuestion.id).audioBlob)}
-                                    />
-                                    <div className="preview-actions">
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => {
-                                                deleteRecording(moduleBQuestion.id)
-                                                setModuleBRecorded(false)
-                                            }}
-                                        >
-                                            <FiTrash2 /> מחק והקלט מחדש
-                                        </button>
-                                        <button className="btn btn-primary btn-lg" onClick={goToModuleC}>
-                                            המשך למודול C
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <AudioRecorder
-                                        onRecordingComplete={handleModuleBRecording}
-                                        key={`moduleB-${moduleBRecorded ? 'recorded' : 'new'}`}
-                                    />
-                                    {moduleBRecorded && (
-                                        <div className="submit-section animate-slide-up">
-                                            <p className="text-success"><FiCheck /> מודול B הושלם!</p>
-                                            <button className="btn btn-primary btn-lg" onClick={goToModuleC}>המשך למודול C</button>
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                            <AudioRecorder
+                                onRecordingComplete={handleModuleBRecording}
+                                submitLabel="המשך למודול C"
+                                key={`moduleB-${moduleBQuestion?.id}`}
+                                initialAudioBlob={getRecordingForQuestion(moduleBQuestion?.id)?.audioBlob}
+                                initialDuration={getRecordingForQuestion(moduleBQuestion?.id)?.duration}
+                            />
                         </>
                     </div>
                 )}
@@ -687,19 +594,7 @@ export default function Simulation() {
                                 }}>
                                     <button
                                         onClick={() => setWatchedVideo(false)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 'var(--space-xs)',
-                                            color: 'var(--primary-light)',
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            fontSize: '0.8rem',
-                                            padding: 'var(--space-xs) var(--space-sm)',
-                                            borderRadius: 'var(--radius-sm)'
-                                        }}
-                                        className="hover-effect"
+                                        className="video-replay-btn hover-effect"
                                     >
                                         <FiPlay style={{ transform: 'rotate(180deg)' }} /> צפייה נוספת בסרטון
                                     </button>
@@ -717,68 +612,18 @@ export default function Simulation() {
                                     <p className="question-text">{moduleCContent?.questions?.[currentCQuestion]?.text || 'שאלה לא נמצאה'}</p>
                                 </div>
 
-                                {/* Check if recording exists for this question */}
-                                {(() => {
-                                    const questionId = moduleCContent?.questions?.[currentCQuestion]?.id || `moduleC-q${currentCQuestion}`
-                                    const existingRecording = getRecordingForQuestion(questionId)
-
-                                    if (moduleCRecordings[currentCQuestion] && existingRecording?.audioBlob) {
-                                        // Show recording preview with delete option
-                                        return (
-                                            <div className="recording-preview card animate-slide-up">
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                                                    <FiCheck style={{ color: 'var(--success)', fontSize: '1.5rem' }} />
-                                                    <span className="text-success">הקלטה נשמרה!</span>
-                                                </div>
-                                                <audio
-                                                    controls
-                                                    src={URL.createObjectURL(existingRecording.audioBlob)}
-                                                    style={{ width: '100%', marginBottom: 'var(--space-md)' }}
-                                                />
-                                                <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                                    <button
-                                                        className="btn btn-secondary"
-                                                        onClick={() => {
-                                                            deleteRecording(questionId)
-                                                            setModuleCRecordings(prev => ({ ...prev, [currentCQuestion]: false }))
-                                                        }}
-                                                    >
-                                                        <FiTrash2 /> מחק והקלט מחדש
-                                                    </button>
-                                                    {/*  Redundant previous button removed as per user request (use header back button) */}
-                                                    {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
-                                                        <button className="btn btn-primary btn-lg" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
-                                                    ) : allCQuestionsAnswered && (
-                                                        <button className="btn btn-primary btn-lg" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )
-                                    } else {
-                                        // Show recorder
-                                        return (
-                                            <>
-                                                <AudioRecorder
-                                                    onRecordingComplete={handleModuleCRecording}
-                                                    key={`moduleC-q${currentCQuestion}-new`}
-                                                />
-                                                {moduleCRecordings[currentCQuestion] && (
-                                                    <div className="submit-section animate-slide-up">
-                                                        <p className="text-success"><FiCheck /> תשובה נשמרה!</p>
-                                                        <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                                            {/*  Redundant previous button removed as per user request (use header back button) */}
-                                                            {currentCQuestion < (moduleCContent?.questions?.length || 2) - 1 ? (
-                                                                <button className="btn btn-primary btn-lg" onClick={nextCQuestion}>המשך לשאלה הבאה</button>
-                                                            ) : allCQuestionsAnswered && (
-                                                                <button className="btn btn-primary btn-lg" onClick={() => setViewingLastQuestion(false)}>המשך להגשה</button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )
+                                {/* Check if recording exists for this question (logic handled by AudioRecorder key reset) */}
+                                <AudioRecorder
+                                    onRecordingComplete={handleModuleCRecording}
+                                    submitLabel={
+                                        currentCQuestion < (moduleCContent?.questions?.length || 2) - 1
+                                            ? "שמור והמשך"
+                                            : "סיים מודול"
                                     }
-                                })()}
+                                    key={`moduleC-q${currentCQuestion}`}
+                                    initialAudioBlob={getRecordingForQuestion(moduleCContent?.questions?.[currentCQuestion]?.id || `moduleC-q${currentCQuestion}`)?.audioBlob}
+                                    initialDuration={getRecordingForQuestion(moduleCContent?.questions?.[currentCQuestion]?.id || `moduleC-q${currentCQuestion}`)?.duration}
+                                />
                             </>
                         ) : (
                             <div className="submission-card animate-scale-in">
@@ -820,7 +665,7 @@ export default function Simulation() {
                             }}>
                                 אם תצאו עכשיו, ההקלטות שעשיתם לא יישמרו ותצטרכו להתחיל מחדש
                             </p>
-                            <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center' }}>
+                            <div className="modal-actions">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => setShowExitConfirm(false)}

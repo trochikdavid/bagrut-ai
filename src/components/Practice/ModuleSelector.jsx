@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FiMessageSquare, FiFileText, FiVideo, FiPlay, FiArrowLeft } from 'react-icons/fi'
+import { FiMessageSquare, FiFileText, FiVideo, FiPlay, FiArrowLeft, FiArrowRight } from 'react-icons/fi'
 import './Practice.css'
 
 export default function ModuleSelector() {
@@ -12,7 +12,7 @@ export default function ModuleSelector() {
             icon: FiMessageSquare,
             weight: '25%',
             color: 'var(--primary)',
-            bgColor: 'rgba(99, 102, 241, 0.15)'
+            bgColor: '#EEF2FF' // Indigo 50
         },
         {
             id: 'module-b',
@@ -21,8 +21,8 @@ export default function ModuleSelector() {
             description: 'מענה על שאלות הקשורות לפרויקט הגמר',
             icon: FiFileText,
             weight: '25%',
-            color: 'var(--secondary)',
-            bgColor: 'rgba(14, 165, 233, 0.15)'
+            color: 'var(--info)',
+            bgColor: '#F0F9FF' // Sky 50
         },
         {
             id: 'module-c',
@@ -32,17 +32,36 @@ export default function ModuleSelector() {
             icon: FiVideo,
             weight: '50%',
             color: 'var(--success)',
-            bgColor: 'rgba(16, 185, 129, 0.15)'
+            bgColor: '#F0FDF4' // Green 50
         }
     ]
 
     return (
-        <div className="page animate-fade-in">
+        <div className="page animate-fade-in" style={{ paddingTop: 'var(--space-sm)' }}>
             <div className="practice-selector">
-                <header className="page-header">
-                    <h1 className="page-title">באיזה מודול נתרגל היום?</h1>
-                    <p className="page-subtitle">אפשר מודול בודד או סימולציה מלאה</p>
+                <header className="page-header" style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 'var(--space-sm)' }}>
+                        <Link
+                            to="/dashboard"
+                            className="btn btn-ghost btn-sm btn-back-nav"
+                        >
+                            <FiArrowRight />
+                            חזרה למסך הראשי
+                        </Link>
+                    </div>
+                    <div>
+                        <h1 className="page-title" style={{ marginTop: 0 }}>באיזה מודול נתרגל היום?</h1>
+                        <p className="page-subtitle">אפשר לתרגל מודול בודד או סימולציה מלאה</p>
+                    </div>
                 </header>
+
+                {/* Tip Card */}
+                <div className="tip-card-slim animate-fade-in">
+                    <span className="tip-icon">💡</span>
+                    <p className="tip-text">
+                        <strong>טיפ:</strong> כדאי להתחיל מתרגול של מודול בודד לפני הסימולציה המלאה כדי להתקדם בהדרגה.
+                    </p>
+                </div>
 
                 {/* Simulation CTA */}
                 <Link to="/practice/simulation" className="simulation-cta card card-glow">
@@ -94,15 +113,6 @@ export default function ModuleSelector() {
                             <FiArrowLeft className="module-arrow" />
                         </Link>
                     ))}
-                </div>
-
-                {/* Info Box */}
-                <div className="practice-info card">
-                    <h4>💡 טיפ</h4>
-                    <p>
-                        כדאי להתחיל מתרגול של מודול בודד לפני הסימולציה המלאה –
-                        כך ניתן להתמקד בכל חלק בנפרד ולהשתפר בהדרגה.
-                    </p>
                 </div>
             </div>
         </div>

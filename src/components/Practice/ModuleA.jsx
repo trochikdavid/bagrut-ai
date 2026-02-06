@@ -13,6 +13,7 @@ export default function ModuleA() {
     const [hasRecording, setHasRecording] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [loadingQuestions, setLoadingQuestions] = useState(true)
+    const [showExitConfirm, setShowExitConfirm] = useState(false)
 
     useEffect(() => {
         const loadQuestions = async () => {
@@ -31,16 +32,10 @@ export default function ModuleA() {
     }
 
     const handleRecordingComplete = async (audioBlob, duration) => {
+        // 1. Save locally
         await saveRecording(selectedQuestion.id, audioBlob, duration)
-        setHasRecording(true)
-    }
 
-    const handleDeleteRecording = () => {
-        deleteRecording(selectedQuestion.id)
-        setHasRecording(false)
-    }
-
-    const handleSubmit = async () => {
+        // 2. Submit for analysis immediately (since user confirmed in the card)
         setSubmitting(true)
         const result = await submitPractice()
         if (result) {
@@ -53,80 +48,109 @@ export default function ModuleA() {
             <div className="loading-overlay">
                 <div className="loading-spinner"></div>
                 <p className="loading-text">{submitting ? 'מנתח את ההקלטה...' : 'טוען שאלות...'}</p>
-                <p className="loading-subtext">{submitting ? 'זה עשוי לקחת מספר שניות' : ''}</p>
+                <p className="loading-subtext">{submitting ? 'זה עשוי לקחת מספר דקות. אין לסגור את הדף.' : ''}</p>
             </div>
         )
     }
 
     return (
-        <div className="page animate-fade-in">
+        <div className="page" style={{ paddingTop: 0 }}>
             <div className="practice-session">
-                <header className="practice-header">
-                    <Link to="/practice" className="back-button">
-                        <FiArrowRight />
-                        חזרה
-                    </Link>
-                    <span className="badge badge-primary">מודול A • 25%</span>
+                <header className="practice-header simulation-header">
+                    {/* Back Button */}
+                    {selectedQuestion ? (
+                        <button
+                            className="back-button"
+                            onClick={() => setSelectedQuestion(null)}
+                        >
+                            <FiArrowRight />
+                            חזור
+                        </button>
+                    ) : (
+                        <div style={{ width: '80px' }}></div>
+                    )}
+
+                    {/* Title */}
+                    <span className="simulation-header-title">מודול A</span>
+
+                    {/* Exit Button */}
+                    <button
+                        className="exit-button"
+                        onClick={() => setShowExitConfirm(true)}
+                        title="יציאה"
+                    >
+                        ✕
+                    </button>
                 </header>
 
-                {!selectedQuestion ? (
-                    <>
-                        <div className="question-card card">
-                            <span className="question-number">שלב 1 מתוך 2</span>
-                            <h2 style={{ marginBottom: 'var(--space-sm)' }}>בחירת שאלה</h2>
-                            <p className="text-secondary">יש לבחור אחת משתי השאלות לתרגול</p>
-                        </div>
-
-                        <div className="question-choices">
-                            {questions.map((q, index) => (
-                                <button
-                                    key={q.id}
-                                    className="question-choice"
-                                    onClick={() => handleSelectQuestion(q)}
-                                >
-                                    <div className="choice-text">{q.text}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="question-card card">
-                            <span className="question-number">שלב 2 מתוך 2</span>
-                            <p className="question-text">{selectedQuestion.text}</p>
-                        </div>
-
-                        <AudioRecorder onRecordingComplete={handleRecordingComplete} key={hasRecording ? 'recorded' : 'new'} />
-
-                        {hasRecording && getRecordingForQuestion(selectedQuestion.id)?.audioBlob && (
-                            <div className="recording-preview card animate-slide-up">
-                                <div className="preview-header">
-                                    <h4>הקלטה שמורה</h4>
-                                </div>
-                                <audio
-                                    controls
-                                    className="audio-player"
-                                    src={URL.createObjectURL(getRecordingForQuestion(selectedQuestion.id).audioBlob)}
-                                />
-                                <div className="preview-actions">
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={handleDeleteRecording}
-                                    >
-                                        <FiTrash2 /> מחק והקלט מחדש
-                                    </button>
-                                    <button
-                                        className="btn btn-primary btn-lg"
-                                        onClick={handleSubmit}
-                                    >
-                                        שלח לניתוח
-                                    </button>
-                                </div>
+                <div className="animate-fade-in" style={{ marginTop: '60px' }}>
+                    {!selectedQuestion ? (
+                        <>
+                            <div className="question-card card" style={{ textAlign: 'center' }}>
+                                <span className="question-number">שלב 1 מתוך 2</span>
+                                <h2 style={{ marginBottom: 'var(--space-sm)' }}>בחירת שאלה</h2>
+                                <p className="text-secondary">יש לבחור אחת משתי השאלות לתרגול</p>
                             </div>
-                        )}
-                    </>
-                )}
+
+                            <div className="question-choices">
+                                {questions.map((q, index) => (
+                                    <button
+                                        key={q.id}
+                                        className="question-choice"
+                                        onClick={() => handleSelectQuestion(q)}
+                                    >
+                                        <div className="choice-text">{q.text}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="question-card card">
+                                <span className="question-number">שלב 2 מתוך 2</span>
+                                <p className="question-text">{selectedQuestion.text}</p>
+                            </div>
+
+                            <AudioRecorder
+                                onRecordingComplete={handleRecordingComplete}
+                                submitLabel="שלח לניתוח"
+                            />
+                        </>
+                    )}
+                </div>
             </div>
+
+            {/* Exit Confirmation Modal */}
+            {showExitConfirm && (
+                <div className="modal-overlay" onClick={() => setShowExitConfirm(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', textAlign: 'center' }}>🤔</div>
+                        <h3 style={{ marginBottom: 'var(--space-md)', textAlign: 'center' }}>רגע, בטוח?</h3>
+                        <p style={{
+                            color: 'var(--text-secondary)',
+                            marginBottom: 'var(--space-xl)',
+                            textAlign: 'center',
+                            lineHeight: 1.6
+                        }}>
+                            אם תצאו עכשיו, ההקלטות שעשיתם לא יישמרו ותצטרכו להתחיל מחדש
+                        </p>
+                        <div className="modal-actions">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowExitConfirm(false)}
+                            >
+                                המשך להתאמן
+                            </button>
+                            <Link
+                                to="/practice"
+                                className="btn btn-danger"
+                            >
+                                יציאה
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { usePractice } from '../../context/PracticeContext'
-import { FiMic, FiTrendingUp, FiAward, FiClock, FiArrowLeft, FiPlay } from 'react-icons/fi'
+import { FiMic, FiTrendingUp, FiTrendingDown, FiClock, FiPlay, FiTarget, FiBarChart2, FiChevronLeft } from 'react-icons/fi'
+import ScoreChart from './ScoreChart'
 import './Dashboard.css'
 
 export default function Dashboard() {
@@ -9,233 +10,122 @@ export default function Dashboard() {
     const { getStats, practices } = usePractice()
     const stats = getStats()
 
-    const getScoreClass = (score) => {
-        if (score >= 85) return 'score-excellent'
-        if (score >= 70) return 'score-good'
-        if (score >= 55) return 'score-average'
-        return 'score-poor'
-    }
+    // --- Logic Helpers ---
 
     const getGreeting = () => {
         const hour = new Date().getHours()
-        if (hour < 12) return 'בוקר טוב'
-        if (hour < 17) return 'צהריים טובים'
-        if (hour < 21) return 'ערב טוב'
+        if (hour >= 5 && hour < 12) return 'בוקר טוב'
+        if (hour >= 12 && hour < 17) return 'צהריים טובים'
+        if (hour >= 17 && hour < 22) return 'ערב טוב'
         return 'לילה טוב'
     }
 
-    const getRecommendation = () => {
-        if (stats.totalPractices === 0) {
-            return {
-                title: 'התחלה עם מודול A',
-                description: 'תרגול נושא כללי הוא דרך מעולה להתחיל',
-                action: '/practice/module-a',
-                icon: FiMic
-            }
-        }
-
-        if (stats.simulationCount === 0) {
-            return {
-                title: 'שנתרגל סימולציה מלאה?',
-                description: 'התרגול הכי טוב למבחן',
-                action: '/practice/simulation',
-                icon: FiPlay
-            }
-        }
-
-        const lastScore = practices[0]?.totalScore || 0
-        if (lastScore < 70) {
-            return {
-                title: 'ממשיכים לתרגל',
-                description: 'כדאי להמשיך לתרגל כדי לשפר את הציון',
-                action: '/practice',
-                icon: FiTrendingUp
-            }
-        }
-
-        return {
-            title: 'כל הכבוד! ממשיכים',
-            description: 'תרגול קבוע שומר על הרמה',
-            action: '/practice',
-            icon: FiAward
-        }
+    // Get recent scores for mini trend
+    const getRecentTrend = () => {
+        const completed = practices
+            .filter(p => p.status === 'completed' && p.totalScore != null)
+            .sort((a, b) => new Date(a.completedAt || a.startedAt) - new Date(b.completedAt || b.startedAt))
+            .slice(-5)
+        return completed.map(p => p.totalScore)
     }
 
-    const recommendation = getRecommendation()
+    const recentTrend = getRecentTrend()
 
-    // Generate simple chart data
-    const maxScore = Math.max(...stats.recentScores, 100)
+    // Calculate trend direction based on improvement value
+    const getTrendDirection = () => {
+        if (stats.improvement > 0) return 'up'
+        if (stats.improvement < 0) return 'down'
+        return 'neutral'
+    }
+
+    const trendDirection = getTrendDirection()
 
     return (
         <div className="page animate-fade-in">
-            <div className="dashboard">
-                {/* Welcome Section */}
-                <section className="dashboard-welcome">
-                    <h1 className="welcome-title">{getGreeting()}, {user?.name?.split(' ')[0]}!</h1>
-                    <p className="welcome-subtitle">שנתחיל לתרגל להיום?</p>
+            <div className="dashboard-v2">
+
+                {/* 1. Header */}
+                <header className="dashboard-header-simple">
+                    <h1 className="greeting-simple">{getGreeting()}, {user?.name?.split(' ')[0]}</h1>
+                </header>
+
+                {/* 2. Navigation Stack (The Core Actions) */}
+                <section className="nav-stack">
+                    <Link to="/practice" className="nav-btn-lg primary-btn">
+                        <div className="nav-icon-wrapper"><FiMic /></div>
+                        <div className="nav-text">
+                            <span className="nav-title">התחלת תרגול</span>
+                            <span className="nav-desc">תרגול מודול בודד או סימולציה</span>
+                        </div>
+                        <div className="nav-arrow-left">
+                            <FiChevronLeft />
+                        </div>
+                    </Link>
+
+                    <Link to="/history" className="nav-btn-lg history-nav-btn">
+                        <div className="nav-icon-wrapper"><FiClock /></div>
+                        <div className="nav-text">
+                            <span className="nav-title">התרגולים שלי</span>
+                            <span className="nav-desc">צפייה במשובים קודמים</span>
+                        </div>
+                    </Link>
+
+                    <Link to="/statistics" className="nav-btn-lg tertiary-btn">
+                        <div className="nav-icon-wrapper"><FiBarChart2 /></div>
+                        <div className="nav-text">
+                            <span className="nav-title">סטטיסטיקה והתקדמות</span>
+                            <span className="nav-desc">ניתוח ביצועים</span>
+                        </div>
+                    </Link>
                 </section>
 
-                {/* Quick Action */}
-                <Link to={recommendation.action} className="dashboard-cta card card-glow">
-                    <div className="cta-icon">
-                        <recommendation.icon />
-                    </div>
-                    <div className="cta-content">
-                        <h3 className="cta-title">{recommendation.title}</h3>
-                        <p className="cta-description">{recommendation.description}</p>
-                    </div>
-                    <FiArrowLeft className="cta-arrow" />
-                </Link>
-
-                {/* Stats Grid */}
-                <section className="dashboard-stats">
-                    <div className="stat-card card">
-                        <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-light)' }}>
-                            <FiAward />
+                {/* 3. Quick Stats Row */}
+                <section className="quick-stats-row">
+                    <div className="quick-stat-card">
+                        <div className="quick-stat-icon">
+                            <FiPlay />
                         </div>
-                        <div className="stat-content">
-                            <span className={`stat-value ${getScoreClass(stats.averageScore)}`}>
-                                {stats.averageScore || '--'}
+                        <div className="quick-stat-content">
+                            <span className="quick-stat-value">{stats.totalPractices}</span>
+                            <span className="quick-stat-label">תרגולים</span>
+                        </div>
+                    </div>
+
+                    <div className="quick-stat-card">
+                        <div className="quick-stat-icon avg-icon">
+                            <FiTarget />
+                        </div>
+                        <div className="quick-stat-content">
+                            <span className="quick-stat-value">{stats.averageScore || '--'}</span>
+                            <span className="quick-stat-label">ציון ממוצע</span>
+                        </div>
+                    </div>
+
+                    <div className="quick-stat-card">
+                        <div className={`quick-stat-icon trend-icon ${trendDirection}`}>
+                            {trendDirection === 'down' ? <FiTrendingDown /> : <FiTrendingUp />}
+                        </div>
+                        <div className="quick-stat-content">
+                            <span
+                                className={`quick-stat-value ${trendDirection === 'up' ? 'trend-up' : trendDirection === 'down' ? 'trend-down' : ''}`}
+                                dir="ltr"
+                                style={{ textAlign: 'right' }}
+                            >
+                                {stats.improvement > 0 ? `+${stats.improvement}` : stats.improvement || '0'}
                             </span>
-                            <span className="stat-label">ציון ממוצע</span>
-                        </div>
-                    </div>
-
-                    <div className="stat-card card">
-                        <div className="stat-icon" style={{ background: 'rgba(14, 165, 233, 0.2)', color: 'var(--secondary)' }}>
-                            <FiMic />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-value">{stats.totalPractices}</span>
-                            <span className="stat-label">תרגולים</span>
-                        </div>
-                    </div>
-
-                    <div className="stat-card card">
-                        <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)' }}>
-                            <FiTrendingUp />
-                        </div>
-                        <div className="stat-content">
-                            <span className={`stat-value ${stats.improvement > 0 ? 'score-good' : stats.improvement < 0 ? 'score-poor' : ''}`}>
-                                {stats.improvement > 0 ? '+' : ''}{stats.improvement || '0'}
-                            </span>
-                            <span className="stat-label">שינוי אחרון</span>
-                        </div>
-                    </div>
-
-                    <div className="stat-card card">
-                        <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--warning)' }}>
-                            <FiClock />
-                        </div>
-                        <div className="stat-content">
-                            <span className="stat-value">{stats.simulationCount}</span>
-                            <span className="stat-label">סימולציות</span>
+                            <span className="quick-stat-label">שינוי</span>
                         </div>
                     </div>
                 </section>
 
-                {/* Progress Chart */}
-                {(stats.recentPractices?.length > 0 || stats.recentScores?.length > 0) && (
-                    <section className="dashboard-chart card">
-                        <h3 className="chart-title">התקדמות אחרונה</h3>
-                        <div className="chart-container">
-                            <div className="chart-bars">
-                                {stats.recentPractices?.length > 0 ? (
-                                    stats.recentPractices.map((practice, index) => {
-                                        const score = practice.totalScore || 0
-                                        const date = new Date(practice.completedAt || practice.startedAt)
-                                        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`
+                {/* 4. Interactive Score Chart */}
+                <section className="score-chart-section">
+                    <ScoreChart practices={practices} />
+                </section>
 
-                                        return (
-                                            <div key={practice.id || index} className="chart-bar-wrapper">
-                                                <div
-                                                    className={`chart-bar ${getScoreClass(score)}`}
-                                                    style={{ height: `${Math.min(score, 100)}%` }}
-                                                    title={`ציון: ${score} - ${date.toLocaleDateString('he-IL')}`}
-                                                >
-                                                    <span className="chart-bar-value">{score}</span>
-                                                </div>
-                                                <span className="chart-label">{dateStr}</span>
-                                            </div>
-                                        )
-                                    })
-                                ) : (
-                                    // Fallback for legacy/empty data
-                                    stats.recentScores.map((score, index) => (
-                                        <div key={index} className="chart-bar-wrapper">
-                                            <div
-                                                className={`chart-bar ${getScoreClass(score)}`}
-                                                style={{ height: `${Math.min(score, 100)}%` }}
-                                            >
-                                                <span className="chart-bar-value">{score}</span>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            <div className="chart-baseline"></div>
-                        </div>
-                    </section>
-                )}
-
-                {/* Empty State */}
-                {stats.totalPractices === 0 && (
-                    <section className="dashboard-empty card">
-                        <div className="empty-illustration">🎯</div>
-                        <h3 className="empty-title">עוד לא תירגלתם</h3>
-                        <p className="empty-text">
-                            התרגול הראשון יתחיל את המסע להצלחה בבגרות
-                        </p>
-                        <Link to="/practice" className="btn btn-primary">
-                            <FiMic />
-                            מתחילים עכשיו
-                        </Link>
-                    </section>
-                )}
-
-                {/* Recent Practices */}
-                {practices.length > 0 && (
-                    <section className="dashboard-recent">
-                        <div className="section-header">
-                            <h3 className="section-title">תרגולים אחרונים</h3>
-                            <Link to="/history" className="section-link">
-                                הכל
-                                <FiArrowLeft />
-                            </Link>
-                        </div>
-                        <div className="recent-list">
-                            {practices.slice(0, 3).map(practice => {
-                                const dateStr = practice.completedAt || practice.startedAt
-                                const date = dateStr ? new Date(dateStr) : null
-                                const isValidDate = date && !isNaN(date.getTime()) && date.getFullYear() >= 2000
-
-                                return (
-                                    <Link
-                                        key={practice.id}
-                                        to={`/analysis/${practice.id}`}
-                                        className="recent-item card card-hover"
-                                    >
-                                        <div className="recent-info">
-                                            <span className="recent-type">
-                                                {practice.type === 'simulation' ? 'סימולציה' :
-                                                    practice.type === 'module-a' ? 'מודול A' :
-                                                        practice.type === 'module-b' ? 'מודול B' : 'מודול C'}
-                                            </span>
-                                            <span className="recent-date">
-                                                {isValidDate ? date.toLocaleDateString('he-IL') :
-                                                    (practice.status === 'in-progress' ? 'בתהליך' : 'לא ידוע')}
-                                            </span>
-                                        </div>
-                                        <div className={`recent-score ${getScoreClass(practice.totalScore || 0)}`}>
-                                            {practice.totalScore ?? '-'}
-                                        </div>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-                )}
             </div>
         </div>
     )
 }
+
+

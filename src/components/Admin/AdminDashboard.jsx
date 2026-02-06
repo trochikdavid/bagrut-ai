@@ -16,6 +16,7 @@ export default function AdminDashboard() {
     const [questions, setQuestions] = useState({ 'module-a': [], 'module-b': [], 'module-c': [] })
     const [showAddQuestion, setShowAddQuestion] = useState(false)
     const [showAddModuleC, setShowAddModuleC] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const [newQuestion, setNewQuestion] = useState({ text: '', module: 'module-a' })
     const [newModuleC, setNewModuleC] = useState({
         videoUrl: '',
@@ -91,6 +92,11 @@ export default function AdminDashboard() {
     }
 
     const handleLogout = () => {
+        setShowLogoutConfirm(true)
+    }
+
+    const confirmLogout = () => {
+        setShowLogoutConfirm(false)
         logout()
     }
 
@@ -646,6 +652,37 @@ export default function AdminDashboard() {
                     )}
                 </div>
             </main>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="modal-backdrop" onClick={() => setShowLogoutConfirm(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>התנתקות</h3>
+                            <button className="btn btn-ghost btn-icon" onClick={() => setShowLogoutConfirm(false)}>
+                                <FiX />
+                            </button>
+                        </div>
+                        <p style={{ margin: 'var(--space-md) 0', color: 'var(--text-secondary)' }}>
+                            האם לצאת מחשבון האדמין?
+                        </p>
+                        <div className="modal-actions">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowLogoutConfirm(false)}
+                            >
+                                ביטול
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={confirmLogout}
+                            >
+                                התנתק
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add Question Modal (A/B) */}
             {showAddQuestion && (
