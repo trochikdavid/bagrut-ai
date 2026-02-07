@@ -249,9 +249,12 @@ export function PracticeProvider({ children }) {
                 }
 
                 // Debug: Log all recordings and their question IDs
+                console.log('Recordings debug:', recordingsRef.current.map(r => ({
                     questionId: r.questionId,
                     hasPath: !!r.storagePath
                 })))
+
+                console.log('Analysis debug:', analysis.questionAnalyses.map(qa => ({
                     questionId: qa.questionId,
                     hasUrl: !!qa.recordingUrl
                 })))

@@ -1,21 +1,59 @@
 /**
- * Azure Speech-to-Text Service
- * Uses Microsoft Cognitive Services Speech SDK for continuous recognition
- * Supports audio of any length
+ * Azure Speech configuration is now handled via Edge Function + Token
+ * No local secrets required
  */
 
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk'
 import { getRecordingUrl } from './storageService'
+import { supabase } from '../lib/supabase'
 
-// Azure Speech configuration from environment
-const AZURE_SPEECH_KEY = import.meta.env.VITE_AZURE_SPEECH_KEY
-const AZURE_SPEECH_REGION = import.meta.env.VITE_AZURE_SPEECH_REGION
+// Token caching
+let cachedAuthToken = null
+let tokenExpirationTime = 0
 
 /**
- * Check if Azure Speech is configured
+ * Fetch a valid auth token from our Edge Function
+ * Implements client-side caching and safety margin
+ */
+async function getAuthToken() {
+    const now = Date.now()
+
+    // Safety Margin: 5 minutes
+    // We strictly discard any token that has less than 5 minutes remaining
+    const SAFETY_MARGIN = 5 * 60 * 1000
+
+    if (cachedAuthToken && tokenExpirationTime > (now + SAFETY_MARGIN)) {
+        return cachedAuthToken
+    }
+
+    try {
+        const { data, error } = await supabase.functions.invoke('get-speech-token')
+
+        if (error) throw error
+
+        if (!data.token || !data.region) {
+            throw new Error('Invalid response from token service')
+        }
+
+        cachedAuthToken = data
+        // Use the expiration time provided by the server
+        // If server didn't provide it (old version), fallback to conservative 5 mins
+        tokenExpirationTime = data.expiresAt || (now + 5 * 60 * 1000)
+
+        return data
+    } catch (err) {
+        console.error('Failed to get speech token:', err)
+        throw err
+    }
+}
+
+/**
+ * Check if Azure Speech is configured (via Edge Function availability)
  */
 export function isAzureSpeechConfigured() {
-    return !!(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION)
+    // We assume it's configured if we have the Supabase client
+    // The actual check will happen when we try to fetch a token
+    return true
 }
 
 /**
@@ -25,18 +63,12 @@ export function isAzureSpeechConfigured() {
  * @returns {Promise<{text: string, confidence: number}>} - Transcription result
  */
 export async function transcribeAudio(storagePath) {
-    if (!isAzureSpeechConfigured()) {
-        return { text: null, confidence: 0, error: 'Azure Speech not configured' }
-    }
-
-
     try {
         // Step 1: Get signed URL for the audio file
         const audioUrl = await getRecordingUrl(storagePath)
         if (!audioUrl) {
             throw new Error('Could not get audio URL from storage')
         }
-
 
         // Step 2: Download the audio file
         const audioResponse = await fetch(audioUrl)
@@ -73,12 +105,19 @@ export async function transcribeAudio(storagePath) {
  * @returns {Promise<{text: string, confidence: number, pronunciationAssessment: object, error: string|null}>}
  */
 async function transcribeWithSdk(audioBuffer) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
 
-        // Create speech config
-        const speechConfig = sdk.SpeechConfig.fromSubscription(
-            AZURE_SPEECH_KEY,
-            AZURE_SPEECH_REGION
+        let authToken;
+        try {
+            authToken = await getAuthToken()
+        } catch (err) {
+            return reject(new Error('Authentication failed: ' + err.message))
+        }
+
+        // Create speech config with TOKEN
+        const speechConfig = sdk.SpeechConfig.fromAuthorizationToken(
+            authToken.token,
+            authToken.region
         )
 
         // Configure for English (required for prosody assessment)
@@ -152,11 +191,6 @@ async function transcribeWithSdk(audioBuffer) {
                         const nBest = details?.NBest?.[0]
                         if (nBest?.PronunciationAssessment) {
                             const pa = nBest.PronunciationAssessment
-                                accuracy: pa.AccuracyScore,
-                                fluency: pa.FluencyScore,
-                                prosody: pa.ProsodyScore,
-                                pron: pa.PronScore
-                            })
 
                             totalAccuracy += pa.AccuracyScore || 0
                             totalFluency += pa.FluencyScore || 0
@@ -261,13 +295,23 @@ async function transcribeWithSdk(audioBuffer) {
             // Calculate total silence time (all pauses over threshold)
             const totalLongPauseTime = longPauses.reduce((sum, p) => sum + p.durationSeconds, 0)
 
-                accuracy: avgAccuracy,
-                fluency: avgFluency,
-                prosody: avgProsody,
-                totalWords: allWords.length,
-                problematicWords: problematicWords.length,
-                longPauses: longPauses.length,
-                totalLongPauseTime: totalLongPauseTime.toFixed(1) + 's'
+            resolve({
+                text: fullText || '[No speech detected]',
+                confidence: avgConfidence,
+                pronunciationAssessment: {
+                    accuracyScore: avgAccuracy,
+                    fluencyScore: avgFluency,
+                    prosodyScore: avgProsody,
+                    pronunciationScore: avgPronScore,
+                    totalWords: allWords.length,
+                    errorCount: problematicWords.length,
+                    problematicWords: problematicWords,
+                    allWords: allWords,
+                    longPauses: longPauses,
+                    longPauseCount: longPauses.length,
+                    totalLongPauseTime: parseFloat(totalLongPauseTime.toFixed(1))
+                },
+                error: null
             })
 
             // ========== DETAILED AZURE PRONUNCIATION LOG ==========

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { usePractice } from '../../context/PracticeContext'
-import { FiMic, FiTrendingUp, FiTrendingDown, FiClock, FiPlay, FiTarget, FiBarChart2, FiChevronLeft } from 'react-icons/fi'
+import { FiMic, FiClock, FiActivity, FiCheckCircle, FiTarget, FiBarChart2, FiChevronLeft } from 'react-icons/fi'
 import ScoreChart from './ScoreChart'
 import './Dashboard.css'
 
@@ -20,25 +20,16 @@ export default function Dashboard() {
         return 'לילה טוב'
     }
 
-    // Get recent scores for mini trend
-    const getRecentTrend = () => {
-        const completed = practices
-            .filter(p => p.status === 'completed' && p.totalScore != null)
-            .sort((a, b) => new Date(a.completedAt || a.startedAt) - new Date(b.completedAt || b.startedAt))
-            .slice(-5)
-        return completed.map(p => p.totalScore)
-    }
 
-    const recentTrend = getRecentTrend()
 
-    // Calculate trend direction based on improvement value
-    const getTrendDirection = () => {
-        if (stats.improvement > 0) return 'up'
-        if (stats.improvement < 0) return 'down'
-        return 'neutral'
-    }
 
-    const trendDirection = getTrendDirection()
+    // Calculate practices this week
+    const practicesThisWeek = practices.filter(p => {
+        if (p.status !== 'completed') return false
+        const d = new Date(p.completedAt || p.startedAt)
+        const now = new Date()
+        return (now - d) < 7 * 24 * 60 * 60 * 1000
+    }).length
 
     return (
         <div className="page animate-fade-in">
@@ -68,6 +59,9 @@ export default function Dashboard() {
                             <span className="nav-title">התרגולים שלי</span>
                             <span className="nav-desc">צפייה במשובים קודמים</span>
                         </div>
+                        <div className="nav-arrow-left">
+                            <FiChevronLeft />
+                        </div>
                     </Link>
 
                     <Link to="/statistics" className="nav-btn-lg tertiary-btn">
@@ -76,44 +70,44 @@ export default function Dashboard() {
                             <span className="nav-title">סטטיסטיקה והתקדמות</span>
                             <span className="nav-desc">ניתוח ביצועים</span>
                         </div>
+                        <div className="nav-arrow-left">
+                            <FiChevronLeft />
+                        </div>
                     </Link>
                 </section>
 
                 {/* 3. Quick Stats Row */}
                 <section className="quick-stats-row">
-                    <div className="quick-stat-card">
-                        <div className="quick-stat-icon">
-                            <FiPlay />
+                    <div className="overview-card">
+                        <div className="icon-wrapper bg-blue">
+                            <FiActivity />
                         </div>
-                        <div className="quick-stat-content">
-                            <span className="quick-stat-value">{stats.totalPractices}</span>
-                            <span className="quick-stat-label">תרגולים</span>
+                        <div className="overview-content">
+                            <span className="overview-label">ציון ממוצע</span>
+                            <span className="overview-value">{stats.averageScore || '-'}</span>
                         </div>
                     </div>
 
-                    <div className="quick-stat-card">
-                        <div className="quick-stat-icon avg-icon">
+                    <div className="overview-card">
+                        <div className="icon-wrapper bg-orange">
+                            <FiCheckCircle />
+                        </div>
+                        <div className="overview-content">
+                            <span className="overview-label">סה"כ תרגולים</span>
+                            <span className="overview-value">{stats.totalPractices || 0}</span>
+                            <span className="overview-trend">
+                                {practicesThisWeek} השבוע
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="overview-card">
+                        <div className="icon-wrapper bg-purple">
                             <FiTarget />
                         </div>
-                        <div className="quick-stat-content">
-                            <span className="quick-stat-value">{stats.averageScore || '--'}</span>
-                            <span className="quick-stat-label">ציון ממוצע</span>
-                        </div>
-                    </div>
-
-                    <div className="quick-stat-card">
-                        <div className={`quick-stat-icon trend-icon ${trendDirection}`}>
-                            {trendDirection === 'down' ? <FiTrendingDown /> : <FiTrendingUp />}
-                        </div>
-                        <div className="quick-stat-content">
-                            <span
-                                className={`quick-stat-value ${trendDirection === 'up' ? 'trend-up' : trendDirection === 'down' ? 'trend-down' : ''}`}
-                                dir="ltr"
-                                style={{ textAlign: 'right' }}
-                            >
-                                {stats.improvement > 0 ? `+${stats.improvement}` : stats.improvement || '0'}
-                            </span>
-                            <span className="quick-stat-label">שינוי</span>
+                        <div className="overview-content">
+                            <span className="overview-label">הציון הכי גבוה</span>
+                            <span className="overview-value">{Math.max(...(stats.recentScores || [0]), 0)}</span>
                         </div>
                     </div>
                 </section>
