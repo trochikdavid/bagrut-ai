@@ -113,8 +113,7 @@
     padding-bottom: env(safe-area-inset-bottom);
     z-index: 50;
     display: none;
-    overflow: visible;
-    /* Let the logo pop out */
+    overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -135,8 +134,7 @@
     height: 60px;
     max-width: 640px;
     margin: 0 auto;
-    padding: 0 var(--space-md) 0 0;
-    /* No padding on right for logo */
+    padding: 0 var(--space-md);
 }
 
 .bottom-nav-item {
@@ -154,16 +152,6 @@
     transition: color var(--transition);
 }
 
-.bottom-nav-item.nav-logo-item {
-    width: 180px;
-    /* Much wider for the massive logo */
-    min-width: unset;
-    padding: 0;
-    flex: 0 0 auto;
-    overflow: visible;
-    position: relative;
-    z-index: 10;
-}
 
 .bottom-nav-item.active {
     color: var(--primary);
