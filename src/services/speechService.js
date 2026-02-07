@@ -26,11 +26,9 @@ export function isAzureSpeechConfigured() {
  */
 export async function transcribeAudio(storagePath) {
     if (!isAzureSpeechConfigured()) {
-        console.warn('⚠️ Azure Speech not configured, skipping transcription')
         return { text: null, confidence: 0, error: 'Azure Speech not configured' }
     }
 
-    console.log('🎤 Starting SDK transcription for:', storagePath)
 
     try {
         // Step 1: Get signed URL for the audio file
@@ -39,7 +37,6 @@ export async function transcribeAudio(storagePath) {
             throw new Error('Could not get audio URL from storage')
         }
 
-        console.log('📥 Fetching audio from:', audioUrl)
 
         // Step 2: Download the audio file
         const audioResponse = await fetch(audioUrl)
@@ -48,14 +45,12 @@ export async function transcribeAudio(storagePath) {
         }
 
         const audioBlob = await audioResponse.blob()
-        console.log('📦 Audio downloaded, size:', audioBlob.size, 'bytes')
 
         // Step 3: Convert to ArrayBuffer for SDK
         const arrayBuffer = await audioBlob.arrayBuffer()
 
         // Step 4: Convert to WAV format (SDK works best with WAV)
         const wavBuffer = await convertToWavBuffer(arrayBuffer)
-        console.log('🔄 Converted to WAV, size:', wavBuffer.byteLength, 'bytes')
 
         // Step 5: Use Speech SDK for transcription
         const result = await transcribeWithSdk(wavBuffer)
@@ -63,7 +58,6 @@ export async function transcribeAudio(storagePath) {
         return result
 
     } catch (error) {
-        console.error('❌ Transcription error:', error)
         return {
             text: null,
             confidence: 0,
@@ -80,7 +74,6 @@ export async function transcribeAudio(storagePath) {
  */
 async function transcribeWithSdk(audioBuffer) {
     return new Promise((resolve, reject) => {
-        console.log('🚀 Starting Azure Speech SDK transcription with Pronunciation Assessment...')
 
         // Create speech config
         const speechConfig = sdk.SpeechConfig.fromSubscription(
@@ -106,7 +99,6 @@ async function transcribeWithSdk(audioBuffer) {
         // Enable prosody assessment (intonation, rhythm, stress)
         pronunciationConfig.enableProsodyAssessment = true
 
-        console.log('🎯 Pronunciation Assessment enabled with prosody')
 
         // Create audio config from WAV buffer
         const audioInputStream = sdk.AudioInputStream.createPushStream()
@@ -141,7 +133,6 @@ async function transcribeWithSdk(audioBuffer) {
             if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
                 const text = e.result.text
                 if (text && text.trim()) {
-                    console.log('📝 Recognized:', text)
                     transcriptions.push(text)
 
                     // Extract pronunciation assessment results
@@ -161,7 +152,6 @@ async function transcribeWithSdk(audioBuffer) {
                         const nBest = details?.NBest?.[0]
                         if (nBest?.PronunciationAssessment) {
                             const pa = nBest.PronunciationAssessment
-                            console.log('🎯 Pronunciation scores:', {
                                 accuracy: pa.AccuracyScore,
                                 fluency: pa.FluencyScore,
                                 prosody: pa.ProsodyScore,
@@ -208,28 +198,23 @@ async function transcribeWithSdk(audioBuffer) {
                             }
                         }
                     } catch (err) {
-                        console.warn('⚠️ Could not parse pronunciation assessment:', err.message)
                     }
                 }
             } else if (e.result.reason === sdk.ResultReason.NoMatch) {
-                console.log('⚠️ No speech detected in segment')
             }
         }
 
         // Handle errors
         recognizer.canceled = (s, e) => {
             if (e.reason === sdk.CancellationReason.Error) {
-                console.error('❌ Recognition error:', e.errorDetails)
                 recognizer.stopContinuousRecognitionAsync()
                 reject(new Error(e.errorDetails))
             } else if (e.reason === sdk.CancellationReason.EndOfStream) {
-                console.log('📌 End of audio stream')
             }
         }
 
         // Handle session stopped (recognition complete)
         recognizer.sessionStopped = (s, e) => {
-            console.log('✅ Recognition session completed')
             recognizer.stopContinuousRecognitionAsync()
 
             const fullText = transcriptions.join(' ').trim()
@@ -276,9 +261,6 @@ async function transcribeWithSdk(audioBuffer) {
             // Calculate total silence time (all pauses over threshold)
             const totalLongPauseTime = longPauses.reduce((sum, p) => sum + p.durationSeconds, 0)
 
-            console.log('📊 Full transcript length:', fullText.length, 'chars')
-            console.log('📊 Average confidence:', avgConfidence)
-            console.log('📊 Pronunciation Assessment:', {
                 accuracy: avgAccuracy,
                 fluency: avgFluency,
                 prosody: avgProsody,
@@ -289,46 +271,25 @@ async function transcribeWithSdk(audioBuffer) {
             })
 
             // ========== DETAILED AZURE PRONUNCIATION LOG ==========
-            console.log('\n' + '='.repeat(60))
-            console.log('🎤 AZURE PRONUNCIATION ASSESSMENT - FULL REPORT')
-            console.log('='.repeat(60))
 
-            console.log('\n📈 OVERALL SCORES:')
-            console.log(`   • Accuracy Score:      ${avgAccuracy}/100`)
-            console.log(`   • Fluency Score:       ${avgFluency}/100`)
-            console.log(`   • Prosody Score:       ${avgProsody}/100`)
-            console.log(`   • Pronunciation Score: ${avgPronScore}/100`)
 
-            console.log('\n📊 STATISTICS:')
-            console.log(`   • Total words:         ${allWords.length}`)
-            console.log(`   • Problematic words:   ${problematicWords.length}`)
-            console.log(`   • Error rate:          ${allWords.length > 0 ? ((problematicWords.length / allWords.length) * 100).toFixed(1) : 0}%`)
 
             if (allWords.length > 0) {
-                console.log('\n📝 ALL WORDS WITH ACCURACY SCORES:')
-                console.log('   Word                    | AccuracyScore | Error Type')
-                console.log('   ' + '-'.repeat(55))
                 allWords.forEach(w => {
                     const wordPadded = w.word.padEnd(22)
                     const scorePadded = String(w.accuracyScore).padStart(3)
                     const errorIcon = w.errorType !== 'None' ? '❌' : '✅'
-                    console.log(`   ${errorIcon} ${wordPadded} | ${scorePadded}  | ${w.errorType}`)
                 })
             }
 
             if (problematicWords.length > 0) {
-                console.log('\n⚠️ PROBLEMATIC WORDS DETAIL:')
                 problematicWords.forEach((w, i) => {
-                    console.log(`   ${i + 1}. "${w.word}"`)
-                    console.log(`      • Accuracy Score: ${w.accuracyScore}/100`)
-                    console.log(`      • Error Type: ${w.errorType}`)
 
                     // Show syllables if available
                     if (w.syllables && w.syllables.length > 0) {
                         const syllableStr = w.syllables
                             .map(s => `"${s.syllable}"(${s.accuracyScore})`)
                             .join(' - ')
-                        console.log(`      • Syllables: ${syllableStr}`)
                     }
 
                     // Show weak phonemes if available
@@ -338,7 +299,6 @@ async function transcribeWithSdk(audioBuffer) {
                             const phonemeStr = weakPhonemes
                                 .map(p => `"${p.phoneme}"(${p.accuracyScore})`)
                                 .join(', ')
-                            console.log(`      • Weak Phonemes: ${phonemeStr}`)
                         }
                     }
 
@@ -350,23 +310,16 @@ async function transcribeWithSdk(audioBuffer) {
                         'Monotone': 'דיבור חד-גוני, חסר אינטונציה'
                     }
                     if (explanations[w.errorType]) {
-                        console.log(`      • הסבר: ${explanations[w.errorType]}`)
                     }
                 })
             }
 
             // Log long pauses if any detected
             if (longPauses.length > 0) {
-                console.log('\n⏸️ LONG PAUSES DETECTED (4+ seconds):')
                 longPauses.forEach((pause, i) => {
-                    console.log(`   ${i + 1}. ${pause.durationSeconds}s pause`)
-                    console.log(`      • After: "${pause.afterWord}"`)
-                    console.log(`      • Before: "${pause.beforeWord}"`)
                 })
-                console.log(`   📊 Total long pause time: ${totalLongPauseTime.toFixed(1)} seconds`)
             }
 
-            console.log('\n' + '='.repeat(60) + '\n')
 
             resolve({
                 text: fullText || '[No speech detected]',
@@ -390,13 +343,10 @@ async function transcribeWithSdk(audioBuffer) {
         }
 
         // Start continuous recognition
-        console.log('▶️ Starting continuous recognition with pronunciation assessment...')
         recognizer.startContinuousRecognitionAsync(
             () => {
-                console.log('🎙️ Recognition started, processing audio...')
             },
             (err) => {
-                console.error('❌ Failed to start recognition:', err)
                 reject(new Error(err))
             }
         )
@@ -416,8 +366,6 @@ async function convertToWavBuffer(inputBuffer) {
         // Decode the audio
         const audioBuffer = await audioContext.decodeAudioData(inputBuffer.slice(0))
 
-        console.log('⏱️ Audio duration:', audioBuffer.duration.toFixed(1), 'seconds')
-        console.log('🎵 Sample rate:', audioBuffer.sampleRate, 'Hz')
 
         // Convert to WAV format (16kHz mono, 16-bit PCM)
         const wavBuffer = audioBufferToWav(audioBuffer)
@@ -515,7 +463,6 @@ export async function transcribeMultiple(recordings) {
             continue
         }
 
-        console.log(`🎤 Transcribing question ${recording.questionId}...`)
         const result = await transcribeAudio(recording.storagePath)
         results.set(recording.questionId, result)
 

@@ -32,27 +32,22 @@ export default function AnalysisPage() {
                     if (data.questionAnalyses) {
                         const urls = {}
                         await Promise.all(data.questionAnalyses.map(async (qa) => {
-                            console.log(`🔍 Processing audio for Q${qa.questionId}. Raw URL:`, qa.audioUrl)
                             if (qa.audioUrl) {
                                 if (qa.audioUrl.startsWith('http') || qa.audioUrl.startsWith('blob')) {
                                     urls[qa.questionId] = qa.audioUrl
                                 } else {
                                     const publicUrl = await getRecordingUrl(qa.audioUrl)
-                                    console.log(`🔗 Generated signed URL for Q${qa.questionId}:`, publicUrl)
                                     if (publicUrl) urls[qa.questionId] = publicUrl
                                 }
                             } else {
-                                console.warn(`⚠️ No audio URL found for Q${qa.questionId}`)
                             }
                         }))
-                        console.log('✅ Final Audio URLs map:', urls)
                         setAudioUrls(urls)
                     }
                 } else {
                     navigate('/history')
                 }
             } catch (error) {
-                console.error('Error loading practice:', error)
                 navigate('/history')
             } finally {
                 setLoading(false)

@@ -38,7 +38,6 @@ export async function uploadRecording(userId, practiceId, questionId, audioBlob)
     const url = `${supabaseUrl}/storage/v1/object/recordings/${fileName}`
 
     // For file uploads we send the blob directly
-    console.log(`📤 Uploading to ${url}...`)
 
     try {
         const response = await fetch(url, {
@@ -49,11 +48,9 @@ export async function uploadRecording(userId, practiceId, questionId, audioBlob)
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error('❌ Upload failed:', response.status, errorText)
             throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
         }
 
-        console.log('✅ Upload successful:', fileName)
 
         // Verify file exists immediately
         const listUrl = `${supabaseUrl}/storage/v1/object/list/recordings`
@@ -69,13 +66,11 @@ export async function uploadRecording(userId, practiceId, questionId, audioBlob)
         if (listResponse.ok) {
             const files = await listResponse.json()
             const exists = files.find(f => f.name === fileName.split('/').pop())
-            console.log('🧐 File verification:', exists ? 'FOUND' : 'NOT FOUND IN LIST')
         }
 
         return fileName
 
     } catch (err) {
-        console.error('❌ Upload exception:', err)
         throw err
     }
 }
@@ -94,7 +89,6 @@ export async function getRecordingUrl(path) {
     })
 
     if (!response.ok) {
-        console.error('Error getting signed URL:', await response.text())
         return null
     }
 
@@ -128,6 +122,5 @@ export async function deleteRecording(path) {
 export async function deletePracticeRecordings(userId, practiceId) {
     // Usually handled by cascading deletes or manual cleanup
     // For now we'll just log
-    console.warn('deletePracticeRecordings not fully implemented in native fetch version')
     return true
 }

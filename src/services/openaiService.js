@@ -53,23 +53,19 @@ export function isModuleCTopicConfigured() {
  * Helper to call the OpenAI scoring Edge Function
  */
 async function callOpenAIFunction(action, params) {
-    console.log(`🤖 Calling Edge Function: ${action}`)
 
     const { data, error } = await supabase.functions.invoke('openai-scoring', {
         body: { action, ...params }
     })
 
     if (error) {
-        console.error(`❌ Edge Function error (${action}):`, error)
         throw new Error(error.message || 'Edge Function error')
     }
 
     if (data.error) {
-        console.error(`❌ OpenAI error (${action}):`, data.error)
         throw new Error(data.error)
     }
 
-    console.log(`✅ ${action} completed`)
     return data
 }
 
@@ -81,7 +77,6 @@ async function callOpenAIFunction(action, params) {
  */
 export async function scoreTopicDevelopment(question, transcript) {
     if (!isOpenAIConfigured()) {
-        console.warn('Supabase not configured, returning mock score')
         return {
             range: '55-75',
             score: 65,
@@ -90,17 +85,14 @@ export async function scoreTopicDevelopment(question, transcript) {
     }
 
     try {
-        console.log('🤖 Starting Topic Development analysis...')
         const result = await callOpenAIFunction('scoreTopicDevelopment', { question, transcript })
 
-        console.log('🎯 Parsed result:', result)
         return {
             range: result.range,
             score: result.score,
             justification: result.justification
         }
     } catch (error) {
-        console.error('❌ OpenAI scoring error:', error)
         throw error
     }
 }
@@ -116,7 +108,6 @@ export async function scoreTopicDevelopment(question, transcript) {
  */
 export async function getTopicDevelopmentFeedback({ question, score, range, transcript }) {
     if (!isFeedbackAssistantConfigured()) {
-        console.warn('Supabase not configured, returning mock feedback')
         return {
             strengths: ['פידבק דמו - Supabase לא מוגדר'],
             improvements: [],
@@ -125,19 +116,16 @@ export async function getTopicDevelopmentFeedback({ question, score, range, tran
     }
 
     try {
-        console.log('📝 Starting Topic Development feedback analysis...')
         const result = await callOpenAIFunction('getTopicDevelopmentFeedback', {
             question, score, range, transcript
         })
 
-        console.log('🎯 Parsed feedback:', result)
         return {
             strengths: result.strengths || [],
             improvements: result.improvements || [],
             generalFeedback: result.general_feedback || result.generalFeedback || ''
         }
     } catch (error) {
-        console.error('❌ OpenAI feedback error:', error)
         throw error
     }
 }
@@ -147,13 +135,10 @@ export async function getTopicDevelopmentFeedback({ question, score, range, tran
  */
 export async function scoreAndFeedbackTopicDevelopment(question, transcript) {
     // Step 1: Get the score
-    console.log('🔄 Step 1: Getting Topic Development score...')
     const scoreResult = await scoreTopicDevelopment(question, transcript)
 
-    console.log(`✅ Score received: ${scoreResult.score} (Range: ${scoreResult.range})`)
 
     // Step 2: Get detailed feedback based on the score
-    console.log('🔄 Step 2: Getting detailed feedback...')
     let feedbackResult
     try {
         feedbackResult = await getTopicDevelopmentFeedback({
@@ -162,9 +147,7 @@ export async function scoreAndFeedbackTopicDevelopment(question, transcript) {
             range: scoreResult.range,
             transcript
         })
-        console.log('✅ Feedback received')
     } catch (error) {
-        console.error('Failed to get feedback, using empty arrays:', error)
         feedbackResult = {
             preservationPoints: [],
             improvementPoints: []
@@ -190,27 +173,21 @@ export async function scoreAndFeedbackTopicDevelopment(question, transcript) {
  */
 export async function scoreModuleCTopicDevelopment({ question, studentTranscript, videoTranscript }) {
     if (!isModuleCTopicConfigured()) {
-        console.warn('Module C Topic Assistant not configured, falling back to regular Topic Development')
         return scoreTopicDevelopment(question, studentTranscript)
     }
 
     try {
-        console.log('🎬 Starting Module C Topic Development analysis...')
-        console.log(`   Video transcript length: ${videoTranscript?.length || 0} chars`)
 
         const result = await callOpenAIFunction('scoreModuleCTopicDevelopment', {
             question, studentTranscript, videoTranscript
         })
 
-        console.log('🎯 Module C parsed result:', result)
         return {
             range: result.range,
             score: result.score,
             justification: result.justification
         }
     } catch (error) {
-        console.error('❌ Module C Topic Development scoring error:', error)
-        console.log('⚠️ Falling back to regular Topic Development scoring')
         return scoreTopicDevelopment(question, studentTranscript)
     }
 }
@@ -220,20 +197,17 @@ export async function scoreModuleCTopicDevelopment({ question, studentTranscript
  */
 export async function getModuleCTopicFeedback({ question, score, range, studentTranscript, videoTranscript }) {
     try {
-        console.log('📝 Starting Module C Topic Development feedback analysis...')
 
         const result = await callOpenAIFunction('getModuleCTopicFeedback', {
             question, score, studentTranscript, videoTranscript
         })
 
-        console.log('🎯 Module C Feedback parsed:', result)
         return {
             strengths: result.strengths || [],
             improvements: result.improvements || [],
             generalFeedback: result.general_feedback || result.generalFeedback || ''
         }
     } catch (error) {
-        console.error('❌ Module C Topic feedback error:', error)
         return getTopicDevelopmentFeedback({ question, score, range, transcript: studentTranscript })
     }
 }
@@ -247,7 +221,6 @@ export async function getModuleCTopicFeedback({ question, score, range, studentT
  */
 export async function scoreVocabulary(question, transcript) {
     if (!isVocabularyConfigured()) {
-        console.warn('Vocabulary Assistant not configured, returning mock score')
         return {
             range: '55-75',
             score: 65,
@@ -256,17 +229,14 @@ export async function scoreVocabulary(question, transcript) {
     }
 
     try {
-        console.log('🤖 Starting Vocabulary analysis...')
         const result = await callOpenAIFunction('scoreVocabulary', { question, transcript })
 
-        console.log('🎯 Vocabulary parsed result:', result)
         return {
             range: result.range || '55-75',
             score: result.score || 65,
             justification: result.justification || 'לא התקבלה הנמקה'
         }
     } catch (error) {
-        console.error('❌ Vocabulary scoring error:', error)
         throw error
     }
 }
@@ -276,19 +246,16 @@ export async function scoreVocabulary(question, transcript) {
  */
 export async function getVocabularyFeedback({ question, score, range, transcript }) {
     try {
-        console.log('📝 Starting Vocabulary feedback analysis...')
         const result = await callOpenAIFunction('getVocabularyFeedback', {
             question, score, transcript
         })
 
-        console.log('🎯 Vocabulary feedback parsed:', result)
         return {
             strengths: result.strengths || [],
             improvements: result.improvements || [],
             generalFeedback: result.general_feedback || result.generalFeedback || ''
         }
     } catch (error) {
-        console.error('❌ Vocabulary feedback error:', error)
         throw error
     }
 }
@@ -302,7 +269,6 @@ export async function getVocabularyFeedback({ question, score, range, transcript
  */
 export async function scoreLanguage(question, transcript) {
     if (!isLanguageConfigured()) {
-        console.warn('Language Assistant not configured, returning mock score')
         return {
             range: '55-75',
             score: 65,
@@ -311,17 +277,14 @@ export async function scoreLanguage(question, transcript) {
     }
 
     try {
-        console.log('🤖 Starting Language analysis...')
         const result = await callOpenAIFunction('scoreLanguage', { question, transcript })
 
-        console.log('🎯 Language parsed result:', result)
         return {
             range: result.range || '55-75',
             score: result.score || 65,
             justification: result.justification || 'לא התקבלה הנמקה'
         }
     } catch (error) {
-        console.error('❌ Language scoring error:', error)
         throw error
     }
 }
@@ -331,19 +294,16 @@ export async function scoreLanguage(question, transcript) {
  */
 export async function getLanguageFeedback({ question, score, range, transcript }) {
     try {
-        console.log('📝 Starting Language feedback analysis...')
         const result = await callOpenAIFunction('getLanguageFeedback', {
             question, score, transcript
         })
 
-        console.log('🎯 Language feedback parsed:', result)
         return {
             strengths: result.strengths || [],
             improvements: result.improvements || [],
             generalFeedback: result.general_feedback || result.generalFeedback || ''
         }
     } catch (error) {
-        console.error('❌ Language feedback error:', error)
         throw error
     }
 }
@@ -357,7 +317,6 @@ export async function getLanguageFeedback({ question, score, range, transcript }
  */
 export async function scoreFluency(question, transcript, pronunciationMetrics) {
     if (!isFluencyConfigured()) {
-        console.warn('Fluency Assistant not configured, returning mock score')
         return {
             range: '55-75',
             score: 65,
@@ -366,7 +325,6 @@ export async function scoreFluency(question, transcript, pronunciationMetrics) {
     }
 
     if (!pronunciationMetrics) {
-        console.warn('No pronunciation metrics provided, returning mock score')
         return {
             range: '55-75',
             score: 65,
@@ -375,19 +333,16 @@ export async function scoreFluency(question, transcript, pronunciationMetrics) {
     }
 
     try {
-        console.log('🎯 Starting Fluency analysis with Azure metrics...')
         const result = await callOpenAIFunction('scoreFluency', {
             question, transcript, pronunciationMetrics
         })
 
-        console.log('🎯 Fluency parsed result:', result)
         return {
             range: result.range || '55-75',
             score: result.score || 65,
             justification: result.justification || 'לא התקבלה הנמקה'
         }
     } catch (error) {
-        console.error('❌ Fluency scoring error:', error)
         throw error
     }
 }
@@ -397,12 +352,10 @@ export async function scoreFluency(question, transcript, pronunciationMetrics) {
  */
 export async function getFluencyFeedback({ question, score, range, transcript, pronunciationMetrics }) {
     try {
-        console.log('📝 Starting Fluency feedback analysis...')
         const result = await callOpenAIFunction('getFluencyFeedback', {
             question, score, range, transcript, pronunciationMetrics
         })
 
-        console.log('🎯 Fluency feedback parsed:', result)
         return {
             strengths: result.strengths || [],
             improvements: result.improvements || [],
@@ -410,7 +363,6 @@ export async function getFluencyFeedback({ question, score, range, transcript, p
             problematicWords: pronunciationMetrics?.problematicWords || []
         }
     } catch (error) {
-        console.error('❌ Fluency feedback error:', error)
         throw error
     }
 }
@@ -423,8 +375,6 @@ export async function getFluencyFeedback({ question, score, range, transcript, p
  * Analyze a full practice with all criteria
  */
 export async function analyzeAnswer(question, transcript, pronunciationMetrics = null) {
-    console.log('📊 Starting full answer analysis...')
-    console.log('📊 Pronunciation metrics available:', !!pronunciationMetrics)
 
     // Check if no speech was detected - return all zeros
     const noSpeechIndicators = [
@@ -441,7 +391,6 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
         )
 
     if (isNoSpeech) {
-        console.log('⚠️ No speech detected - returning zero scores for all criteria')
         return {
             topicDevelopment: {
                 score: 0,
@@ -492,36 +441,26 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
     const [topicDevelopmentResult, vocabularyResult, languageResult, fluencyResult] = await Promise.all([
         // Topic Development
         scoreTopicDevelopment(question, transcript).catch(error => {
-            console.error('Failed to get Topic Development score:', error)
             return { range: '55-75', score: 60, justification: 'Error analyzing Topic Development' }
         }),
         // Vocabulary
         scoreVocabulary(question, transcript).catch(error => {
-            console.error('Failed to get Vocabulary score:', error)
             return { range: '55-75', score: 65, justification: 'Error analyzing Vocabulary' }
         }),
         // Language
         scoreLanguage(question, transcript).catch(error => {
-            console.error('Failed to get Language score:', error)
             return { range: '55-75', score: 65, justification: 'Error analyzing Language' }
         }),
         // Fluency/Delivery - only if pronunciation metrics available
         pronunciationMetrics
             ? scoreFluency(question, transcript, pronunciationMetrics).catch(error => {
-                console.error('Failed to get Fluency score:', error)
                 return { range: '55-75', score: 65, justification: 'Error analyzing Fluency' }
             })
             : Promise.resolve({ range: '55-75', score: 65, justification: 'No pronunciation metrics available' })
     ])
 
-    console.log('✅ All scoring completed')
-    console.log(`   Topic Development: ${topicDevelopmentResult.score}`)
-    console.log(`   Fluency: ${fluencyResult.score}`)
-    console.log(`   Vocabulary: ${vocabularyResult.score}`)
-    console.log(`   Language: ${languageResult.score}`)
 
     // Get detailed feedback from all Feedback Assistants (in parallel)
-    console.log('🔄 Getting detailed feedback from all Feedback Assistants...')
     const [topicFeedback, vocabularyFeedback, languageFeedback, fluencyFeedback] = await Promise.all([
         // Topic Development Feedback
         getTopicDevelopmentFeedback({
@@ -530,7 +469,6 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
             range: topicDevelopmentResult.range,
             transcript
         }).catch(error => {
-            console.error('Failed to get Topic Development feedback:', error)
             return { preservationPoints: [], improvementPoints: [] }
         }),
         // Vocabulary Feedback
@@ -540,7 +478,6 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
             range: vocabularyResult.range,
             transcript
         }).catch(error => {
-            console.error('Failed to get Vocabulary feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
         }),
         // Language Feedback
@@ -550,7 +487,6 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
             range: languageResult.range,
             transcript
         }).catch(error => {
-            console.error('Failed to get Language feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
         }),
         // Fluency/Delivery Feedback - only if pronunciation metrics available
@@ -562,13 +498,11 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
                 transcript,
                 pronunciationMetrics
             }).catch(error => {
-                console.error('Failed to get Fluency feedback:', error)
                 return { strengths: [], improvements: [], generalFeedback: '' }
             })
             : Promise.resolve({ strengths: [], improvements: [], generalFeedback: 'No pronunciation metrics available' })
     ])
 
-    console.log('✅ All feedback received')
 
     // Calculate weighted total score
     // Topic Development: 50%, Delivery: 15%, Vocabulary: 20%, Language: 15%
@@ -644,9 +578,6 @@ export async function analyzeAnswer(question, transcript, pronunciationMetrics =
  * Analyze a Module C practice answer with video transcript context
  */
 export async function analyzeAnswerModuleC({ question, studentTranscript, videoTranscript, pronunciationMetrics = null }) {
-    console.log('📊 Starting Module C answer analysis...')
-    console.log(`   Video transcript available: ${videoTranscript ? 'Yes' : 'No'} (${videoTranscript?.length || 0} chars)`)
-    console.log('📊 Pronunciation metrics available:', !!pronunciationMetrics)
 
     // Check if no speech was detected - return all zeros
     const noSpeechIndicators = [
@@ -663,7 +594,6 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
         )
 
     if (isNoSpeech) {
-        console.log('⚠️ No speech detected in Module C - returning zero scores for all criteria')
         return {
             topicDevelopment: {
                 score: 0,
@@ -718,36 +648,26 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             studentTranscript,
             videoTranscript
         }).catch(error => {
-            console.error('Failed to get Module C Topic Development score:', error)
             return { range: '55-75', score: 60, justification: 'שגיאה בניתוח Topic Development' }
         }),
         // Vocabulary - Regular assistant
         scoreVocabulary(question, studentTranscript).catch(error => {
-            console.error('Failed to get Vocabulary score:', error)
             return { range: '55-75', score: 65, justification: 'שגיאה בניתוח Vocabulary' }
         }),
         // Language - Regular assistant
         scoreLanguage(question, studentTranscript).catch(error => {
-            console.error('Failed to get Language score:', error)
             return { range: '55-75', score: 65, justification: 'שגיאה בניתוח Language' }
         }),
         // Fluency/Delivery - only if pronunciation metrics available
         pronunciationMetrics
             ? scoreFluency(question, studentTranscript, pronunciationMetrics).catch(error => {
-                console.error('Failed to get Fluency score:', error)
                 return { range: '55-75', score: 65, justification: 'Error analyzing Fluency' }
             })
             : Promise.resolve({ range: '55-75', score: 65, justification: 'No pronunciation metrics available' })
     ])
 
-    console.log('✅ All Module C scoring completed')
-    console.log(`   Topic Development: ${topicDevelopmentResult.score}`)
-    console.log(`   Fluency: ${fluencyResult.score}`)
-    console.log(`   Vocabulary: ${vocabularyResult.score}`)
-    console.log(`   Language: ${languageResult.score}`)
 
     // Get detailed feedback from all Feedback Assistants (in parallel)
-    console.log('🔄 Getting detailed feedback from all Feedback Assistants...')
     const [topicFeedback, vocabularyFeedback, languageFeedback, fluencyFeedback] = await Promise.all([
         // Topic Development Feedback - Uses Module C specific assistant with video transcript
         getModuleCTopicFeedback({
@@ -757,7 +677,6 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             studentTranscript,
             videoTranscript
         }).catch(error => {
-            console.error('Failed to get Module C Topic Development feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
         }),
         // Vocabulary Feedback - Regular assistant
@@ -767,7 +686,6 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             range: vocabularyResult.range,
             transcript: studentTranscript
         }).catch(error => {
-            console.error('Failed to get Vocabulary feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
         }),
         // Language Feedback - Regular assistant
@@ -777,7 +695,6 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
             range: languageResult.range,
             transcript: studentTranscript
         }).catch(error => {
-            console.error('Failed to get Language feedback:', error)
             return { strengths: [], improvements: [], generalFeedback: '' }
         }),
         // Fluency/Delivery Feedback - only if pronunciation metrics available
@@ -789,13 +706,11 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
                 transcript: studentTranscript,
                 pronunciationMetrics
             }).catch(error => {
-                console.error('Failed to get Fluency feedback:', error)
                 return { strengths: [], improvements: [], generalFeedback: '' }
             })
             : Promise.resolve({ strengths: [], improvements: [], generalFeedback: 'No pronunciation metrics available' })
     ])
 
-    console.log('✅ All Module C feedback received')
 
     // Aggregate all strengths/improvements for top-level access
     const allStrengths = [
@@ -819,7 +734,6 @@ export async function analyzeAnswerModuleC({ question, studentTranscript, videoT
         languageResult.score * 0.15
     )
 
-    console.log(`📊 Module C Final Score: ${totalScore}`)
 
     return {
         topicDevelopment: {

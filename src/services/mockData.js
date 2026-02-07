@@ -118,7 +118,6 @@ export function generateMockAnalysis(practice) {
         // Find the recording for this question
         const recording = practice.recordings?.find(r => r.questionId === question.id)
 
-        console.log(`🔎 Analysis for Q${question.id}: Path value =`, recording?.storagePath)
 
         return {
             questionId: question.id,

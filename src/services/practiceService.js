@@ -90,7 +90,6 @@ export async function completePractice(practiceId, analysisData) {
 export async function savePracticeQuestion(practiceId, questionData, orderIndex) {
     const headers = await getAuthHeaders()
 
-    console.log(`💾 Saving Q${questionData.questionId}. URL payload:`, questionData.recordingUrl)
 
     const body = {
         practice_id: practiceId,
@@ -136,7 +135,6 @@ export async function getPracticeById(practiceId) {
     const questionsResponse = await fetch(questionsUrl, { headers })
     const questions = await questionsResponse.json()
 
-    console.log('📦 Raw DB Questions:', questions.map(q => ({ id: q.question_id, url: q.recording_url })))
 
     return {
         ...practice,
@@ -168,8 +166,6 @@ export async function getUserPractices(userId) {
 
     const data = await response.json()
 
-    console.log('🔍 Raw Supabase practices data:', data)
-    console.log('🔍 First raw practice:', data[0])
 
     // Transform to match existing format
     return data.map(practice => ({
@@ -297,7 +293,6 @@ export async function getPracticedQuestionIds(userId, moduleType) {
     })
 
     if (!response.ok) {
-        console.warn('Could not fetch practiced questions, falling back to random selection')
         return []
     }
 

@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
                     await fetchUserProfile(session.user.id)
                 }
             } catch (error) {
-                console.error('Error initializing auth:', error)
             } finally {
                 setLoading(false)
             }
@@ -39,7 +38,6 @@ export function AuthProvider({ children }) {
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
-                console.log('Auth state change:', event)
                 if (event === 'SIGNED_IN' && session?.user && !user) {
                     // Set basic user from session (don't fetch profile here to avoid AbortError)
                     setUser({
@@ -63,7 +61,6 @@ export function AuthProvider({ children }) {
     const fetchUserProfile = async (userId, retries = 3) => {
         // Prevent concurrent fetches
         if (fetchingProfile.current) {
-            console.log('Already fetching profile, skipping...')
             return
         }
 
@@ -71,7 +68,6 @@ export function AuthProvider({ children }) {
 
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                console.log(`Fetching profile for: ${userId} (attempt ${attempt})`)
 
                 // Get current session token for the request
                 const { data: { session } } = await supabase.auth.getSession()
@@ -99,12 +95,10 @@ export function AuthProvider({ children }) {
 
                 // If user is explicitly not approved, don't log them in
                 if (profile.is_approved === false) {
-                    console.log('User not approved')
                     setUser(null)
                     return
                 }
 
-                console.log('Setting user from profile:', fullUser)
                 setUser(fullUser)
                 fetchingProfile.current = false
                 return
@@ -112,16 +106,13 @@ export function AuthProvider({ children }) {
             } catch (error) {
                 // If AbortError, retry
                 if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
-                    console.log('Caught AbortError, retrying...')
                     await new Promise(r => setTimeout(r, 200))
                     continue
                 }
-                console.error('Error in fetchUserProfile:', error)
             }
         }
 
         // All retries failed - fall back to auth user
-        console.log('All retries failed, using auth user data')
         try {
             const { data: { user: authUser } } = await supabase.auth.getUser()
             if (authUser) {
@@ -134,7 +125,6 @@ export function AuthProvider({ children }) {
                 })
             }
         } catch (e) {
-            console.error('Failed to get auth user:', e)
         }
         fetchingProfile.current = false
     }
@@ -217,7 +207,6 @@ export function AuthProvider({ children }) {
                     }, token)
 
                     if (profile) {
-                        console.log('Profile fetched:', profile)
                         setUser(prev => ({
                             ...prev,
                             name: profile.name || prev.name,
@@ -235,7 +224,6 @@ export function AuthProvider({ children }) {
 
             return { success: true }
         } catch (error) {
-            console.error('Login error:', error)
             return { success: false, error: 'שגיאה בהתחברות. נסה שוב.' }
         }
     }
@@ -294,10 +282,8 @@ export function AuthProvider({ children }) {
 
             // Don't auto-login - user needs to verify email first
             // Just return success to show verification message
-            console.log('User registered:', data.user?.email)
             return { success: true }
         } catch (error) {
-            console.error('Register error:', error)
             return { success: false, error: 'שגיאה בהרשמה. נסה שוב.' }
         }
     }
@@ -317,7 +303,6 @@ export function AuthProvider({ children }) {
         } catch (error) {
             // Ignore AbortError - user is already logged out locally
             if (!error.message?.includes('AbortError')) {
-                console.error('Logout error:', error)
             }
         }
     }
@@ -345,7 +330,6 @@ export function AuthProvider({ children }) {
             setUser(prev => ({ ...prev, ...updates }))
             return { success: true }
         } catch (error) {
-            console.error('Update profile error:', error)
             return { success: false, error: 'שגיאה בעדכון הפרופיל' }
         }
     }
@@ -377,7 +361,6 @@ export function AuthProvider({ children }) {
 
             return { success: true }
         } catch (error) {
-            console.error('Delete account error:', error)
             return { success: false, error: 'שגיאה במחיקת החשבון' }
         }
     }

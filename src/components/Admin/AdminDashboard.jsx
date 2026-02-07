@@ -62,7 +62,6 @@ export default function AdminDashboard() {
             const fetchedQuestions = await adminService.getQuestions()
             setQuestions(fetchedQuestions)
         } catch (error) {
-            console.error('Error loading questions:', error)
             alert('שגיאה בטעינת שאלות')
         }
     }
@@ -73,7 +72,6 @@ export default function AdminDashboard() {
             const fetchedUsers = await adminService.getAllUsers()
             setUsers(fetchedUsers)
         } catch (error) {
-            console.error('Error loading users:', error)
         } finally {
             setLoadingUsers(false)
         }
@@ -85,7 +83,6 @@ export default function AdminDashboard() {
             const fetchedStats = await adminService.getAdminStats()
             setStats(fetchedStats)
         } catch (error) {
-            console.error('Error loading stats:', error)
         } finally {
             setLoadingStats(false)
         }
@@ -116,7 +113,6 @@ export default function AdminDashboard() {
                 setNewQuestion({ text: '', module: 'module-a' })
                 setShowAddQuestion(false)
             } catch (error) {
-                console.error('Error creating question:', error)
                 alert('שגיאה ביצירת שאלה')
             }
         }
@@ -150,7 +146,6 @@ export default function AdminDashboard() {
                 })
                 setShowAddModuleC(false)
             } catch (error) {
-                console.error('Error creating video module:', error)
                 alert('שגיאה ביצירת סרטון')
             }
         }
@@ -165,7 +160,6 @@ export default function AdminDashboard() {
                     [module]: prev[module].filter(q => q.id !== questionId)
                 }))
             } catch (error) {
-                console.error('Error deleting question:', error)
                 alert('שגיאה במחיקת שאלה')
             }
         }
@@ -187,7 +181,6 @@ export default function AdminDashboard() {
                 u.id === userId ? { ...u, isApproved: !currentStatus } : u
             ))
         } catch (error) {
-            console.error('Error toggling status:', error)
             alert('שגיאה בעדכון סטטוס משתמש')
         }
     }
@@ -198,7 +191,6 @@ export default function AdminDashboard() {
                 await adminService.deleteUser(userId)
                 setUsers(prev => prev.filter(u => u.id !== userId))
             } catch (error) {
-                console.error('Error deleting user:', error)
                 alert('שגיאה במחיקת משתמש')
             }
         }
@@ -250,7 +242,6 @@ export default function AdminDashboard() {
             setShowEditModuleC(false)
             setEditingModuleC(null)
         } catch (error) {
-            console.error('Error updating video module:', error)
             alert('שגיאה בעדכון סרטון')
         }
     }

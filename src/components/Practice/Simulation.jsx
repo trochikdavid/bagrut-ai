@@ -76,7 +76,6 @@ export default function Simulation() {
         // Use async function to get smart questions
         const loadSmartQuestions = async () => {
             setLoadingQuestions(true)
-            console.log('🎬 Initializing simulation with smart question selection')
 
             // Get unpracticed questions for all modules in parallel
             const [smartQuestionsA, smartQuestionsB, smartQuestionsC] = await Promise.all([
@@ -85,10 +84,6 @@ export default function Simulation() {
                 getUnpracticedQuestions('module-c', 1)
             ])
 
-            console.log('🎯 Smart selection results:')
-            console.log('   Module A:', smartQuestionsA.map(q => q.id))
-            console.log('   Module B:', smartQuestionsB[0]?.id)
-            console.log('   Module C:', smartQuestionsC[0]?.id)
 
             if (smartQuestionsA.length > 0) {
                 setModuleAQuestions(smartQuestionsA)
@@ -97,7 +92,6 @@ export default function Simulation() {
                 setModuleBQuestion(smartQuestionsB[0])
             }
             if (smartQuestionsC.length > 0) {
-                console.log('🎬 Selected Module C content:', smartQuestionsC[0])
                 setModuleCContent(smartQuestionsC[0])
             }
 

@@ -39,12 +39,9 @@ export function PracticeProvider({ children }) {
             } else {
                 // Supabase mode
                 const userPractices = await practiceService.getUserPractices(user.id)
-                console.log('📦 Loaded practices from Supabase:', userPractices)
-                console.log('📦 First practice sample:', userPractices[0])
                 setPractices(userPractices)
             }
         } catch (error) {
-            console.error('Error loading practices:', error)
             setPractices([])
         } finally {
             setInitialLoading(false)
@@ -71,7 +68,6 @@ export function PracticeProvider({ children }) {
                 setQuestionBank(mockQuestions)
             }
         } catch (error) {
-            console.error('Error loading questions:', error)
             setQuestionBank(mockQuestions) // Fallback
         }
     }, [])
@@ -108,18 +104,15 @@ export function PracticeProvider({ children }) {
         try {
             // Get IDs of already practiced questions from database
             const practicedIds = await practiceService.getPracticedQuestionIds(user.id, moduleType)
-            console.log(`🎯 Smart selection for ${moduleType}: ${practicedIds.length} practiced out of ${allQuestions.length} total`)
 
             // Separate into unpracticed and practiced
             const unpracticed = allQuestions.filter(q => !practicedIds.includes(q.id))
             const practiced = allQuestions.filter(q => practicedIds.includes(q.id))
 
-            console.log(`   📋 Unpracticed: ${unpracticed.length}, Practiced: ${practiced.length}`)
 
             // If enough unpracticed questions, use them
             if (unpracticed.length >= count) {
                 const shuffled = [...unpracticed].sort(() => Math.random() - 0.5)
-                console.log(`   ✅ Returning ${count} unpracticed questions`)
                 return shuffled.slice(0, count)
             }
 
@@ -129,11 +122,9 @@ export function PracticeProvider({ children }) {
             const shuffledPracticed = [...practiced].sort(() => Math.random() - 0.5)
             const needed = count - unpracticed.length
 
-            console.log(`   🔄 Cycle restart: using ${unpracticed.length} unpracticed + ${needed} practiced`)
             return [...shuffledUnpracticed, ...shuffledPracticed.slice(0, needed)]
 
         } catch (error) {
-            console.warn('Smart selection failed, falling back to random:', error)
             const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
             return shuffled.slice(0, count)
         }
@@ -185,7 +176,6 @@ export function PracticeProvider({ children }) {
             ]
         }))
 
-        console.log(`📼 Recording saved locally for Q${questionId}. Will upload on submit.`)
     }
 
     // Get recording blob for a specific question (for playback)
@@ -206,7 +196,6 @@ export function PracticeProvider({ children }) {
             }))
         }
 
-        console.log(`🗑️ Recording deleted for Q${questionId}`)
     }
 
     const submitPractice = async () => {
@@ -215,7 +204,6 @@ export function PracticeProvider({ children }) {
         setLoading(true)
 
         try {
-            console.log('📝 Submitting practice. Recordings state (Ref):', recordingsRef.current)
 
             // Create a temporary practice object with the latest recordings from ref
             const practiceToAnalyze = {
@@ -238,16 +226,13 @@ export function PracticeProvider({ children }) {
                     )
                     dbPracticeId = dbPractice.id
                     setCurrentPracticeDbId(dbPracticeId)
-                    console.log('📦 Created practice in DB:', dbPracticeId)
                 } catch (error) {
-                    console.error('Error creating practice in DB:', error)
                 }
             }
 
             // Save to database if we have a DB practice ID
             if (dbPracticeId && !demoMode && isSupabaseConfigured) {
                 // Upload all recordings to storage now that we have a DB practice ID
-                console.log('📤 Uploading recordings to storage...')
                 for (const recording of recordingsRef.current) {
                     if (recording.audioBlob && !recording.storagePath) {
                         try {
@@ -258,19 +243,15 @@ export function PracticeProvider({ children }) {
                                 recording.audioBlob
                             )
                             recording.storagePath = recordingPath
-                            console.log(`✅ Uploaded recording for Q${recording.questionId}:`, recordingPath)
                         } catch (error) {
-                            console.error(`Error uploading recording for Q${recording.questionId}:`, error)
                         }
                     }
                 }
 
                 // Debug: Log all recordings and their question IDs
-                console.log('🔍 All recordings in ref:', recordingsRef.current.map(r => ({
                     questionId: r.questionId,
                     hasPath: !!r.storagePath
                 })))
-                console.log('🔍 All question analyses:', analysis.questionAnalyses.map(qa => ({
                     questionId: qa.questionId,
                     hasUrl: !!qa.recordingUrl
                 })))
@@ -282,10 +263,8 @@ export function PracticeProvider({ children }) {
 
                     // Get recording directly from ref to ensure we have the path
                     const rawRecording = recordingsRef.current.find(r => r.questionId === qa.questionId)
-                    console.log(`🔎 Matching Q${qa.questionId}: found recording =`, !!rawRecording, rawRecording?.storagePath ? '(has path)' : '(no path)')
 
                     if (rawRecording && rawRecording.storagePath) {
-                        console.log(`🚑 Force-injecting storagePath for Q${qa.questionId}:`, rawRecording.storagePath)
                         qa.recordingUrl = rawRecording.storagePath
                         qa.audioUrl = rawRecording.storagePath
                     }
@@ -301,18 +280,15 @@ export function PracticeProvider({ children }) {
                         )
                         savedQuestions.push({ ...qa, dbId: savedQ?.id })
                     } catch (error) {
-                        console.error('Error saving question analysis:', error)
                         savedQuestions.push(qa)
                     }
                 }
 
                 // STEP 2: Transcribe audio using Azure Speech-to-Text
-                console.log('🎤 Starting Azure transcription for all questions...')
                 const recordingsToTranscribe = savedQuestions
                     .filter(q => q.recordingUrl)
                     .map(q => ({ questionId: q.questionId, storagePath: q.recordingUrl }))
 
-                console.log('📋 Recordings to transcribe:', recordingsToTranscribe.length, recordingsToTranscribe.map(r => r.questionId))
 
                 if (recordingsToTranscribe.length > 0 && speechService.isAzureSpeechConfigured()) {
                     const transcriptions = await speechService.transcribeMultiple(recordingsToTranscribe)
@@ -321,7 +297,6 @@ export function PracticeProvider({ children }) {
                     for (const qa of savedQuestions) {
                         const transcription = transcriptions.get(qa.questionId)
                         if (transcription && transcription.text) {
-                            console.log(`📝 Updating transcript for Q${qa.questionId}:`, transcription.text.substring(0, 50) + '...')
                             qa.transcript = transcription.text
 
                             // Update transcript in database
@@ -332,13 +307,11 @@ export function PracticeProvider({ children }) {
                                     transcription.text
                                 )
                             } catch (error) {
-                                console.error(`Error updating transcript for Q${qa.questionId}:`, error)
                             }
 
                             // STEP 4: Analyze with OpenAI for real scores
                             if (openaiService.isOpenAIConfigured()) {
                                 try {
-                                    console.log(`🤖 Analyzing Q${qa.questionId} with OpenAI...`)
 
                                     // Check if this is a Module C question
                                     // Module C questions have videoTranscript in the question data
@@ -356,7 +329,6 @@ export function PracticeProvider({ children }) {
                                         const videoTranscript = questionData?.videoTranscript ||
                                             questionData?.parentVideo?.videoTranscript || ''
 
-                                        console.log(`🎬 Module C question detected. Video transcript: ${videoTranscript ? videoTranscript.length + ' chars' : 'not available'}`)
 
                                         aiAnalysis = await openaiService.analyzeAnswerModuleC({
                                             question: qa.questionText,
@@ -396,8 +368,6 @@ export function PracticeProvider({ children }) {
                                     qa.preservationPoints = aiAnalysis.preservationPoints || []
                                     qa.improvementPoints = aiAnalysis.improvementPoints || []
 
-                                    console.log(`✅ Q${qa.questionId} scored: ${aiAnalysis.totalScore} (Topic Dev: ${aiAnalysis.topicDevelopment.score})`)
-                                    console.log(`   📝 Preservation points: ${qa.preservationPoints.length}, Improvement points: ${qa.improvementPoints.length}`)
 
                                     // Update scores in database
                                     try {
@@ -409,17 +379,13 @@ export function PracticeProvider({ children }) {
                                             qa.totalScore
                                         )
                                     } catch (dbError) {
-                                        console.error(`Error updating scores in DB for Q${qa.questionId}:`, dbError)
                                     }
                                 } catch (aiError) {
-                                    console.error(`❌ OpenAI analysis failed for Q${qa.questionId}:`, aiError)
                                     // Keep mock scores if OpenAI fails
                                 }
                             } else {
-                                console.warn('⚠️ OpenAI not configured, keeping mock scores')
                             }
                         } else if (transcription?.error) {
-                            console.warn(`⚠️ Transcription failed for Q${qa.questionId}:`, transcription.error)
                             qa.transcript = `[Transcription unavailable: ${transcription.error}]`
                         }
                     }
@@ -456,17 +422,14 @@ export function PracticeProvider({ children }) {
                         analysis.strengths = [...new Set(allPreservation)].slice(0, 10)
                         analysis.improvements = [...new Set(allImprovement)].slice(0, 10)
 
-                        console.log(`📊 Aggregated feedback: ${analysis.strengths.length} strengths, ${analysis.improvements.length} improvements`)
                     }
                 } else {
-                    console.warn('⚠️ Azure Speech not configured or no recordings to transcribe')
                 }
 
                 // Complete the practice with analysis results
                 try {
                     await practiceService.completePractice(dbPracticeId, analysis)
                 } catch (error) {
-                    console.error('Error completing practice:', error)
                 }
             }
 
@@ -493,7 +456,6 @@ export function PracticeProvider({ children }) {
 
             return completedPractice
         } catch (error) {
-            console.error('Error submitting practice:', error)
             setLoading(false)
             return null
         }
@@ -529,7 +491,6 @@ export function PracticeProvider({ children }) {
                 questionAnalyses: practice.questionAnalyses
             }
         } catch (error) {
-            console.error('Error fetching practice by ID:', error)
             return null
         }
     }
@@ -597,7 +558,6 @@ export function PracticeProvider({ children }) {
             setPractices([])
             return { success: true }
         } catch (error) {
-            console.error('Error clearing history:', error)
             return { success: false, error: 'Failed to clear history' }
         }
     }

@@ -93,7 +93,6 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
             startTimer()
 
         } catch (err) {
-            console.error('Microphone error:', err)
             alert('Unable to access microphone. Please check permissions.')
         }
     }

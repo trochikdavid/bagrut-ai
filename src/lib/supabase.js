@@ -10,10 +10,6 @@ export { supabaseUrl, supabaseAnonKey }
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
 if (!isSupabaseConfigured) {
-    console.warn('Missing Supabase environment variables. Running in demo mode.')
-    console.warn('To enable full functionality, create a .env file with:')
-    console.warn('VITE_SUPABASE_URL=your-project-url')
-    console.warn('VITE_SUPABASE_ANON_KEY=your-anon-key')
 }
 
 // Create client with placeholder values if not configured (will fail on actual operations)
@@ -54,7 +50,6 @@ export async function fetchFromSupabase(table, query = {}, token = null) {
         const data = await response.json()
         return single ? data[0] : data
     } catch (e) {
-        console.error('Native fetch error:', e)
         return null
     }
 }

@@ -24,7 +24,6 @@ export async function getAllUsers() {
                 .eq('status', 'completed')
 
             if (practicesError) {
-                console.error('Error fetching practices for user:', profile.id, practicesError)
                 return {
                     id: profile.id,
                     name: profile.name,
