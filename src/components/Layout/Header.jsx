@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { FiSettings } from 'react-icons/fi'
 
+import logo from '../../assets/logo.png'
+
 export default function Header() {
     const { user } = useAuth()
 
@@ -14,8 +16,7 @@ export default function Header() {
         <header className="header">
             <div className="header-content">
                 <Link to="/dashboard" className="header-logo">
-                    <div className="header-logo-icon">🎯</div>
-                    <span className="header-logo-text">בגרות AI</span>
+                    <img src={logo} alt="SpeakIT" className="header-logo-image" />
                 </Link>
 
                 <div className="header-user">

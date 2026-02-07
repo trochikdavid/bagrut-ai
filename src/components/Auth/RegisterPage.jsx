@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi'
 import './Auth.css'
 
+import logo from '../../assets/logo.png'
+
 export default function RegisterPage() {
     const { register } = useAuth()
     const [name, setName] = useState('')
@@ -94,8 +96,7 @@ export default function RegisterPage() {
         <div className="auth-page">
             <div className="auth-container animate-slide-up">
                 <div className="auth-header">
-                    <div className="auth-logo">🎯</div>
-                    <h1 className="auth-title">בגרות AI</h1>
+                    <img src={logo} alt="SpeakIT" className="auth-logo-img" />
                     <p className="auth-subtitle">פתיחת חשבון חדש</p>
                 </div>
 

@@ -186,3 +186,11 @@
     color: var(--text-primary);
     border: 1px solid var(--border-subtle);
 }
+
+.auth-logo-img {
+    height: auto;
+    width: 200px;
+    max-width: 80%;
+    margin-bottom: 1rem;
+    object-fit: contain;
+}

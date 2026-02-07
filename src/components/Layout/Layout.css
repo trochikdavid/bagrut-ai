@@ -37,17 +37,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-right: 0;
+    /* Align logo to edge */
 }
 
 .header-logo {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
     text-decoration: none;
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: 1.25rem;
-    letter-spacing: -0.02em;
+    height: 100%;
+}
+
+.header-logo-image {
+    max-height: 85px;
+    /* Significantly larger than header */
+    width: auto;
+    object-fit: contain;
+    margin-right: -10px;
+    /* Overlap right padding */
 }
 
 .header-logo:hover {
@@ -106,6 +113,8 @@
     padding-bottom: env(safe-area-inset-bottom);
     z-index: 50;
     display: none;
+    overflow: visible;
+    /* Let the logo pop out */
 }
 
 @media (max-width: 768px) {
@@ -121,11 +130,13 @@
 
 .bottom-nav-content {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     height: 60px;
     max-width: 640px;
     margin: 0 auto;
+    padding: 0 var(--space-md) 0 0;
+    /* No padding on right for logo */
 }
 
 .bottom-nav-item {
@@ -143,6 +154,17 @@
     transition: color var(--transition);
 }
 
+.bottom-nav-item.nav-logo-item {
+    width: 180px;
+    /* Much wider for the massive logo */
+    min-width: unset;
+    padding: 0;
+    flex: 0 0 auto;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
+}
+
 .bottom-nav-item.active {
     color: var(--primary);
 }
@@ -150,4 +172,23 @@
 .bottom-nav-icon {
     font-size: 1.5rem;
     margin-bottom: 2px;
+}
+
+.bottom-nav-logo-img {
+    height: 220px;
+    /* Huge - double+ size */
+    width: auto;
+    object-fit: contain;
+    position: absolute;
+    bottom: -10px;
+    /* Anchored to bottom */
+    right: -20px;
+    /* Anchored to extreme right */
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+    transition: transform var(--transition);
+    transform-origin: bottom right;
+}
+
+.bottom-nav-logo-img:active {
+    transform: scale(0.95);
 }

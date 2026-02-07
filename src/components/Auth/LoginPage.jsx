@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import './Auth.css'
 
+import logo from '../../assets/logo.png'
+
 export default function LoginPage() {
     const { login } = useAuth()
     const [email, setEmail] = useState('')
@@ -30,8 +32,7 @@ export default function LoginPage() {
         <div className="auth-page">
             <div className="auth-container animate-slide-up">
                 <div className="auth-header">
-                    <div className="auth-logo">🎯</div>
-                    <h1 className="auth-title">בגרות AI</h1>
+                    <img src={logo} alt="SpeakIT" className="auth-logo-img" />
                     <p className="auth-subtitle">התחברות למערכת התרגול</p>
                 </div>
 
@@ -102,10 +103,7 @@ export default function LoginPage() {
                     <Link to="/register" className="auth-link">הרשמה</Link>
                 </div>
 
-                <div className="auth-demo-info">
-                    <p>לצפייה במסך אדמין:</p>
-                    <code>admin@bagrut.ai / admin123</code>
-                </div>
+
             </div>
         </div>
     )
