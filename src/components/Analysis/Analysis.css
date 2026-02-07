@@ -917,19 +917,89 @@
         display: none;
     }
 
-    .sim-table-row {
-        grid-template-columns: 1fr;
-        gap: var(--space-xs);
-        text-align: right;
-    }
-
     .weighted-score-header {
         display: none;
     }
 
     .weighted-score-row {
         grid-template-columns: 1fr;
-        gap: var(--space-xs);
+        gap: 0;
+        padding: var(--space-md);
+    }
+
+    .weighted-score-row .criteria-name {
+        font-size: 1.1rem;
+        margin-bottom: var(--space-sm);
+        padding-bottom: var(--space-xs);
+        border-bottom: 2px solid var(--border-subtle);
+        width: 100%;
+        display: block;
+    }
+
+    .weighted-score-row span:not(.criteria-name) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--border-subtle);
+    }
+
+    .weighted-score-row span:not(.criteria-name)::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .weighted-score-row span:last-child {
+        border-bottom: none;
+    }
+
+    .weighted-score-total {
+        padding: var(--space-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sim-table-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: var(--space-md);
+    }
+
+    .sim-table-row .sim-q-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        padding-bottom: var(--space-xs);
+        border-bottom: 2px solid var(--border-subtle);
+        display: block;
+    }
+
+    .sim-table-row span:not(.sim-q-name) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--border-subtle);
+    }
+
+    .sim-table-row span:not(.sim-q-name)::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .sim-table-row .module-badge {
+        margin: 0;
+    }
+
+    .sim-table-row span:last-child {
+        border-bottom: none;
     }
 
     .final-summary-total {

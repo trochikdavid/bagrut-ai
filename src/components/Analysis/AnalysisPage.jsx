@@ -371,9 +371,9 @@ export default function AnalysisPage() {
                                                                             {criteria.name}
                                                                             <small>({criteria.en})</small>
                                                                         </span>
-                                                                        <span className={`criteria-score ${getScoreClass(score)}`}>{score}</span>
-                                                                        <span className="criteria-weight">{criteria.weight}%</span>
-                                                                        <span className="criteria-contribution">{contribution}</span>
+                                                                        <span className={`criteria-score ${getScoreClass(score)}`} data-label="ציון">{score}</span>
+                                                                        <span className="criteria-weight" data-label="משקל">{criteria.weight}%</span>
+                                                                        <span className="criteria-contribution" data-label="ניקוד">{contribution}</span>
                                                                     </div>
                                                                 )
                                                             })
@@ -498,11 +498,11 @@ export default function AnalysisPage() {
 
                                     return (
                                         <div key={qa.questionId} className="sim-table-row">
-                                            <span>שאלה {idx + 1}</span>
-                                            <span className="module-badge">{moduleName}</span>
-                                            <span className={`score ${getScoreClass(qa.totalScore)}`}>{qa.totalScore}</span>
-                                            <span>{moduleWeight}%</span>
-                                            <span className="contribution">{contribution}/{moduleWeight}</span>
+                                            <span className="sim-q-name">שאלה {idx + 1}</span>
+                                            <span className="module-badge" data-label="מודול">{moduleName}</span>
+                                            <span className={`score ${getScoreClass(qa.totalScore)}`} data-label="ציון">{qa.totalScore}</span>
+                                            <span data-label="משקל">{moduleWeight}%</span>
+                                            <span className="contribution" data-label="ניקוד">{contribution}/{moduleWeight}</span>
                                         </div>
                                     )
                                 })}
