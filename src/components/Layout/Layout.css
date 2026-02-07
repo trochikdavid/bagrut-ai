@@ -5,6 +5,8 @@
     width: 100%;
     background-color: var(--bg-tertiary);
     /* Light gray background for the app wrapper */
+    overflow-x: hidden;
+    position: relative;
 }
 
 .layout-main {
@@ -53,8 +55,7 @@
     /* Significantly larger than header */
     width: auto;
     object-fit: contain;
-    margin-right: -10px;
-    /* Overlap right padding */
+    /* Removed negative margin that caused overflow */
 }
 
 .header-logo:hover {

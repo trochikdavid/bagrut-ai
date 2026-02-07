@@ -7,6 +7,7 @@
     margin: 0 auto;
     padding: 0 1rem 2rem 1rem;
     width: 100%;
+    overflow-x: hidden;
 }
 
 /* 1. Header */

@@ -61,7 +61,8 @@
     position: relative;
     width: 100%;
     height: 360px;
-    overflow: visible;
+    overflow: hidden;
+    /* Clip points that might overflow */
 }
 
 .line-chart {

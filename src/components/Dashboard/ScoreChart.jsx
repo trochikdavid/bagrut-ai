@@ -43,7 +43,14 @@ export default function ScoreChart({ practices }) {
     const currentWidth = dimensions.width || 800 // Fallback width
     const currentHeight = dimensions.height || 360
     // Adjust padding based on width to keep it consistent
-    const padding = { top: 40, right: 60, bottom: 50, left: 60 }
+    // Adjust padding based on width for mobile responsiveness
+    const isMobile = currentWidth < 600
+    const padding = {
+        top: 40,
+        right: isMobile ? 30 : 60,
+        bottom: 50,
+        left: isMobile ? 30 : 60
+    }
 
     // Calculate scales
     const { points, xLabels } = useMemo(() => {
