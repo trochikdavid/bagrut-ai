@@ -6,6 +6,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
     // State Machine: 'idle' | 'recording' | 'review' | 'completed'
     const [status, setStatus] = useState(initialAudioBlob ? 'review' : 'idle')
     const [isPaused, setIsPaused] = useState(false)
+    const [hasUsedPause, setHasUsedPause] = useState(false) // Track if pause was used
 
     // Recording State
 
@@ -86,6 +87,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
             recorder.start()
             setStatus('recording')
             setIsPaused(false)
+            setHasUsedPause(false) // Reset pause tracking for new recording
             setRecordingTime(0)
             durationRef.current = 0
             startTimer()
@@ -111,6 +113,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
             } else {
                 mediaRecorderRef.current.pause()
                 stopTimer()
+                setHasUsedPause(true) // Mark that pause was used
             }
             setIsPaused(!isPaused)
         }
@@ -122,6 +125,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
         setAudioUrl(null)
         setRecordingTime(0)
         setCurrentTime(0)
+        setHasUsedPause(false) // Reset pause tracking
         durationRef.current = 0
         setStatus('idle')
     }
@@ -213,6 +217,16 @@ export default function AudioRecorder({ onRecordingComplete, disabled, submitLab
             </div>
 
             <div className="rc-timer">{formatTime(recordingTime)}</div>
+
+            {/* Pause tip - shows after first pause */}
+            {hasUsedPause && (
+                <div className="rc-pause-tip animate-fade-in">
+                    <span className="rc-pause-tip-icon">💡</span>
+                    <span className="rc-pause-tip-text">
+                        <strong>שימו לב:</strong> במבחן האמיתי אפשר לעצור רק פעם אחת, אז תכננו טוב את המשך ההקלטה!
+                    </span>
+                </div>
+            )}
 
             <div className="rc-controls-row">
                 <button className="rc-control-btn pause" onClick={togglePause} title={isPaused ? "המשך" : "השהה"}>

@@ -562,6 +562,15 @@ export default function Simulation() {
                                     </span>
                                     <h3>צפייה בסרטון</h3>
                                 </div>
+
+                                {/* Tip Card Slim */}
+                                <div className="tip-card-slim animate-fade-in">
+                                    <span className="tip-icon">💡</span>
+                                    <p className="tip-text">
+                                        <strong>טיפ:</strong> כדאי לקרוא קודם את השאלה הראשונה ורק אז לצפות בסרטון, כך תדעו למה לשים לב.
+                                    </p>
+                                </div>
+
                                 {moduleCContent?.videoUrl ? (
                                     <div className="video-container">
                                         <iframe

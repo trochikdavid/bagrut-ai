@@ -110,6 +110,35 @@
     margin-top: auto;
 }
 
+/* Pause Tip */
+.rc-pause-tip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border: 1px solid #F59E0B;
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm) var(--space-md);
+    width: 100%;
+    max-width: 340px;
+}
+
+.rc-pause-tip-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.rc-pause-tip-text {
+    font-size: 0.8125rem;
+    color: #92400E;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.rc-pause-tip-text strong {
+    color: #78350F;
+}
+
 /* New labeled buttons for recording state */
 .rc-control-btn {
     display: flex;

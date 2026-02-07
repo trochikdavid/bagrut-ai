@@ -341,6 +341,14 @@ export default function AnalysisPage() {
                                                 )}
                                             </div>
 
+                                            {/* Tip Card Slim */}
+                                            <div className="tip-card-slim animate-fade-in" style={{ marginTop: '-1rem', marginBottom: '2rem' }}>
+                                                <span className="tip-icon">💡</span>
+                                                <p className="tip-text">
+                                                    <strong>טיפ:</strong> כדאי להאזין להקלטה ולודא שהתמלול תואם למה שהתכוונתם, אם התמלול לא תואם שפרו את ההגייה.
+                                                </p>
+                                            </div>
+
                                             {/* Weighted Score Calculation Table */}
                                             <div className="qa-scores">
                                                 <h5>חישוב ציון משוקלל</h5>

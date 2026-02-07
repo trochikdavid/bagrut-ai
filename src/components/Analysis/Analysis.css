@@ -938,3 +938,36 @@
         text-align: center;
     }
 }
+
+/* Tip Card Slim */
+.tip-card-slim {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: #DBEAFE;
+    border: 1px solid #93C5FD;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-xl);
+}
+
+.tip-card-slim .tip-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.tip-card-slim .tip-text {
+    margin: 0 !important;
+    font-size: 0.875rem;
+    color: #0369A1;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.tip-card-slim .tip-text strong {
+    color: #0284C7;
+    margin-left: 0.25rem;
+}

@@ -153,6 +153,14 @@ export default function ModuleC() {
                                 <p className="text-secondary">אחרי הצפייה, עוברים לשאלות ההבנה</p>
                             </div>
 
+                            {/* Tip Card Slim */}
+                            <div className="tip-card-slim animate-fade-in">
+                                <span className="tip-icon">💡</span>
+                                <p className="tip-text">
+                                    <strong>טיפ:</strong> כדאי לקרוא קודם את השאלה הראשונה ורק אז לצפות בסרטון, כך תדעו למה לשים לב.
+                                </p>
+                            </div>
+
                             <div className="video-container">
                                 <iframe
                                     src={getEmbedUrl(videoContent.videoUrl)}
@@ -171,7 +179,7 @@ export default function ModuleC() {
                                 style={{ width: '100%' }}
                             >
                                 <FiPlay />
-                                סיום צפייה ומעבר לשאלות
+                                המשך לשאלות
                             </button>
                         </>
                     ) : (
