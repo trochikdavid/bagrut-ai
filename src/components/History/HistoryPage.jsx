@@ -1,12 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { usePractice } from '../../context/PracticeContext'
-import { FiClock, FiCalendar, FiChevronLeft, FiMic, FiPlay, FiAward, FiArrowRight } from 'react-icons/fi'
+import { useAuth } from '../../context/AuthContext'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { FiClock, FiCalendar, FiChevronLeft, FiMic, FiPlay, FiAward, FiArrowRight, FiLoader, FiAlertCircle } from 'react-icons/fi'
 import './History.css'
 
 export default function HistoryPage() {
-    const { practices, loading } = usePractice()
+    const { practices, loading, refreshPractices } = usePractice()
+    const { user } = useAuth()
     const [filter, setFilter] = useState('all')
+
+    // Subscribe to realtime updates for processing status changes
+    useEffect(() => {
+        if (!isSupabaseConfigured || !user?.id) return
+
+        const channel = supabase
+            .channel('practice-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'practices',
+                    filter: `user_id=eq.${user.id}`
+                },
+                (payload) => {
+                    console.log('Practice updated:', payload)
+                    // Refresh practices when processing status changes
+                    if (payload.new.processing_status === 'completed' ||
+                        payload.new.processing_status === 'failed') {
+                        refreshPractices()
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user?.id, refreshPractices])
 
     const getScoreClass = (score) => {
         if (!score) return 'text-muted'
@@ -47,6 +80,15 @@ export default function HistoryPage() {
             case 'module-c': return 'מודול C'
             default: return 'תרגול'
         }
+    }
+
+    const isProcessing = (practice) => {
+        return practice.processingStatus === 'pending' ||
+            practice.processingStatus === 'processing'
+    }
+
+    const hasFailed = (practice) => {
+        return practice.processingStatus === 'failed'
     }
 
     if (loading) {
@@ -130,12 +172,19 @@ export default function HistoryPage() {
                         filteredPractices.map(practice => (
                             <Link
                                 key={practice.id}
-                                to={`/analysis/${practice.id}`}
-                                className="history-item"
+                                to={isProcessing(practice) ? '#' : `/analysis/${practice.id}`}
+                                className={`history-item ${isProcessing(practice) ? 'processing' : ''} ${hasFailed(practice) ? 'failed' : ''}`}
+                                onClick={(e) => isProcessing(practice) && e.preventDefault()}
                             >
                                 <div className="history-main-row">
                                     <div className="history-icon">
-                                        {getIcon(practice.type)}
+                                        {isProcessing(practice) ? (
+                                            <FiLoader className="spin" />
+                                        ) : hasFailed(practice) ? (
+                                            <FiAlertCircle />
+                                        ) : (
+                                            getIcon(practice.type)
+                                        )}
                                     </div>
                                     <div className="history-info">
                                         <span className="history-title">{getTitle(practice.type)}</span>
@@ -154,18 +203,42 @@ export default function HistoryPage() {
                                     </div>
 
                                     <div className="history-score">
-                                        <span className={`score-value ${getScoreClass(practice.totalScore)}`}>
-                                            {practice.totalScore ?? '-'}
-                                        </span>
-                                        <span className="score-label">ציון</span>
+                                        {isProcessing(practice) ? (
+                                            <>
+                                                <span className="score-value processing-text">מעבד...</span>
+                                                <span className="score-label">אנא המתן</span>
+                                            </>
+                                        ) : hasFailed(practice) ? (
+                                            <>
+                                                <span className="score-value failed-text">שגיאה</span>
+                                                <span className="score-label">נסה שוב</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className={`score-value ${getScoreClass(practice.totalScore)}`}>
+                                                    {practice.totalScore ?? '-'}
+                                                </span>
+                                                <span className="score-label">ציון</span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="history-footer">
-                                    <span className="history-details-btn">
-                                        לצפייה במשוב המלא
-                                        <FiChevronLeft className="btn-icon" />
-                                    </span>
+                                    {isProcessing(practice) ? (
+                                        <span className="history-processing-msg">
+                                            הניתוח מתבצע ברקע, ניתן לצאת מהעמוד
+                                        </span>
+                                    ) : hasFailed(practice) ? (
+                                        <span className="history-error-msg">
+                                            {practice.processingError || 'שגיאה בעיבוד התרגול'}
+                                        </span>
+                                    ) : (
+                                        <span className="history-details-btn">
+                                            לצפייה במשוב המלא
+                                            <FiChevronLeft className="btn-icon" />
+                                        </span>
+                                    )}
                                 </div>
                             </Link>
                         ))
@@ -175,3 +248,4 @@ export default function HistoryPage() {
         </div>
     )
 }
+

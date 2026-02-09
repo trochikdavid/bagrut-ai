@@ -35,6 +35,7 @@ export async function createPractice(userId, type, questions, moduleAInfo = null
         user_id: userId,
         type,
         status: 'in-progress',
+        processing_status: 'pending',
         module_a_info: moduleAInfo,
         started_at: new Date().toISOString()
     }
@@ -172,6 +173,8 @@ export async function getUserPractices(userId) {
         id: practice.id,
         type: practice.type,
         status: practice.status,
+        processingStatus: practice.processing_status,
+        processingError: practice.processing_error,
         totalScore: practice.total_score,
         moduleScores: practice.module_scores,
         scores: practice.scores,
@@ -191,7 +194,6 @@ export async function getUserPractices(userId) {
                 duration: q.duration,
                 scores: q.scores,
                 feedback: q.feedback,
-                totalScore: q.total_score,
                 totalScore: q.total_score,
                 recordingUrl: q.recording_url,
                 audioUrl: q.recording_url // Alias for frontend compatibility
@@ -298,5 +300,27 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 
     const data = await response.json()
     return data.map(row => row.question_id)
+}
+
+// Trigger background processing for a practice
+export async function triggerProcessing(practiceId) {
+    const headers = await getAuthHeaders()
+    const functionsUrl = supabaseUrl.replace('.supabase.co', '.supabase.co/functions/v1')
+
+    const url = `${functionsUrl}/process-practice`
+    const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ practiceId })
+    })
+
+    if (!response.ok) {
+        const error = await response.text()
+        console.error('Failed to trigger processing:', error)
+        // Don't throw - this is fire-and-forget
+        return { success: false, error }
+    }
+
+    return await response.json()
 }
 

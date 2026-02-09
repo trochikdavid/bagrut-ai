@@ -1,18 +1,31 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import './Auth.css'
 
 import logo from '../../assets/logo.png'
 
 export default function LoginPage() {
-    const { login } = useAuth()
+    const { login, user } = useAuth()
+    const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+
+    // Auto-redirect if session exists (handles both login and email confirmation)
+    useEffect(() => {
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session || user) {
+                navigate('/dashboard')
+            }
+        }
+        checkSession()
+    }, [user, navigate])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -23,9 +36,9 @@ export default function LoginPage() {
 
         if (!result.success) {
             setError(result.error)
+            setLoading(false)
         }
-
-        setLoading(false)
+        // No need to navigate here, the useEffect or PublicRoute will catch it
     }
 
     return (

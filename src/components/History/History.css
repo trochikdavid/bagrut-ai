@@ -219,3 +219,79 @@
         /* Hide duration etc on mobile to save space */
     }
 }
+
+/* Processing and Failed States */
+.history-item.processing {
+    border-color: var(--warning, #f59e0b);
+    background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.05));
+    cursor: default;
+}
+
+.history-item.processing:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.history-item.processing .history-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning, #f59e0b);
+}
+
+.history-item.failed {
+    border-color: var(--error, #ef4444);
+    background: linear-gradient(135deg, var(--bg-card), rgba(239, 68, 68, 0.05));
+}
+
+.history-item.failed .history-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--error, #ef4444);
+}
+
+/* Spin animation for loading icon */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Processing text styles */
+.processing-text {
+    color: var(--warning, #f59e0b);
+    font-size: 1rem;
+}
+
+.failed-text {
+    color: var(--error, #ef4444);
+    font-size: 1rem;
+}
+
+/* Processing message in footer */
+.history-processing-msg {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.85rem;
+    color: var(--warning, #f59e0b);
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: var(--radius-full);
+}
+
+.history-error-msg {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.85rem;
+    color: var(--error, #ef4444);
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: var(--radius-full);
+}

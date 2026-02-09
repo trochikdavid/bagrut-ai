@@ -204,19 +204,32 @@ export function PracticeProvider({ children }) {
         setLoading(true)
 
         try {
-
-            // Create a temporary practice object with the latest recordings from ref
-            const practiceToAnalyze = {
-                ...currentPractice,
-                recordings: recordingsRef.current
+            // Demo mode - use the old synchronous flow with mock data
+            if (demoMode || !isSupabaseConfigured) {
+                const practiceToAnalyze = {
+                    ...currentPractice,
+                    recordings: recordingsRef.current
+                }
+                const analysis = generateMockAnalysis(practiceToAnalyze)
+                const completedPractice = {
+                    ...currentPractice,
+                    ...analysis,
+                    status: 'completed',
+                    completedAt: new Date().toISOString()
+                }
+                const newPractices = [completedPractice, ...practices]
+                savePracticesToStorage(newPractices)
+                setCurrentPractice(null)
+                setCurrentPracticeDbId(null)
+                setLoading(false)
+                return completedPractice
             }
 
-            // Generate mock analysis for scores/feedback (will be replaced with GPT later)
-            const analysis = generateMockAnalysis(practiceToAnalyze)
+            // === PRODUCTION MODE: Background Processing ===
 
-            // Create practice in DB now (only when actually submitting)
+            // Step 1: Create practice in DB with processing_status: 'pending'
             let dbPracticeId = currentPracticeDbId
-            if (!dbPracticeId && user?.id && !demoMode && isSupabaseConfigured) {
+            if (!dbPracticeId && user?.id) {
                 try {
                     const dbPractice = await practiceService.createPractice(
                         user.id,
@@ -227,238 +240,79 @@ export function PracticeProvider({ children }) {
                     dbPracticeId = dbPractice.id
                     setCurrentPracticeDbId(dbPracticeId)
                 } catch (error) {
+                    console.error('Failed to create practice:', error)
+                    setLoading(false)
+                    return null
                 }
             }
 
-            // Save to database if we have a DB practice ID
-            if (dbPracticeId && !demoMode && isSupabaseConfigured) {
-                // Upload all recordings to storage now that we have a DB practice ID
-                for (const recording of recordingsRef.current) {
-                    if (recording.audioBlob && !recording.storagePath) {
-                        try {
-                            const recordingPath = await storageService.uploadRecording(
-                                user.id,
-                                dbPracticeId,
-                                recording.questionId,
-                                recording.audioBlob
-                            )
-                            recording.storagePath = recordingPath
-                        } catch (error) {
-                        }
-                    }
-                }
-
-                // Debug: Log all recordings and their question IDs
-                console.log('Recordings debug:', recordingsRef.current.map(r => ({
-                    questionId: r.questionId,
-                    hasPath: !!r.storagePath
-                })))
-
-                console.log('Analysis debug:', analysis.questionAnalyses.map(qa => ({
-                    questionId: qa.questionId,
-                    hasUrl: !!qa.recordingUrl
-                })))
-
-                // STEP 1: Save per-question analysis with audio URL (transcript pending)
-                const savedQuestions = []
-                for (let i = 0; i < analysis.questionAnalyses.length; i++) {
-                    const qa = analysis.questionAnalyses[i]
-
-                    // Get recording directly from ref to ensure we have the path
-                    const rawRecording = recordingsRef.current.find(r => r.questionId === qa.questionId)
-
-                    if (rawRecording && rawRecording.storagePath) {
-                        qa.recordingUrl = rawRecording.storagePath
-                        qa.audioUrl = rawRecording.storagePath
-                    }
-
-                    // Save with null transcript initially
-                    qa.transcript = null
-
+            // Step 2: Upload all recordings to storage
+            console.log('Uploading recordings...')
+            for (const recording of recordingsRef.current) {
+                if (recording.audioBlob && !recording.storagePath) {
                     try {
-                        const savedQ = await practiceService.savePracticeQuestion(
+                        const recordingPath = await storageService.uploadRecording(
+                            user.id,
                             dbPracticeId,
-                            qa,
-                            i
+                            recording.questionId,
+                            recording.audioBlob
                         )
-                        savedQuestions.push({ ...qa, dbId: savedQ?.id })
+                        recording.storagePath = recordingPath
                     } catch (error) {
-                        savedQuestions.push(qa)
+                        console.error('Failed to upload recording:', error)
                     }
                 }
+            }
 
-                // STEP 2: Transcribe audio using Azure Speech-to-Text
-                const recordingsToTranscribe = savedQuestions
-                    .filter(q => q.recordingUrl)
-                    .map(q => ({ questionId: q.questionId, storagePath: q.recordingUrl }))
+            // Step 3: Save practice questions with recording URLs (no scores yet)
+            const questions = currentPractice.questions || []
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i]
+                const recording = recordingsRef.current.find(r => r.questionId === q.id)
 
-
-                if (recordingsToTranscribe.length > 0 && speechService.isAzureSpeechConfigured()) {
-                    const transcriptions = await speechService.transcribeMultiple(recordingsToTranscribe)
-
-                    // STEP 3: Update DB with real transcripts AND analyze with OpenAI
-                    for (const qa of savedQuestions) {
-                        const transcription = transcriptions.get(qa.questionId)
-                        if (transcription && transcription.text) {
-                            qa.transcript = transcription.text
-
-                            // Update transcript in database
-                            try {
-                                await practiceService.updatePracticeQuestionTranscript(
-                                    dbPracticeId,
-                                    qa.questionId,
-                                    transcription.text
-                                )
-                            } catch (error) {
-                            }
-
-                            // STEP 4: Analyze with OpenAI for real scores
-                            if (openaiService.isOpenAIConfigured()) {
-                                try {
-
-                                    // Check if this is a Module C question
-                                    // Module C questions have videoTranscript in the question data
-                                    const isModuleCQuestion = currentPractice.type === 'module-c' ||
-                                        (currentPractice.type === 'simulation' && qa.moduleType === 'module-c')
-
-                                    let aiAnalysis
-
-                                    if (isModuleCQuestion) {
-                                        // Find the video transcript for this question
-                                        // It should be stored in the question data from the practice
-                                        const questionData = currentPractice.questions?.find(q =>
-                                            q.id === qa.questionId || q.questionId === qa.questionId
-                                        )
-                                        const videoTranscript = questionData?.videoTranscript ||
-                                            questionData?.parentVideo?.videoTranscript || ''
-
-
-                                        aiAnalysis = await openaiService.analyzeAnswerModuleC({
-                                            question: qa.questionText,
-                                            studentTranscript: transcription.text,
-                                            videoTranscript,
-                                            pronunciationMetrics: transcription.pronunciationAssessment
-                                        })
-                                    } else {
-                                        // Regular analysis for Module A/B with pronunciation metrics
-                                        aiAnalysis = await openaiService.analyzeAnswer(
-                                            qa.questionText,
-                                            transcription.text,
-                                            transcription.pronunciationAssessment // Pass Azure pronunciation metrics
-                                        )
-                                    }
-
-                                    // Update question analysis with real scores
-                                    qa.scores = {
-                                        topicDevelopment: aiAnalysis.topicDevelopment.score,
-                                        fluency: aiAnalysis.fluency?.score || null, // Module C has no fluency
-                                        vocabulary: aiAnalysis.vocabulary.score,
-                                        grammar: aiAnalysis.grammar.score
-                                    }
-                                    qa.totalScore = aiAnalysis.totalScore
-                                    // Preserve videoUrl if it exists (for Module C)
-                                    const originalQuestion = currentPractice.questions?.find(q => q.id === qa.questionId)
-
-                                    qa.feedback = {
-                                        videoUrl: originalQuestion?.videoUrl || qa.feedback?.videoUrl,
-                                        topicDevelopment: aiAnalysis.topicDevelopment,
-                                        fluency: aiAnalysis.fluency, // May be null for Module C
-                                        vocabulary: aiAnalysis.vocabulary,
-                                        grammar: aiAnalysis.grammar
-                                    }
-
-                                    // Save detailed feedback points from Topic Development
-                                    qa.preservationPoints = aiAnalysis.preservationPoints || []
-                                    qa.improvementPoints = aiAnalysis.improvementPoints || []
-
-
-                                    // Update scores in database
-                                    try {
-                                        await practiceService.updatePracticeQuestionScores(
-                                            dbPracticeId,
-                                            qa.questionId,
-                                            qa.scores,
-                                            qa.feedback,
-                                            qa.totalScore
-                                        )
-                                    } catch (dbError) {
-                                    }
-                                } catch (aiError) {
-                                    // Keep mock scores if OpenAI fails
-                                }
-                            } else {
-                            }
-                        } else if (transcription?.error) {
-                            qa.transcript = `[Transcription unavailable: ${transcription.error}]`
-                        }
-                    }
-
-                    // Update analysis with real analyzed questions
-                    analysis.questionAnalyses = savedQuestions
-
-                    // Recalculate total score based on real scores
-                    if (savedQuestions.length > 0) {
-                        const avgScore = Math.round(
-                            savedQuestions.reduce((sum, q) => sum + (q.totalScore || 0), 0) / savedQuestions.length
-                        )
-                        analysis.totalScore = avgScore
-
-                        // Recalculate average scores per criteria (ignoring nulls)
-                        const calculateAverage = (questions, key) => {
-                            const validQuestions = questions.filter(q => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
-                            if (validQuestions.length === 0) return 0
-                            return Math.round(validQuestions.reduce((sum, q) => sum + q.scores[key], 0) / validQuestions.length)
-                        }
-
-                        analysis.scores = {
-                            topicDevelopment: calculateAverage(savedQuestions, 'topicDevelopment'),
-                            fluency: calculateAverage(savedQuestions, 'fluency'),
-                            vocabulary: calculateAverage(savedQuestions, 'vocabulary'),
-                            grammar: calculateAverage(savedQuestions, 'grammar')
-                        }
-
-                        // Aggregate all preservation and improvement points from all questions
-                        const allPreservation = savedQuestions.flatMap(q => q.preservationPoints || [])
-                        const allImprovement = savedQuestions.flatMap(q => q.improvementPoints || [])
-
-                        // Remove duplicates and limit
-                        analysis.strengths = [...new Set(allPreservation)].slice(0, 10)
-                        analysis.improvements = [...new Set(allImprovement)].slice(0, 10)
-
-                    }
-                } else {
+                const questionData = {
+                    questionId: q.id,
+                    questionText: q.text || q.questionText,
+                    transcript: null, // Will be filled by background processing
+                    duration: recording?.duration,
+                    scores: null,
+                    feedback: null,
+                    totalScore: null,
+                    recordingUrl: recording?.storagePath
                 }
 
-                // Complete the practice with analysis results
                 try {
-                    await practiceService.completePractice(dbPracticeId, analysis)
+                    await practiceService.savePracticeQuestion(dbPracticeId, questionData, i)
                 } catch (error) {
+                    console.error('Failed to save question:', error)
                 }
             }
 
-            const completedPractice = {
+            // Step 4: Trigger background processing (fire-and-forget)
+            console.log('Triggering background processing...')
+            practiceService.triggerProcessing(dbPracticeId)
+                .then(result => console.log('Background processing triggered:', result))
+                .catch(err => console.error('Background processing error:', err))
+
+            // Step 5: Return immediately - don't wait for processing
+            const pendingPractice = {
                 ...currentPractice,
-                ...analysis,
-                id: dbPracticeId || currentPractice.id,
-                status: 'completed',
-                completedAt: new Date().toISOString()
+                id: dbPracticeId,
+                status: 'in-progress',
+                processingStatus: 'processing',
+                startedAt: new Date().toISOString()
             }
 
-            if (demoMode || !isSupabaseConfigured) {
-                // Demo mode - save to localStorage
-                const newPractices = [completedPractice, ...practices]
-                savePracticesToStorage(newPractices)
-            } else {
-                // Reload practices from database
-                await loadPractices()
-            }
+            // Reload practices to show the new pending one
+            await loadPractices()
 
             setCurrentPractice(null)
             setCurrentPracticeDbId(null)
             setLoading(false)
 
-            return completedPractice
+            return pendingPractice
         } catch (error) {
+            console.error('Submit practice error:', error)
             setLoading(false)
             return null
         }
