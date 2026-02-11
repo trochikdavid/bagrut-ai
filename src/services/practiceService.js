@@ -304,23 +304,55 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 
 // Trigger background processing for a practice
 export async function triggerProcessing(practiceId) {
-    const headers = await getAuthHeaders()
+    let headers = await getAuthHeaders()
     const functionsUrl = supabaseUrl.replace('.supabase.co', '.supabase.co/functions/v1')
-
     const url = `${functionsUrl}/process-practice`
-    const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ practiceId })
-    })
+
+    // Helper for making the request
+    const makeRequest = async (requestHeaders) => {
+        return fetch(url, {
+            method: 'POST',
+            headers: requestHeaders,
+            body: JSON.stringify({ practiceId })
+        })
+    }
+
+    let response = await makeRequest(headers)
+
+    // Handle 401 (Unauthorized) - likely expired token
+    if (response.status === 401) {
+        console.log('Received 401 from Edge Function, attempting session refresh...')
+
+        try {
+            // Refresh session
+            const { data, error } = await supabase.auth.refreshSession()
+
+            if (error || !data.session) {
+                console.error('Failed to refresh session:', error)
+                throw new Error('Session refresh failed')
+            }
+
+            console.log('Session refreshed successfully, retrying request...')
+
+            // Get new headers with fresh token
+            headers = await getAuthHeaders()
+
+            // Retry request
+            response = await makeRequest(headers)
+
+        } catch (refreshError) {
+            console.error('Error during token refresh retry:', refreshError)
+            // Return the original 401 response error if refresh fails
+            const error = await response.text()
+            return { success: false, error: `Authentication failed: ${error}` }
+        }
+    }
 
     if (!response.ok) {
         const error = await response.text()
         console.error('Failed to trigger processing:', error)
-        // Don't throw - this is fire-and-forget
         return { success: false, error }
     }
 
     return await response.json()
 }
-
