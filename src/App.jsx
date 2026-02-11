@@ -15,7 +15,7 @@ import HistoryPage from './components/History/HistoryPage'
 import ProfilePage from './components/Profile/ProfilePage'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import StatisticsPage from './components/Statistics/StatisticsPage'
-
+//g
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
 
