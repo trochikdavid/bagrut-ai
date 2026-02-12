@@ -313,7 +313,18 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 // Trigger background processing for a practice
 // transcriptions: optional array of { questionId, transcript, pronunciationAssessment }
 export async function triggerProcessing(practiceId, transcriptions = null) {
-    let headers = await getAuthHeaders()
+    // Get a FRESH token — the old one may have expired during transcription
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+        // Try refreshing the session
+        const { data: refreshData } = await supabase.auth.refreshSession()
+        if (!refreshData?.session?.access_token) {
+            throw new Error('No valid session for Edge Function call')
+        }
+    }
+
+    const token = (await supabase.auth.getSession()).data.session?.access_token
+
     const functionsUrl = supabaseUrl.replace('.supabase.co', '.supabase.co/functions/v1')
     const url = `${functionsUrl}/process-practice`
 
@@ -322,16 +333,15 @@ export async function triggerProcessing(practiceId, transcriptions = null) {
         body.transcriptions = transcriptions
     }
 
-    // Helper for making the request
-    const makeRequest = async (requestHeaders) => {
-        return fetch(url, {
-            method: 'POST',
-            headers: requestHeaders,
-            body: JSON.stringify(body)
-        })
-    }
-
-    const response = await makeRequest(headers)
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey
+        },
+        body: JSON.stringify(body)
+    })
 
     if (!response.ok) {
         const error = await response.text()
