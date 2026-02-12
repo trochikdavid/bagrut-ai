@@ -303,50 +303,27 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 }
 
 // Trigger background processing for a practice
-export async function triggerProcessing(practiceId) {
+// transcriptions: optional array of { questionId, transcript, pronunciationAssessment }
+export async function triggerProcessing(practiceId, transcriptions = null) {
     let headers = await getAuthHeaders()
     const functionsUrl = supabaseUrl.replace('.supabase.co', '.supabase.co/functions/v1')
     const url = `${functionsUrl}/process-practice`
+
+    const body = { practiceId }
+    if (transcriptions) {
+        body.transcriptions = transcriptions
+    }
 
     // Helper for making the request
     const makeRequest = async (requestHeaders) => {
         return fetch(url, {
             method: 'POST',
             headers: requestHeaders,
-            body: JSON.stringify({ practiceId })
+            body: JSON.stringify(body)
         })
     }
 
-    let response = await makeRequest(headers)
-
-    // Handle 401 (Unauthorized) - likely expired token
-    if (response.status === 401) {
-        console.log('Received 401 from Edge Function, attempting session refresh...')
-
-        try {
-            // Refresh session
-            const { data, error } = await supabase.auth.refreshSession()
-
-            if (error || !data.session) {
-                console.error('Failed to refresh session:', error)
-                throw new Error('Session refresh failed')
-            }
-
-            console.log('Session refreshed successfully, retrying request...')
-
-            // Get new headers with fresh token
-            headers = await getAuthHeaders()
-
-            // Retry request
-            response = await makeRequest(headers)
-
-        } catch (refreshError) {
-            console.error('Error during token refresh retry:', refreshError)
-            // Return the original 401 response error if refresh fails
-            const error = await response.text()
-            return { success: false, error: `Authentication failed: ${error}` }
-        }
-    }
+    const response = await makeRequest(headers)
 
     if (!response.ok) {
         const error = await response.text()

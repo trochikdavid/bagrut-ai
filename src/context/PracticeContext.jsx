@@ -288,13 +288,55 @@ export function PracticeProvider({ children }) {
                 }
             }
 
-            // Step 4: Trigger background processing (fire-and-forget)
-            console.log('Triggering background processing...')
-            practiceService.triggerProcessing(dbPracticeId)
+            // Step 4: Client-side transcription using Azure SDK
+            // (SDK requires browser APIs like AudioContext, so must run client-side)
+            console.log('Starting client-side transcription...')
+            const transcriptions = []
+
+            for (const recording of recordingsRef.current) {
+                if (!recording.storagePath) continue
+
+                try {
+                    console.log(`Transcribing question ${recording.questionId}...`)
+                    const result = await speechService.transcribeAudio(recording.storagePath)
+
+                    const transcriptionData = {
+                        questionId: recording.questionId,
+                        transcript: result.text || '[No speech detected]',
+                        pronunciationAssessment: result.pronunciationAssessment || null
+                    }
+                    transcriptions.push(transcriptionData)
+
+                    // Update transcript in DB immediately
+                    try {
+                        await practiceService.updatePracticeQuestionTranscript(
+                            dbPracticeId,
+                            recording.questionId,
+                            transcriptionData.transcript
+                        )
+                    } catch (err) {
+                        console.error('Failed to save transcript:', err)
+                    }
+                } catch (error) {
+                    console.error(`Transcription failed for ${recording.questionId}:`, error)
+                    transcriptions.push({
+                        questionId: recording.questionId,
+                        transcript: '[Transcription failed]',
+                        pronunciationAssessment: null
+                    })
+                }
+            }
+
+            console.log(`Transcription complete for ${transcriptions.length} recordings`)
+
+            // Step 5: Trigger background processing with transcripts (fire-and-forget)
+            // The Edge Function will skip transcription and go straight to OpenAI analysis
+            console.log('Triggering background processing with transcripts...')
+            practiceService.triggerProcessing(dbPracticeId, transcriptions)
                 .then(result => console.log('Background processing triggered:', result))
                 .catch(err => console.error('Background processing error:', err))
 
-            // Step 5: Return immediately - don't wait for processing
+            // Step 6: Return immediately - analysis continues server-side
             const pendingPractice = {
                 ...currentPractice,
                 id: dbPracticeId,
@@ -335,6 +377,7 @@ export function PracticeProvider({ children }) {
                 id: practice.id,
                 type: practice.type,
                 status: practice.status,
+                processing_status: practice.processing_status,
                 totalScore: practice.total_score,
                 moduleScores: practice.module_scores,
                 scores: practice.scores,

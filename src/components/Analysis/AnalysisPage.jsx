@@ -17,8 +17,9 @@ export default function AnalysisPage() {
     const [playingAudio, setPlayingAudio] = useState(null)
 
     useEffect(() => {
+        let pollInterval = null
+
         const loadPractice = async () => {
-            setLoading(true)
             try {
                 const data = await getPracticeById(id)
                 if (data) {
@@ -39,10 +40,44 @@ export default function AnalysisPage() {
                                     const publicUrl = await getRecordingUrl(qa.audioUrl)
                                     if (publicUrl) urls[qa.questionId] = publicUrl
                                 }
-                            } else {
                             }
                         }))
                         setAudioUrls(urls)
+                    }
+
+                    // If still processing, poll every 5 seconds
+                    if (data.status !== 'completed' && data.processing_status !== 'completed') {
+                        if (!pollInterval) {
+                            pollInterval = setInterval(async () => {
+                                try {
+                                    const updated = await getPracticeById(id)
+                                    if (updated) {
+                                        setPractice(updated)
+                                        if (updated.status === 'completed' || updated.processing_status === 'completed') {
+                                            clearInterval(pollInterval)
+                                            pollInterval = null
+                                            // Fetch audio URLs for the completed practice
+                                            if (updated.questionAnalyses) {
+                                                const urls = {}
+                                                await Promise.all(updated.questionAnalyses.map(async (qa) => {
+                                                    if (qa.audioUrl) {
+                                                        if (qa.audioUrl.startsWith('http') || qa.audioUrl.startsWith('blob')) {
+                                                            urls[qa.questionId] = qa.audioUrl
+                                                        } else {
+                                                            const publicUrl = await getRecordingUrl(qa.audioUrl)
+                                                            if (publicUrl) urls[qa.questionId] = publicUrl
+                                                        }
+                                                    }
+                                                }))
+                                                setAudioUrls(urls)
+                                            }
+                                        }
+                                    }
+                                } catch (err) {
+                                    console.error('Polling error:', err)
+                                }
+                            }, 5000)
+                        }
                     }
                 } else {
                     navigate('/history')
@@ -54,7 +89,12 @@ export default function AnalysisPage() {
             }
         }
 
+        setLoading(true)
         loadPractice()
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval)
+        }
     }, [id, getPracticeById, navigate])
 
     const getScoreClass = (score) => {
@@ -127,6 +167,33 @@ export default function AnalysisPage() {
                         <FiArrowRight />
                         חזרה להיסטוריה
                     </Link>
+                </div>
+            </div>
+        )
+    }
+
+    // Show processing state when Edge Function is still analyzing
+    if (practice.status !== 'completed' && practice.processing_status !== 'completed') {
+        return (
+            <div className="page animate-fade-in">
+                <div className="analysis-page">
+                    <header className="practice-header">
+                        <Link to="/history" className="back-button">
+                            <FiArrowRight />
+                            חזרה
+                        </Link>
+                    </header>
+                    <div className="score-hero-wrapper">
+                        <div className="score-hero card" style={{ textAlign: 'center', padding: '3rem' }}>
+                            <div className="loading-spinner" style={{ margin: '0 auto 1.5rem' }}></div>
+                            <h2 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>הניתוח עדיין בתהליך...</h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                                התמלול הושלם בהצלחה ✅ כעת מנתחים את התשובה שלך.
+                                <br />
+                                העמוד יתעדכן אוטומטית כשהניתוח יסתיים.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
