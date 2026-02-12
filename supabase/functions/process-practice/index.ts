@@ -498,7 +498,7 @@ serve(async (req) => {
         }
 
         const body = await req.json()
-        const { practiceId, transcriptions } = body
+        const { practiceId } = body
 
         if (!practiceId) {
             return new Response(JSON.stringify({ error: 'practiceId is required' }), {
@@ -541,15 +541,6 @@ serve(async (req) => {
 
         const processedQuestions: any[] = []
 
-        // Build a map of pre-made transcriptions (from client-side SDK)
-        const transcriptionMap = new Map<string, any>()
-        if (transcriptions && Array.isArray(transcriptions)) {
-            for (const t of transcriptions) {
-                transcriptionMap.set(t.questionId, t)
-            }
-            console.log(`Received ${transcriptions.length} pre-made transcriptions from client`)
-        }
-
         for (const question of questions) {
             try {
                 console.log(`Processing question: ${question.question_id}`)
@@ -561,22 +552,25 @@ serve(async (req) => {
                     continue
                 }
 
-                // Step 1: Get transcription (prefer client-side SDK results, fallback to Azure REST API)
+                // Step 1: Get transcription
+                // Prefer client-side transcript from DB, fallback to Azure REST API
                 let transcriptText: string
                 let pronunciationMetrics: any = null
 
-                const clientTranscription = transcriptionMap.get(question.question_id)
-                if (clientTranscription) {
-                    console.log('Using client-side transcription for:', question.question_id)
-                    transcriptText = clientTranscription.transcript
-                    pronunciationMetrics = clientTranscription.pronunciationAssessment
+                if (question.transcript && question.transcript !== '[No speech detected]') {
+                    // Client already transcribed and saved to DB
+                    console.log('Using client-side transcript from DB for:', question.question_id)
+                    transcriptText = question.transcript
+                    // Read pronunciation metrics from scores._pronunciationAssessment
+                    pronunciationMetrics = question.scores?._pronunciationAssessment || null
                 } else {
+                    // Fallback: transcribe with Azure REST API
                     console.log('Falling back to Azure REST API transcription for:', question.question_id)
                     const transcription = await transcribeAudio(question.recording_url, supabaseAdmin)
                     transcriptText = transcription.text
                     pronunciationMetrics = transcription.pronunciationAssessment
 
-                    // Update transcript in DB (client may not have done this)
+                    // Save transcript to DB
                     await supabaseAdmin
                         .from('practice_questions')
                         .update({ transcript: transcriptText })

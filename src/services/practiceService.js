@@ -235,15 +235,23 @@ export async function clearUserPractices(userId) {
     return true
 }
 
-// Update only the transcript for a specific question
-export async function updatePracticeQuestionTranscript(practiceId, questionId, transcript) {
+// Update transcript and pronunciation data for a specific question
+export async function updatePracticeQuestionTranscript(practiceId, questionId, transcript, pronunciationAssessment = null) {
     const headers = await getAuthHeaders()
 
     const url = `${supabaseUrl}/rest/v1/practice_questions?practice_id=eq.${practiceId}&question_id=eq.${questionId}`
+
+    const updateData = { transcript }
+    if (pronunciationAssessment) {
+        // Store pronunciation metrics temporarily in scores column
+        // Edge Function will read this and replace with actual AI scores
+        updateData.scores = { _pronunciationAssessment: pronunciationAssessment }
+    }
+
     const response = await fetch(url, {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ transcript })
+        body: JSON.stringify(updateData)
     })
 
     if (!response.ok) {

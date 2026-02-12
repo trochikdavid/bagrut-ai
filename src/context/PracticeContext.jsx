@@ -291,7 +291,6 @@ export function PracticeProvider({ children }) {
             // Step 4: Client-side transcription using Azure SDK
             // (SDK requires browser APIs like AudioContext, so must run client-side)
             console.log('Starting client-side transcription...')
-            const transcriptions = []
 
             for (const recording of recordingsRef.current) {
                 if (!recording.storagePath) continue
@@ -300,8 +299,7 @@ export function PracticeProvider({ children }) {
                     console.log(`Transcribing question ${recording.questionId}...`)
                     const result = await speechService.transcribeAudio(recording.storagePath)
 
-                    // Trim pronunciation data for Edge Function — only send what it needs
-                    // (allWords with phonemes/syllables can be megabytes)
+                    // Trim pronunciation data — only keep what's needed for scoring
                     let trimmedPronunciation = null
                     if (result.pronunciationAssessment) {
                         const pa = result.pronunciationAssessment
@@ -323,39 +321,35 @@ export function PracticeProvider({ children }) {
                         }
                     }
 
-                    const transcriptionData = {
-                        questionId: recording.questionId,
-                        transcript: result.text || '[No speech detected]',
-                        pronunciationAssessment: trimmedPronunciation
-                    }
-                    transcriptions.push(transcriptionData)
+                    const transcript = result.text || '[No speech detected]'
 
-                    // Update transcript in DB immediately
+                    // Save transcript + pronunciation to DB
+                    await practiceService.updatePracticeQuestionTranscript(
+                        dbPracticeId,
+                        recording.questionId,
+                        transcript,
+                        trimmedPronunciation
+                    )
+                    console.log(`Saved transcript for ${recording.questionId}`)
+                } catch (error) {
+                    console.error(`Transcription failed for ${recording.questionId}:`, error)
+                    // Save failure marker
                     try {
                         await practiceService.updatePracticeQuestionTranscript(
                             dbPracticeId,
                             recording.questionId,
-                            transcriptionData.transcript
+                            '[Transcription failed]'
                         )
-                    } catch (err) {
-                        console.error('Failed to save transcript:', err)
-                    }
-                } catch (error) {
-                    console.error(`Transcription failed for ${recording.questionId}:`, error)
-                    transcriptions.push({
-                        questionId: recording.questionId,
-                        transcript: '[Transcription failed]',
-                        pronunciationAssessment: null
-                    })
+                    } catch (e) { /* ignore */ }
                 }
             }
 
-            console.log(`Transcription complete for ${transcriptions.length} recordings`)
+            console.log('All transcriptions saved to DB')
 
-            // Step 5: Trigger background processing with transcripts (fire-and-forget)
-            // The Edge Function will skip transcription and go straight to OpenAI analysis
-            console.log('Triggering background processing with transcripts...')
-            practiceService.triggerProcessing(dbPracticeId, transcriptions)
+            // Step 5: Trigger background processing (fire-and-forget)
+            // Edge Function reads transcripts + pronunciation from DB
+            console.log('Triggering background processing...')
+            practiceService.triggerProcessing(dbPracticeId)
                 .then(result => console.log('Background processing triggered:', result))
                 .catch(err => console.error('Background processing error:', err))
 
