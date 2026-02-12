@@ -300,10 +300,33 @@ export function PracticeProvider({ children }) {
                     console.log(`Transcribing question ${recording.questionId}...`)
                     const result = await speechService.transcribeAudio(recording.storagePath)
 
+                    // Trim pronunciation data for Edge Function — only send what it needs
+                    // (allWords with phonemes/syllables can be megabytes)
+                    let trimmedPronunciation = null
+                    if (result.pronunciationAssessment) {
+                        const pa = result.pronunciationAssessment
+                        trimmedPronunciation = {
+                            accuracyScore: pa.accuracyScore,
+                            fluencyScore: pa.fluencyScore,
+                            prosodyScore: pa.prosodyScore,
+                            pronunciationScore: pa.pronunciationScore,
+                            totalWords: pa.totalWords,
+                            errorCount: pa.errorCount,
+                            problematicWords: (pa.problematicWords || []).map(w => ({
+                                word: w.word,
+                                accuracyScore: w.accuracyScore,
+                                errorType: w.errorType
+                            })),
+                            longPauses: pa.longPauses || [],
+                            longPauseCount: pa.longPauseCount,
+                            totalLongPauseTime: pa.totalLongPauseTime
+                        }
+                    }
+
                     const transcriptionData = {
                         questionId: recording.questionId,
                         transcript: result.text || '[No speech detected]',
-                        pronunciationAssessment: result.pronunciationAssessment || null
+                        pronunciationAssessment: trimmedPronunciation
                     }
                     transcriptions.push(transcriptionData)
 
