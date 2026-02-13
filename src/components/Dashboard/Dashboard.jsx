@@ -7,8 +7,9 @@ import './Dashboard.css'
 
 export default function Dashboard() {
     const { user } = useAuth()
-    const { getStats, practices } = usePractice()
+    const { getStats, practices, getUnviewedCount } = usePractice()
     const stats = getStats()
+    const unviewedCount = getUnviewedCount()
 
     // --- Logic Helpers ---
 
@@ -62,6 +63,9 @@ export default function Dashboard() {
                         <div className="nav-arrow-left">
                             <FiChevronLeft />
                         </div>
+                        {unviewedCount > 0 && (
+                            <span className="nav-badge">{unviewedCount} חדשים</span>
+                        )}
                     </Link>
 
                     <Link to="/statistics" className="nav-btn-lg tertiary-btn">

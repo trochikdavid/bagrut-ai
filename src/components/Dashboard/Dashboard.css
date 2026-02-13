@@ -60,6 +60,33 @@
     text-align: right;
 }
 
+.nav-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: #EF4444;
+    /* Red 500 */
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
 .nav-btn-lg:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -665,4 +692,28 @@
 .overview-trend {
     font-size: 0.75rem;
     color: var(--text-secondary);
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS - DASHBOARD TWEAKS
+   ============================================ */
+@media (max-width: 360px) {
+    .greeting-simple {
+        font-size: 1.5rem;
+    }
+
+    .nav-btn-lg {
+        padding: 1rem;
+        min-height: 80px;
+    }
+
+    .nav-icon-wrapper {
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
+    }
+
+    .nav-title {
+        font-size: 1.05rem;
+    }
 }

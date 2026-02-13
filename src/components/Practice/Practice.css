@@ -255,6 +255,89 @@ a.exit-button:hover {
 .loading-subtext {
     color: var(--text-muted);
     font-size: 0.875rem;
+    text-align: center;
+    max-width: 80%;
+}
+
+/* Upload Warning Overlay */
+.upload-warning-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    z-index: 3000;
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.upload-warning-icon {
+    font-size: 4rem;
+    color: #F59E0B;
+    /* Amber 500 */
+    margin-bottom: var(--space-md);
+    animation: pulse 2s infinite;
+}
+
+.upload-warning-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1F2937;
+    /* Gray 800 */
+    margin-bottom: var(--space-xs);
+}
+
+.upload-warning-text {
+    font-size: 1.125rem;
+    color: #DC2626;
+    /* Red 600 */
+    font-weight: 600;
+    max-width: 500px;
+    line-height: 1.5;
+}
+
+.upload-warning-subtext {
+    font-size: 0.9375rem;
+    color: #6B7280;
+    /* Gray 500 */
+    max-width: 450px;
+    line-height: 1.5;
+}
+
+.upload-progress-bar {
+    width: 240px;
+    height: 6px;
+    background: #E5E7EB;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: var(--space-lg);
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: #F59E0B;
+    border-radius: 999px;
+    width: 30%;
+    animation: indeterminate 1.5s infinite linear;
+}
+
+@keyframes indeterminate {
+    0% {
+        transform: translateX(-100%);
+        width: 30%;
+    }
+
+    50% {
+        width: 50%;
+    }
+
+    100% {
+        transform: translateX(200%);
+        width: 30%;
+    }
 }
 
 /* Simulation CTA */
@@ -1356,4 +1439,170 @@ a.exit-button:hover {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS - PRACTICE
+   ============================================ */
+@media (max-width: 600px) {
+
+    /* Main Layout */
+    .practice-session {
+        margin-top: 10px;
+        padding: 0 var(--space-md);
+    }
+
+    /* 1. Simulation Header - Critical Fix */
+    .simulation-header {
+        grid-template-columns: auto 1fr auto !important;
+        /* Force tight layout */
+        height: 56px;
+        padding: 0 var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .simulation-header-title {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+        /* Constrain title width */
+    }
+
+    .simulation-header .back-button span,
+    .simulation-header .exit-button span {
+        display: none;
+        /* Hide text on mobile */
+    }
+
+    .simulation-header .simulation-timer {
+        padding: 0.2rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    /* 2. Timer */
+    .timer-display {
+        font-size: 2.75rem;
+        /* Reduce huge timer */
+        margin: 16px 0;
+    }
+
+    /* 3. Progress Bar */
+    .module-progress {
+        overflow-x: auto;
+        /* Enable scroll if needed */
+        justify-content: flex-start;
+        /* Align left to prevent center clipping */
+        padding: var(--space-xs);
+        scrollbar-width: none;
+        /* Hide scrollbar */
+    }
+
+    .module-progress::-webkit-scrollbar {
+        display: none;
+    }
+
+    .progress-step {
+        padding: var(--space-xs) var(--space-md);
+        min-width: 60px;
+        /* Ensure touchable */
+    }
+
+    .progress-connector {
+        width: 20px;
+        /* Shorten connector */
+    }
+
+    /* 4. Question Card */
+    .question-card {
+        padding: var(--space-md);
+    }
+
+    .question-text {
+        font-size: 1.15rem;
+        /* Readable but smaller */
+        line-height: 1.4;
+    }
+
+    .question-choice {
+        padding: var(--space-md);
+    }
+
+    .choice-text {
+        font-size: 1rem;
+    }
+
+    /* 5. Recorder Interface */
+    .recorder-interface {
+        padding: var(--space-lg) var(--space-md);
+        min-height: 240px;
+        /* Reduce vertical height */
+        gap: var(--space-md);
+    }
+
+    .mic-button {
+        width: 64px;
+        height: 64px;
+        font-size: 2rem;
+    }
+
+    .secondary-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1rem;
+    }
+
+    /* 6. Simulation CTA (Start Page) */
+    .simulation-cta {
+        flex-direction: column;
+        /* Stack vertically */
+        align-items: center;
+        text-align: center;
+        padding: var(--space-lg);
+    }
+
+    .simulation-icon {
+        margin-bottom: var(--space-sm);
+    }
+
+    .simulation-arrow {
+        transform: rotate(90deg);
+        /* Point down on stack */
+        margin-top: var(--space-md);
+    }
+
+    .simulation-cta:hover .simulation-arrow {
+        transform: rotate(90deg) translateY(4px);
+    }
+
+    /* 7. Submission Card */
+    .submission-card {
+        padding: 32px 20px;
+        /* Reduce padding */
+    }
+
+    .submission-icon {
+        width: 100px;
+        height: 100px;
+        font-size: 3.5rem;
+    }
+
+    .submission-title {
+        font-size: 1.5rem;
+    }
+
+    .submission-text {
+        font-size: 1rem;
+    }
+
+    /* 8. Intro Content */
+    .intro-content {
+        padding: var(--space-lg);
+    }
+
+    .intro-list {
+        max-width: 100%;
+        font-size: 0.9rem;
+    }
 }

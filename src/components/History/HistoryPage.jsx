@@ -7,7 +7,7 @@ import { FiClock, FiCalendar, FiChevronLeft, FiMic, FiPlay, FiAward, FiArrowRigh
 import './History.css'
 
 export default function HistoryPage() {
-    const { practices, loading, refreshPractices } = usePractice()
+    const { practices, loading, refreshPractices, isPracticeNew } = usePractice()
     const { user } = useAuth()
     const [filter, setFilter] = useState('all')
 
@@ -176,6 +176,9 @@ export default function HistoryPage() {
                                 className={`history-item ${isProcessing(practice) ? 'processing' : ''} ${hasFailed(practice) ? 'failed' : ''}`}
                                 onClick={(e) => isProcessing(practice) && e.preventDefault()}
                             >
+                                {isPracticeNew(practice.id) && !isProcessing(practice) && !hasFailed(practice) && (
+                                    <span className="new-badge">חדש!</span>
+                                )}
                                 <div className="history-main-row">
                                     <div className="history-icon">
                                         {isProcessing(practice) ? (
@@ -205,8 +208,8 @@ export default function HistoryPage() {
                                     <div className="history-score">
                                         {isProcessing(practice) ? (
                                             <>
-                                                <span className="score-value processing-text">מעבד...</span>
-                                                <span className="score-label">אנא המתן</span>
+                                                <span className="score-value processing-text">בניתוח</span>
+                                                <span className="score-label">⏳</span>
                                             </>
                                         ) : hasFailed(practice) ? (
                                             <>
@@ -227,7 +230,7 @@ export default function HistoryPage() {
                                 <div className="history-footer">
                                     {isProcessing(practice) ? (
                                         <span className="history-processing-msg">
-                                            הניתוח מתבצע ברקע, ניתן לצאת מהעמוד
+                                            המשוב בדרך! אפשר לחזור בעוד כמה דקות 😊
                                         </span>
                                     ) : hasFailed(practice) ? (
                                         <span className="history-error-msg">

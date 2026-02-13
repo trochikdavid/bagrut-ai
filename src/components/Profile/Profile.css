@@ -220,3 +220,65 @@
 .menu-item.admin .menu-icon {
     color: var(--primary);
 }
+
+/* ============================================
+   MOBILE RESPONSIVENESS - PROFILE
+   ============================================ */
+@media (max-width: 600px) {
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-lg);
+        gap: var(--space-md);
+    }
+
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+    }
+
+    .profile-name {
+        justify-content: center;
+        /* Center the name when stacked */
+        font-size: 1.25rem;
+    }
+
+    .profile-stats {
+        grid-template-columns: 1fr;
+        /* Single column */
+        gap: var(--space-md);
+    }
+
+    .profile-stat {
+        padding: var(--space-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        /* Revert to right align for list view appeal */
+    }
+
+    .profile-stat-value {
+        font-size: 1.5rem;
+        order: 2;
+        /* Value on left in RTL */
+    }
+
+    .profile-stat-label {
+        margin-top: 0;
+        font-size: 1rem;
+        order: 1;
+        /* Label on right in RTL */
+    }
+
+    .menu-item {
+        padding: var(--space-md);
+        font-size: 0.95rem;
+    }
+
+    .menu-icon {
+        font-size: 1.1rem;
+        margin-left: var(--space-sm);
+    }
+}

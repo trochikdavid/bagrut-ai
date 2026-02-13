@@ -63,6 +63,7 @@
     color: inherit;
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    position: relative;
 }
 
 .history-item:hover {
@@ -144,6 +145,32 @@
 .score-label {
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+.new-badge {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    background: #10B981;
+    /* Green 500 */
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounce-in {
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* History Footer & Button */

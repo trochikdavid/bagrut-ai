@@ -1041,3 +1041,131 @@
     color: #0284C7;
     margin-left: 0.25rem;
 }
+
+/* ============================================
+   MOBILE RESPONSIVENESS - ANALYSIS
+   ============================================ */
+@media (max-width: 600px) {
+
+    /* Score Hero Redesign */
+    .score-hero {
+        padding: var(--space-lg);
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: var(--space-lg);
+    }
+
+    .score-circle {
+        width: 110px;
+        height: 110px;
+        border-width: 5px;
+    }
+
+    .score-value {
+        font-size: 2.25rem;
+        /* Smaller */
+    }
+
+    .score-header-row {
+        flex-direction: column;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+    }
+
+    .score-label {
+        font-size: 1.5rem;
+    }
+
+    .score-meta {
+        flex-direction: row;
+        /* Keep side-by-side but wrap */
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: center;
+    }
+
+    .meta-item {
+        flex: 1 1 40%;
+        /* Approx half width */
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+
+    /* Tables to Cards */
+    .weighted-score-header,
+    .sim-table-header {
+        display: none !important;
+        /* Hide headers */
+    }
+
+    .weighted-score-row,
+    .sim-table-row {
+        grid-template-columns: 1fr;
+        /* Stack content */
+        gap: var(--space-sm);
+        padding: var(--space-md);
+        position: relative;
+    }
+
+    /* Add labels via pseudo-elements is tricky with CSS Modules/React dynamically,
+       so we rely on the component rendering suitable block layouts or just stacking.
+       Assuming the component structure allows simple stacking. */
+
+    .weighted-score-total,
+    .sim-table-total {
+        grid-template-columns: 1fr auto;
+        /* Name + Total */
+        gap: var(--space-sm);
+        font-size: 0.9rem;
+    }
+
+    /* Module Breakdown Grid */
+    .module-scores-grid {
+        grid-template-columns: 1fr;
+        /* Single column */
+        gap: var(--space-md);
+    }
+
+    /* Feedback Section */
+    .qa-feedback-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .progress-bar {
+        width: 100%;
+        margin: var(--space-sm) 0;
+        height: 8px;
+    }
+
+    .qa-feedback-name {
+        width: 100%;
+        text-align: right;
+        margin-bottom: 0;
+    }
+
+    /* Audio Player */
+    .qa-audio-player {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .qa-audio-player audio {
+        width: 100%;
+    }
+
+    /* Final Summary */
+    .final-summary-total {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-md);
+        padding: var(--space-lg);
+    }
+
+    .total-value {
+        font-size: 2.5rem;
+    }
+}

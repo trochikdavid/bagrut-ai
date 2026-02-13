@@ -273,3 +273,31 @@
         font-size: 0.7rem;
     }
 }
+
+/* ============================================
+   MOBILE RESPONSIVENESS - SCORE CHART
+   ============================================ */
+@media (max-width: 480px) {
+    .chart-wrapper {
+        height: 240px;
+        /* Reduce height significantly */
+    }
+
+    .score-chart-container {
+        padding: var(--space-md) var(--space-sm);
+    }
+
+    .chart-header {
+        align-items: center;
+        text-align: center;
+    }
+
+    .chart-title {
+        font-size: 1rem;
+    }
+
+    .chart-legend {
+        gap: var(--space-xs);
+        font-size: 0.7rem;
+    }
+}

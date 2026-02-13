@@ -589,3 +589,64 @@ a:hover {
         transform: translateY(0);
     }
 }
+
+/* ============================================
+   MOBILE RESPONSIVENESS GLOBAL OVERRIDES
+   ============================================ */
+@media (max-width: 600px) {
+    html {
+        font-size: 14px;
+        /* Base scale down */
+    }
+
+    h1 {
+        font-size: 1.75rem;
+        /* 28px */
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        /* 24px */
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        /* 20px */
+    }
+
+    .container {
+        padding: 0 var(--space-md);
+    }
+
+    .card {
+        padding: var(--space-md);
+        /* Reduced padding */
+    }
+
+    /* Full width modals on mobile */
+    .modal-content {
+        max-width: calc(100% - 2rem);
+        margin: 1rem;
+        padding: var(--space-lg);
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        /* Stack buttons, primary on top/bottom depending on design. Here standard vertical stack. */
+        gap: var(--space-md);
+    }
+
+    .btn-lg {
+        height: 44px;
+        /* Touchable minimum */
+        font-size: 0.95rem;
+        padding: 0 var(--space-lg);
+    }
+
+    /* Ensure inputs are large enough to not zoom */
+    .form-input {
+        font-size: 16px;
+    }
+}

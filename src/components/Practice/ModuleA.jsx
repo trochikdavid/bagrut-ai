@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePractice } from '../../context/PracticeContext'
 import AudioRecorder from './AudioRecorder'
-import { FiArrowRight, FiCheck, FiTrash2 } from 'react-icons/fi'
+import { FiArrowRight, FiCheck, FiTrash2, FiAlertTriangle } from 'react-icons/fi'
 import './Practice.css'
 
 export default function ModuleA() {
@@ -44,11 +44,25 @@ export default function ModuleA() {
     }
 
     if (submitting || loading || loadingQuestions) {
+        if (submitting) {
+            return (
+                <div className="upload-warning-overlay">
+                    <FiAlertTriangle className="upload-warning-icon" />
+                    <h2 className="upload-warning-title">מעלה את ההקלטות...</h2>
+                    <p className="upload-warning-text">ההקלטות שלך נשמרות כרגע. אל תסגור את הדף!</p>
+                    <p className="upload-warning-subtext">סגירת הדף תגרום לאיבוד ההקלטות ולא תוכל לקבל ציון.</p>
+
+                    <div className="upload-progress-bar">
+                        <div className="upload-progress-fill"></div>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className="loading-overlay">
                 <div className="loading-spinner"></div>
-                <p className="loading-text">{submitting ? 'מנתח את ההקלטה...' : 'טוען שאלות...'}</p>
-                <p className="loading-subtext">{submitting ? 'זה עשוי לקחת מספר דקות. אין לסגור את הדף.' : ''}</p>
+                <p className="loading-text">טוען שאלות...</p>
             </div>
         )
     }

@@ -8,7 +8,7 @@ import './Analysis.css'
 export default function AnalysisPage() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { getPracticeById } = usePractice()
+    const { getPracticeById, markAsViewed } = usePractice()
     const [practice, setPractice] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -24,6 +24,12 @@ export default function AnalysisPage() {
                 const data = await getPracticeById(id)
                 if (data) {
                     setPractice(data)
+
+                    // Mark as viewed if completed
+                    if (data.status === 'completed' || data.processing_status === 'completed') {
+                        markAsViewed(id)
+                    }
+
                     // Expand all questions by default (0-9 covers potential range of Qs)
                     const expanded = {}
                     for (let i = 0; i < 10; i++) expanded[i] = true
@@ -56,6 +62,7 @@ export default function AnalysisPage() {
                                         if (updated.status === 'completed' || updated.processing_status === 'completed') {
                                             clearInterval(pollInterval)
                                             pollInterval = null
+                                            markAsViewed(id)
                                             // Fetch audio URLs for the completed practice
                                             if (updated.questionAnalyses) {
                                                 const urls = {}
@@ -180,18 +187,28 @@ export default function AnalysisPage() {
                     <header className="practice-header">
                         <Link to="/history" className="back-button">
                             <FiArrowRight />
-                            חזרה
+                            חזרה להמשך
                         </Link>
                     </header>
                     <div className="score-hero-wrapper">
                         <div className="score-hero card" style={{ textAlign: 'center', padding: '3rem' }}>
                             <div className="loading-spinner" style={{ margin: '0 auto 1.5rem' }}></div>
-                            <h2 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>הניתוח עדיין בתהליך...</h2>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                התמלול הושלם בהצלחה ✅ כעת מנתחים את התשובה שלך.
+                            <h2 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>מנתחים את התשובות שלך...</h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2rem' }}>
+                                העמוד יתעדכן אוטומטית ברגע שהניתוח יסתיים.
                                 <br />
-                                העמוד יתעדכן אוטומטית כשהניתוח יסתיים.
+                                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>אפשר להישאר כאן או לחזור מאוחר יותר.</span>
                             </p>
+
+                            <div className="processing-steps" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem' }}>
+                                <span className="step-dot active"></span>
+                                <span className="step-dot active"></span>
+                                <span className="step-dot active"></span>
+                            </div>
+
+                            <Link to="/history" className="btn btn-outline">
+                                חזרה להיסטוריית התרגולים
+                            </Link>
                         </div>
                     </div>
                 </div>

@@ -15,7 +15,9 @@ import HistoryPage from './components/History/HistoryPage'
 import ProfilePage from './components/Profile/ProfilePage'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import StatisticsPage from './components/Statistics/StatisticsPage'
-//g
+import LandingPage from './components/LandingPage/LandingPage'
+import ScrollToTop from './components/ScrollToTop'
+
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
 
@@ -58,8 +60,6 @@ function AdminRoute({ children }) {
   return user?.isAdmin ? children : <Navigate to="/dashboard" />
 }
 
-import ScrollToTop from './components/ScrollToTop'
-
 function App() {
   return (
     <Router>
@@ -68,6 +68,7 @@ function App() {
         <PracticeProvider>
           <Routes>
             {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={
               <PublicRoute>
                 <LoginPage />
@@ -80,12 +81,11 @@ function App() {
             } />
 
             {/* Private Routes */}
-            <Route path="/" element={
+            <Route element={
               <PrivateRoute>
                 <Layout />
               </PrivateRoute>
             }>
-              <Route index element={<Navigate to="/dashboard" />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="practice" element={<ModuleSelector />} />
               <Route path="practice/module-a" element={<ModuleA />} />
@@ -106,7 +106,7 @@ function App() {
             } />
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </PracticeProvider>
       </AuthProvider>

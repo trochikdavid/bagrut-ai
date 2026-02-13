@@ -257,11 +257,25 @@ export default function Simulation() {
     const showSubmissionScreen = allCQuestionsAnswered && !viewingLastQuestion
 
     if (submitting || loading || loadingQuestions) {
+        if (submitting) {
+            return (
+                <div className="upload-warning-overlay">
+                    <FiAlertTriangle className="upload-warning-icon" />
+                    <h2 className="upload-warning-title">מעלה את ההקלטות...</h2>
+                    <p className="upload-warning-text">ההקלטות שלך נשמרות כרגע. אל תסגור את הדף!</p>
+                    <p className="upload-warning-subtext">סגירת הדף תגרום לאיבוד ההקלטות ולא תוכל לקבל ציון.</p>
+
+                    <div className="upload-progress-bar">
+                        <div className="upload-progress-fill"></div>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className="loading-overlay">
                 <div className="loading-spinner"></div>
-                <p className="loading-text">{submitting ? 'מנתח את הסימולציה...' : 'טוען שאלות...'}</p>
-                <p className="loading-subtext">{submitting ? 'מעבד את כל ההקלטות' : ''}</p>
+                <p className="loading-text">טוען שאלות...</p>
             </div>
         )
     }

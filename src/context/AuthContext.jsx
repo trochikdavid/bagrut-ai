@@ -280,6 +280,11 @@ export function AuthProvider({ children }) {
                 return { success: false, error: errorMessage }
             }
 
+            // Check if user exists (Supabase returns user with empty identities array if exists and email confirmation is on)
+            if (data.user && data.user.identities && data.user.identities.length === 0) {
+                return { success: false, error: 'כתובת האימייל כבר רשומה במערכת' }
+            }
+
             // Don't auto-login - user needs to verify email first
             // Just return success to show verification message
             return { success: true }

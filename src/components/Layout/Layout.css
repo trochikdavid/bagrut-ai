@@ -181,3 +181,22 @@
 .bottom-nav-logo-img:active {
     transform: scale(0.95);
 }
+
+/* Fix Logo Overlap on Small Screens */
+@media (max-width: 380px) {
+    .bottom-nav-logo-img {
+        height: 120px;
+        right: -10px;
+        bottom: -5px;
+    }
+
+    .bottom-nav-item {
+        font-size: 0.7rem;
+        width: 50px;
+    }
+
+    .layout-main {
+        padding: var(--space-md) var(--space-sm);
+        padding-bottom: 70px;
+    }
+}

@@ -48,6 +48,45 @@ export function PracticeProvider({ children }) {
         }
     }, [user?.id, demoMode])
 
+    // Track viewed practices for "New!" badge
+    const [viewedPractices, setViewedPractices] = useState({}) // { practiceId: true }
+
+    // Load viewed status from localStorage
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('bagrut_viewed_practices')
+            if (stored) {
+                setViewedPractices(JSON.parse(stored))
+            }
+        } catch (e) {
+            console.error('Failed to load viewed practices', e)
+        }
+    }, [])
+
+    // Save viewed status to localStorage
+    const markAsViewed = useCallback((practiceId) => {
+        setViewedPractices(prev => {
+            if (prev[practiceId]) return prev // Already viewed
+
+            const newState = { ...prev, [practiceId]: true }
+            localStorage.setItem('bagrut_viewed_practices', JSON.stringify(newState))
+            return newState
+        })
+    }, [])
+
+    // Check if a practice is unviewed (completed but not in viewed map)
+    const isPracticeNew = useCallback((practiceId) => {
+        return !viewedPractices[practiceId]
+    }, [viewedPractices])
+
+    // Get count of unviewed COMPLETED practices
+    const getUnviewedCount = useCallback(() => {
+        return practices.filter(p =>
+            (p.status === 'completed' || p.processing_status === 'completed') &&
+            !viewedPractices[p.id]
+        ).length
+    }, [practices, viewedPractices])
+
     useEffect(() => {
         loadPractices()
     }, [loadPractices])
@@ -495,7 +534,12 @@ export function PracticeProvider({ children }) {
             getPracticeById,
             getStats,
             clearHistory,
-            refreshPractices: loadPractices
+            getStats,
+            clearHistory,
+            refreshPractices: loadPractices,
+            markAsViewed,
+            isPracticeNew,
+            getUnviewedCount
         }}>
             {children}
         </PracticeContext.Provider>

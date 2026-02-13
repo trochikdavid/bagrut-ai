@@ -727,5 +727,75 @@
     line-height: 1.5;
     background: var(--bg-secondary);
     resize: vertical;
+    resize: vertical;
     min-height: 100px;
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS - ADMIN
+   ============================================ */
+@media (max-width: 768px) {
+    .admin-dashboard {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        position: relative;
+        /* Not fixed */
+        height: auto;
+        border-left: none;
+        border-bottom: 1px solid var(--gray-700);
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: var(--space-sm);
+        gap: var(--space-sm);
+    }
+
+    .nav-item {
+        width: auto;
+        white-space: nowrap;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-full);
+        padding: var(--space-xs) var(--space-md);
+        font-size: 0.8rem;
+    }
+
+    .admin-main {
+        margin-right: 0;
+        width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        /* Stack stats */
+        gap: var(--space-sm);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        /* Stack forms */
+    }
+
+    .users-table {
+        margin: 0 -1rem;
+        /* Full bleed */
+        border-left: none;
+        border-right: none;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: var(--space-sm);
+        font-size: 0.8rem;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
 }
