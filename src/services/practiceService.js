@@ -311,7 +311,6 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 }
 
 // Trigger background processing for a practice
-// transcriptions: optional array of { questionId, transcript, pronunciationAssessment }
 export async function triggerProcessing(practiceId) {
     // Use Supabase JS client's built-in functions.invoke()
     // This handles JWT auth automatically
@@ -320,8 +319,16 @@ export async function triggerProcessing(practiceId) {
     })
 
     if (error) {
-        console.error('Failed to trigger processing:', error)
-        return { success: false, error: error.message }
+        // Extract actual error details from Edge Function response
+        let errorDetail = error.message
+        try {
+            if (error.context?.body) {
+                const body = await error.context.json()
+                errorDetail = body?.error || errorDetail
+            }
+        } catch (e) { /* ignore */ }
+        console.error('Failed to trigger processing:', errorDetail, error)
+        return { success: false, error: errorDetail }
     }
 
     return data

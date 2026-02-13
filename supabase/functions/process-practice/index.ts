@@ -694,7 +694,8 @@ serve(async (req) => {
         })
 
     } catch (error) {
-        console.error('Processing error:', error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        console.error('Processing error:', errorMessage)
 
         // Try to update practice status to failed
         try {
@@ -704,7 +705,7 @@ serve(async (req) => {
                     .from('practices')
                     .update({
                         processing_status: 'failed',
-                        processing_error: error.message,
+                        processing_error: errorMessage,
                     })
                     .eq('id', body.practiceId)
             }
@@ -712,7 +713,7 @@ serve(async (req) => {
             console.error('Failed to update error status:', e)
         }
 
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: errorMessage }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })

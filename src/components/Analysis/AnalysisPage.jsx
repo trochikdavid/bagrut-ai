@@ -428,7 +428,7 @@ export default function AnalysisPage() {
                                                         const isModuleCQuestion = qa.module === 'C' || qa.moduleType === 'module-c' || practice.type === 'module-c'
                                                         const qaCriteria = getCriteriaLabels(isModuleCQuestion)
                                                         return Object.entries(qaCriteria)
-                                                            .filter(([key]) => qa.scores[key] !== null && qa.scores[key] !== undefined)
+                                                            .filter(([key]) => qa.scores && qa.scores[key] !== null && qa.scores[key] !== undefined)
                                                             .map(([key, criteria]) => {
                                                                 const score = qa.scores[key]
                                                                 const contribution = calculateWeightedContribution(score, criteria.weight)
@@ -460,7 +460,7 @@ export default function AnalysisPage() {
                                                 <h5>פידבק מפורט</h5>
                                                 {/* Fixed order: topicDevelopment -> vocabulary -> grammar -> fluency */}
                                                 {['topicDevelopment', 'vocabulary', 'grammar', 'fluency']
-                                                    .filter(key => key !== 'pronunciation' && qa.feedback[key] !== null && qa.feedback[key] !== undefined)
+                                                    .filter(key => key !== 'pronunciation' && qa.feedback && qa.feedback[key] !== null && qa.feedback[key] !== undefined)
                                                     .map(key => ({ key, data: qa.feedback[key] }))
                                                     .map(({ key, data }) => (
                                                         <div key={key} className="qa-feedback-item">
