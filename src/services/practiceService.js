@@ -312,42 +312,17 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 
 // Trigger background processing for a practice
 // transcriptions: optional array of { questionId, transcript, pronunciationAssessment }
-export async function triggerProcessing(practiceId, transcriptions = null) {
-    // Get a FRESH token — the old one may have expired during transcription
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) {
-        // Try refreshing the session
-        const { data: refreshData } = await supabase.auth.refreshSession()
-        if (!refreshData?.session?.access_token) {
-            throw new Error('No valid session for Edge Function call')
-        }
-    }
-
-    const token = (await supabase.auth.getSession()).data.session?.access_token
-
-    const functionsUrl = supabaseUrl.replace('.supabase.co', '.supabase.co/functions/v1')
-    const url = `${functionsUrl}/process-practice`
-
-    const body = { practiceId }
-    if (transcriptions) {
-        body.transcriptions = transcriptions
-    }
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'apikey': supabaseAnonKey
-        },
-        body: JSON.stringify(body)
+export async function triggerProcessing(practiceId) {
+    // Use Supabase JS client's built-in functions.invoke()
+    // This handles JWT auth automatically
+    const { data, error } = await supabase.functions.invoke('process-practice', {
+        body: { practiceId }
     })
 
-    if (!response.ok) {
-        const error = await response.text()
+    if (error) {
         console.error('Failed to trigger processing:', error)
-        return { success: false, error }
+        return { success: false, error: error.message }
     }
 
-    return await response.json()
+    return data
 }
