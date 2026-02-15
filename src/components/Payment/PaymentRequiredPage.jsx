@@ -1,111 +1,97 @@
 import React from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { FaLock, FaCrown, FaCheck, FaCreditCard } from 'react-icons/fa'
 
 const PaymentRequiredPage = () => {
     const { user, logout } = useAuth()
 
-    // TODO: Replace with actual payment link provided by user
-    // We append the user_id to the description field so it comes back in the webhook
-    const BASE_PAYMENT_LINK = 'https://meshulam.co.il/purchase?b=e07797899808369527500171a4781440' // Example link, user should provide real one if different. 
-    // actually user didn't provide a link in the prompt, looking at previous file content it was '#'. 
-    // The prompt implies "when user clicks payment... you can send description". 
-    // I will assume a generic placeholder or if I see a link in the code I'll use it. 
-    // The file had `const PAYMENT_LINK = '#'`. 
-    // I will stick to `#` but add the logic, commenting that it needs a real link. 
-    // Wait, if it's `#`, adding params won't help much for testing. 
-    // I'll add a placeholder link that looks real-ish or just keep `#` and append.
-    // Let's just assume the user will replace the base URL.
+    // Meshulam Payment Link
+    // We pass the user_id in BOTH description and cField1 to be safe and robust for the webhook.
+    const BASE_PAYMENT_LINK = 'https://meshulam.co.il/purchase?b=e07797899808369527500171a4781440'
 
-    const PAYMENT_LINK = user?.id ? `https://meshulam.co.il/purchase?b=e07797899808369527500171a4781440&description=${user.id}` : '#'
+    // Construct the link with User ID
+    const paymentLink = user?.id
+        ? `${BASE_PAYMENT_LINK}&cField1=${user.id}&description=${user.id}`
+        : '#'
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8" dir="rtl">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    נדרש מנוי להמשך
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    כדי לגשת לדאשבורד ולתרגולים, עליך לרכוש מנוי.
-                </p>
-            </div>
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4" dir="rtl">
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
-                    <div className="space-y-6">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                {/* Header */}
+                <div className="bg-primary p-8 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-blue-600 opacity-20 transform -skew-y-6 origin-top-left"></div>
+                    <div className="relative z-10">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-white/30">
+                            <FaLock className="text-white text-2xl" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-white mb-2">המנוי לא פעיל</h1>
+                        <p className="text-blue-100 text-sm">
+                            החשבון של <strong>{user?.name}</strong> נוצר בהצלחה, אך נדרש מנוי כדי להמשיך.
+                        </p>
+                    </div>
+                </div>
 
-                        <div className="bg-blue-50 border-r-4 border-blue-400 p-4 rounded">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div className="mr-3">
-                                    <h3 className="text-sm font-medium text-blue-800">
-                                        סטטוס החשבון: ממתין לתשלום
-                                    </h3>
-                                    <div className="mt-2 text-sm text-blue-700">
-                                        <p>
-                                            שלום {user?.name}, החשבון שלך נוצר בהצלחה! השלב הבא הוא הסדרת התשלום.
-                                        </p>
-                                    </div>
-                                </div>
+                {/* Body */}
+                <div className="p-8">
+                    <div className="text-center mb-8">
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">רכוש מנוי וקבל גישה מיידית</h2>
+                        <p className="text-gray-500 text-sm">
+                            שחרר את הפוטנציאל שלך עם גישה מלאה לכל כלי התרגול של Speakit.
+                        </p>
+                    </div>
+
+                    {/* Features List */}
+                    <ul className="space-y-4 mb-8">
+                        <li className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
+                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 ml-3 flex-shrink-0">
+                                <FaCheck size={14} />
                             </div>
-                        </div>
+                            <span className="text-sm font-medium">גישה לכל שאלוני הבגרות (A, B, C, E, G)</span>
+                        </li>
+                        <li className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 ml-3 flex-shrink-0">
+                                <FaCrown size={14} />
+                            </div>
+                            <span className="text-sm font-medium">סימולציות ללא הגבלה עם משוב AI</span>
+                        </li>
+                        <li className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 ml-3 flex-shrink-0">
+                                <FaCheck size={14} />
+                            </div>
+                            <span className="text-sm font-medium">סטטיסטיקות ומעקב שיפור אישי</span>
+                        </li>
+                    </ul>
 
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-gray-900">מה כלול בחבילה?</h3>
-                            <ul className="space-y-2">
-                                <li className="flex items-start">
-                                    <svg className="h-6 w-6 text-green-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>גישה מלאה לכל שאלוני הבגרות (A, B, C, D, E)</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <svg className="h-6 w-6 text-green-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>סימולציות מלאות עם משוב AI מיידי</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <svg className="h-6 w-6 text-green-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>מעקב התקדמות וסטטיסטיקות אישיות</span>
-                                </li>
-                            </ul>
-                        </div>
+                    {/* CTA Button */}
+                    <a
+                        href={paymentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1"
+                    >
+                        <span>מעבר לתשלום מאובטח</span>
+                        <FaCreditCard />
+                    </a>
 
-                        <div className="mt-6">
-                            <a
-                                href={PAYMENT_LINK}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-                            >
-                                מעבר לתשלום מאובטח
-                            </a>
-                        </div>
+                    <p className="text-xs text-center text-gray-400 mt-4">
+                        התשלום מאובטח באמצעות משולם (Meshulam)
+                    </p>
 
-                        <div className="mt-4">
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                כבר שילמתי? רענן עמוד
-                            </button>
-                        </div>
-
-                        <div className="mt-2 text-center">
-                            <button
-                                onClick={logout}
-                                className="text-sm text-gray-500 hover:text-gray-900 underline"
-                            >
-                                התנתק
-                            </button>
-                        </div>
-
+                    {/* Actions */}
+                    <div className="mt-6 flex items-center justify-between pt-6 border-t border-gray-100">
+                        <button
+                            onClick={logout}
+                            className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                        >
+                            התנתק
+                        </button>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="text-sm text-primary font-medium hover:text-primary-hover transition-colors"
+                        >
+                            כבר שילמתי? רענן
+                        </button>
                     </div>
                 </div>
             </div>

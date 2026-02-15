@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
                     email: profile.email,
                     isAdmin: profile.role === 'admin',
                     isApproved: profile.is_approved,
-                    isPremium: profile.is_premium || false,
+                    isPremium: profile.is_premium === true || profile.is_premium === 'true', // Handle both boolean and string "true" only
                     createdAt: profile.created_at
                 }
 
@@ -218,7 +218,7 @@ export function AuthProvider({ children }) {
                             name: profile.name || prev.name,
                             isAdmin: profile.role === 'admin',
                             isApproved: profile.is_approved,
-                            isPremium: profile.is_premium || false
+                            isPremium: profile.is_premium === true || profile.is_premium === 'true' // Handle both boolean and string "true" only
                         }))
 
                         if (profile.is_approved === false) {
