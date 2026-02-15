@@ -7,12 +7,13 @@ const PaymentRequiredPage = () => {
     const { user, logout } = useAuth()
 
     // Meshulam Payment Link
-    // We pass the user_id in BOTH description and cField1 to be safe and robust for the webhook.
-    const BASE_PAYMENT_LINK = 'https://meshulam.co.il/purchase?b=e07797899808369527500171a4781440'
+    // Using user-provided Grow.link URL
+    const BASE_PAYMENT_LINK = 'https://pay.grow.link/b85cbd024eb58e63c53f9e3d9af1c5bd-MzA4NDY4Mw'
 
     // Construct the link with User ID
+    // Base link has no query params, so we start with '?'
     const paymentLink = user?.id
-        ? `${BASE_PAYMENT_LINK}&cField1=${user.id}&description=${user.id}`
+        ? `${BASE_PAYMENT_LINK}?cField1=${user.id}&description=${user.id}`
         : '#'
 
     return (
