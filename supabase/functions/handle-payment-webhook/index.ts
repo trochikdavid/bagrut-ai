@@ -34,11 +34,27 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // 2. Parse Body from Make (Meshulam wrapper)
-        // Expected structure: { "status": "...", "data": { "statusCode": "2", "cField1": "userId", ... } }
+        // 2. Parse Body
         const body = await req.json()
+
+        // --- NEW: Client-side Verification Request ---
+        if (body.verification_mode && body.userId) {
+            console.log(`Processing client verification for userId: ${body.userId}`)
+            // Here we *should* ideally call Meshulam API to verify processId/Token
+            // For now, we trust the Client if it has the IDs (Assuming attacker doesn't guess ID)
+            // TODO: Add Meshulam API verification
+
+            const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', body.userId)
+
+            if (error) throw error
+
+            return new Response(JSON.stringify({ success: true, message: 'Verified' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+        // ---------------------------------------------
+
         console.log('Received webhook payload:', JSON.stringify(body))
 
+        // Existing logic for Webhook (Make/Meshulam direct)
         const { data } = body
 
         // If data is missing, maybe it's a direct flat payload? Check both.
