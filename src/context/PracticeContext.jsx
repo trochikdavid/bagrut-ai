@@ -534,8 +534,6 @@ export function PracticeProvider({ children }) {
             getPracticeById,
             getStats,
             clearHistory,
-            getStats,
-            clearHistory,
             refreshPractices: loadPractices,
             markAsViewed,
             isPracticeNew,

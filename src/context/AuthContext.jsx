@@ -45,6 +45,7 @@ export function AuthProvider({ children }) {
                         name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
                         email: session.user.email,
                         isAdmin: false,
+                        isPremium: false, // Default until profile loaded
                         createdAt: session.user.created_at
                     })
                 } else if (event === 'SIGNED_OUT') {
@@ -75,7 +76,7 @@ export function AuthProvider({ children }) {
 
                 // Use native fetch helper consistently
                 const profile = await fetchFromSupabase('profiles', {
-                    select: 'role,name,email,created_at,is_approved',
+                    select: 'role,name,email,created_at,is_approved,is_premium',
                     eq: { id: userId },
                     single: true
                 }, token)
@@ -90,6 +91,7 @@ export function AuthProvider({ children }) {
                     email: profile.email,
                     isAdmin: profile.role === 'admin',
                     isApproved: profile.is_approved,
+                    isPremium: profile.is_premium || false,
                     createdAt: profile.created_at
                 }
 
@@ -121,6 +123,7 @@ export function AuthProvider({ children }) {
                     name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
                     email: authUser.email,
                     isAdmin: false,
+                    isPremium: false,
                     createdAt: authUser.created_at
                 })
             }
@@ -139,6 +142,7 @@ export function AuthProvider({ children }) {
                 name: 'מנהל מערכת',
                 email: 'admin@bagrut.ai',
                 isAdmin: true,
+                isPremium: true,
                 createdAt: new Date().toISOString()
             }
             setUser(adminUser)
@@ -152,6 +156,7 @@ export function AuthProvider({ children }) {
                 name: email.split('@')[0],
                 email,
                 isAdmin: false,
+                isPremium: false, // Demo user is not premium by default
                 createdAt: new Date().toISOString()
             }
             setUser(newUser)
@@ -193,6 +198,7 @@ export function AuthProvider({ children }) {
                     name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
                     email: data.user.email,
                     isAdmin: false, // Will be updated later
+                    isPremium: false,
                     createdAt: data.user.created_at
                 }
                 setUser(sessionUser)
@@ -201,7 +207,7 @@ export function AuthProvider({ children }) {
                 setTimeout(async () => {
                     const token = data.session.access_token
                     const profile = await fetchFromSupabase('profiles', {
-                        select: 'role,name,is_approved',
+                        select: 'role,name,is_approved,is_premium',
                         eq: { id: data.user.id },
                         single: true
                     }, token)
@@ -211,7 +217,8 @@ export function AuthProvider({ children }) {
                             ...prev,
                             name: profile.name || prev.name,
                             isAdmin: profile.role === 'admin',
-                            isApproved: profile.is_approved
+                            isApproved: profile.is_approved,
+                            isPremium: profile.is_premium || false
                         }))
 
                         if (profile.is_approved === false) {

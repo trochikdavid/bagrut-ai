@@ -18,6 +18,8 @@ import StatisticsPage from './components/Statistics/StatisticsPage'
 import LandingPage from './components/LandingPage/LandingPage'
 import ScrollToTop from './components/ScrollToTop'
 
+import PaymentRequiredPage from './components/Payment/PaymentRequiredPage'
+
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
 
@@ -30,6 +32,25 @@ function PrivateRoute({ children }) {
   }
 
   return user ? children : <Navigate to="/login" />
+}
+
+function PremiumRoute({ children }) {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: '100vh' }}>
+        <div className="loading-spinner"></div>
+      </div>
+    )
+  }
+
+  if (!user) return <Navigate to="/login" />
+
+  // Admin is always premium
+  if (user.isAdmin) return children
+
+  return user.isPremium ? children : <Navigate to="/payment" />
 }
 
 function PublicRoute({ children }) {
@@ -81,10 +102,16 @@ function App() {
             } />
 
             {/* Private Routes */}
-            <Route element={
+            <Route path="/payment" element={
               <PrivateRoute>
-                <Layout />
+                <PaymentRequiredPage />
               </PrivateRoute>
+            } />
+
+            <Route element={
+              <PremiumRoute>
+                <Layout />
+              </PremiumRoute>
             }>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="practice" element={<ModuleSelector />} />
