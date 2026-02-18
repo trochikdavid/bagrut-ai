@@ -19,7 +19,6 @@ import LandingPage from './components/LandingPage/LandingPage'
 import ScrollToTop from './components/ScrollToTop'
 
 import PaymentRequiredPage from './components/Payment/PaymentRequiredPage'
-import PaymentSuccessPage from './components/Payment/PaymentSuccessPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -106,11 +105,6 @@ function App() {
             <Route path="/payment" element={
               <PrivateRoute>
                 <PaymentRequiredPage />
-              </PrivateRoute>
-            } />
-            <Route path="/payment-success" element={
-              <PrivateRoute>
-                <PaymentSuccessPage />
               </PrivateRoute>
             } />
 

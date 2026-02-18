@@ -37,21 +37,6 @@ serve(async (req) => {
         // 2. Parse Body
         const body = await req.json()
 
-        // --- NEW: Client-side Verification Request ---
-        if (body.verification_mode && body.userId) {
-            console.log(`Processing client verification for userId: ${body.userId}`)
-            // Here we *should* ideally call Meshulam API to verify processId/Token
-            // For now, we trust the Client if it has the IDs (Assuming attacker doesn't guess ID)
-            // TODO: Add Meshulam API verification
-
-            const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', body.userId)
-
-            if (error) throw error
-
-            return new Response(JSON.stringify({ success: true, message: 'Verified' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-        }
-        // ---------------------------------------------
-
         console.log('Received webhook payload:', JSON.stringify(body))
 
         // Existing logic for Webhook (Make/Meshulam direct)
@@ -85,26 +70,39 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'User ID (cField1) or Payer Email is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // 5. Update User Profile
+        // 4. Update Database
+        // Strategy: 
+        // A. Try ID from cField1 (Best)
+        // B. Try Email from payerEmail (Fallback)
+
         let query = supabaseAdmin.from('profiles').update({ is_premium: true })
+        let matched = false
 
         if (userId) {
+            console.log(`Updating via User ID: ${userId}`)
             query = query.eq('id', userId)
-        } else {
-            // Fallback to payerEmail if userId is missing. Note: payerEmail might actally be empty in the payload example provided by user!
-            if (!payerEmail) {
-                return new Response(JSON.stringify({ error: 'No identifier found (cField1 missing, payerEmail empty)' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-            }
+            matched = true
+        } else if (payerEmail) {
+            console.log(`Updating via Payer Email: ${payerEmail}`)
             query = query.eq('email', payerEmail)
+            matched = true
+        } else {
+            console.error('No identifier found in webhook (cField1 missing, payerEmail empty)')
+            return new Response(JSON.stringify({ error: 'No identifier found (cField1 missing, payerEmail empty)' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        const { data: updatedUser, error } = await query.select()
+        const { error: updateError, count } = await query.select()
 
-        if (error || !updatedUser || updatedUser.length === 0) {
-            console.error('Update failed:', error || 'User not found')
-            // Might want to return 404/500 so Make retries? Or 200 to stop retrying?
-            // If user not found, retrying won't help unless race condition.
-            return new Response(JSON.stringify({ error: 'User update failed or user not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        if (updateError) {
+            console.error('Error updating profile:', updateError)
+            return new Response(JSON.stringify({ error: 'Database update failed', details: updateError }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
+        // If we tried email matching but found no user (maybe email mismatch), log warning
+        if (matched && count === 0) {
+            console.warn(`No user found with ${userId ? 'ID ' + userId : 'Email ' + payerEmail}`)
+            // We return 200 to Meshulam/Make so they don't retry, but we log it internally
+            return new Response(JSON.stringify({ warning: 'Payment received but user not found (email mismatch?)' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         return new Response(JSON.stringify({
