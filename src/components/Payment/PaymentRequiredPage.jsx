@@ -13,7 +13,7 @@ const PaymentRequiredPage = () => {
     // Construct the link with User ID
     // Base link has no query params, so we start with '?'
     const paymentLink = user?.id
-        ? `${BASE_PAYMENT_LINK}?cField1=${user.id}&description=${user.id}`
+        ? `${BASE_PAYMENT_LINK}?cField1=${user.id}&description=${user.id}&identifyParam=${user.id}&userId=${user.id}`
         : '#'
 
     return (

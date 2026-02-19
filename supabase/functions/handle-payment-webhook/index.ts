@@ -18,51 +18,43 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
         )
 
-        // 1. Verify Secret
-        // specific header 'x-webhook-secret' or inside body
-        const secret = req.headers.get('x-webhook-secret')
+        // 1. Parse Body immediately to log it (Debugging)
+        const body = await req.json()
+        console.log('DEBUG: Received incoming request body:', JSON.stringify(body))
+        console.log('DEBUG: Received headers:', JSON.stringify(Object.fromEntries(req.headers.entries())))
+
+        // 2. Verify Secret
+        // Grow sends the secret in the body as 'webhookKey'
+        const incomingSecret = body.webhookKey
         const EXPECTED_SECRET = Deno.env.get('PAYMENT_WEBHOOK_SECRET')
 
-        // If secret env var is not set, we default to a hardcoded placeholder or fail? 
-        // Better to fail safe.
-        if (!EXPECTED_SECRET) {
-            console.error('PAYMENT_WEBHOOK_SECRET is not set in Edge Function secrets.')
-            return new Response(JSON.stringify({ error: 'Server configuration error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        if (!incomingSecret || incomingSecret !== EXPECTED_SECRET) {
+            console.error('Unauthorized attempt. Invalid webhookKey.')
+            return new Response(JSON.stringify({ error: 'Unauthorized', debug_note: 'Secret mismatch' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
-
-        if (secret !== EXPECTED_SECRET) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-        }
-
-        // 2. Parse Body
-        const body = await req.json()
-
-        console.log('Received webhook payload:', JSON.stringify(body))
 
         // Existing logic for Webhook (Make/Meshulam direct)
         const { data } = body
-
-        // If data is missing, maybe it's a direct flat payload? Check both.
+        // If data is missing, use body directly (direct webhook case)
         const payload = data || body
 
-        const { statusCode, cField1, description, payerEmail } = payload
+        // Extract fields based on Grow payload structure seen in logs
+        // Payload example: { "identifyParam": "...", "transactionCode": "...", ... }
+        const { statusCode, cField1, description, payerEmail, identifyParam, transactionCode } = payload
 
         // 3. Verify Status
-        // Meshulam successful payment statusCode is usually '000' or '2' depending on the API/IPN version?
-        // User provided logic: "Validate statusCode = 2"
-        if (String(statusCode) !== '2') {
-            console.log(`Payment not successful (statusCode: ${statusCode}). logic: approved only if 2.`)
-            // We return 200 OK to acknowledge receipt, but don't update user premium status?
-            // Or maybe we treat it as an error?
-            // Usually webhooks should return 200 if received, even if business logic ignores it.
+        // Grow direct webhook doesn't send 'statusCode'. It sends 'transactionCode'.
+        // If we received this webhook (Transaction Approved type), it is a success.
+        // We just check if transactionCode exists to be sure it's valid.
+        if (!transactionCode && String(statusCode) !== '2') {
+            console.log(`Payment might not be successful. No transactionCode and statusCode is ${statusCode}`)
             return new Response(JSON.stringify({ message: 'Status code not approved', statusCode }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         // 4. Identify User
-        // Primary: cField1 (where we put userId)
-        // Secondary: Extract from description?
-        // Tertiary: payerEmail
-        const userId = cField1 || (description && description.includes('user_') ? description : null) // rudimentary check
+        // Grow uses 'identifyParam' if configured. 
+        // We also check cField1 (Make wrapper) or description fallback.
+        const userId = identifyParam || cField1 || (description && description.includes('user_') ? description : null)
 
         console.log(`Processing approved payment for userId: ${userId} or email: ${payerEmail}`)
 
