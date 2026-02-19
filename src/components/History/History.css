@@ -149,8 +149,8 @@
 
 .new-badge {
     position: absolute;
-    top: -8px;
-    left: -8px;
+    top: 12px;
+    left: 12px;
     background: #10B981;
     /* Green 500 */
     color: white;

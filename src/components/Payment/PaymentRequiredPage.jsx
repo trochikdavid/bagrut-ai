@@ -20,11 +20,8 @@ const PaymentRequiredPage = () => {
     // Using user-provided Grow.link URL
     const BASE_PAYMENT_LINK = 'https://pay.grow.link/b85cbd024eb58e63c53f9e3d9af1c5bd-MzA4NDY4Mw'
 
-    // Construct the link with User ID
-    // Base link has no query params, so we start with '?'
-    const paymentLink = user?.id
-        ? `${BASE_PAYMENT_LINK}?user_id=${user.id}&userId=${user.id}&cField1=${user.id}`
-        : '#'
+    // Construct the link (No redundant params, rely on payerEmail)
+    const paymentLink = BASE_PAYMENT_LINK
 
     // Poll for status update (in case webhook updates DB while user is here)
     React.useEffect(() => {
@@ -89,15 +86,7 @@ const PaymentRequiredPage = () => {
                     {/* CTA Button - Using btn-primary from system */}
                     {/* CTA Button - Using btn-primary from system */}
                     <button
-                        onClick={async () => {
-                            try {
-                                // Log payment attempt
-                                await supabaseBrowser.from('payment_attempts').insert({
-                                    user_id: user.id
-                                })
-                            } catch (e) {
-                                console.error('Failed to log payment attempt', e)
-                            }
+                        onClick={() => {
                             // Redirect to payment
                             window.open(paymentLink, '_blank', 'noopener,noreferrer')
                         }}
