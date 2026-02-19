@@ -38,23 +38,20 @@ serve(async (req) => {
         // If data is missing, use body directly (direct webhook case)
         const payload = data || body
 
-        // Extract fields based on Grow payload structure seen in logs
-        // Payload example: { "identifyParam": "...", "transactionCode": "...", ... }
-        const { statusCode, cField1, description, payerEmail, identifyParam, transactionCode } = payload
+        // Extract fields based on Grow payload structure
+        // User configured 'user_id' custom field in Grow.
+        const { statusCode, cField1, description, payerEmail, identifyParam, transactionCode, user_id } = payload
 
         // 3. Verify Status
-        // Grow direct webhook doesn't send 'statusCode'. It sends 'transactionCode'.
-        // If we received this webhook (Transaction Approved type), it is a success.
-        // We just check if transactionCode exists to be sure it's valid.
+        // Grow direct webhook doesn't send 'statusCode' always. It sends 'transactionCode'.
         if (!transactionCode && String(statusCode) !== '2') {
             console.log(`Payment might not be successful. No transactionCode and statusCode is ${statusCode}`)
             return new Response(JSON.stringify({ message: 'Status code not approved', statusCode }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         // 4. Identify User
-        // Grow uses 'identifyParam' if configured. 
-        // We also check cField1 (Make wrapper) or description fallback.
-        const userId = identifyParam || cField1 || (description && description.includes('user_') ? description : null)
+        // Priority: user_id (Custom Field) > identifyParam > cField1 > description
+        const userId = user_id || identifyParam || cField1 || (description && description.includes('user_') ? description : null)
 
         console.log(`Processing approved payment for userId: ${userId} or email: ${payerEmail}`)
 
@@ -70,17 +67,37 @@ serve(async (req) => {
         let query = supabaseAdmin.from('profiles').update({ is_premium: true })
         let matched = false
 
-        if (userId) {
-            console.log(`Updating via User ID: ${userId}`)
-            query = query.eq('id', userId)
+        // Helper to validate UUID
+        const isValidUUID = (uuid: string) => {
+            const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            return regex.test(uuid)
+        }
+
+        let validUserId = null
+        if (userId && isValidUUID(userId)) {
+            validUserId = userId
+        } else if (userId) {
+            console.warn(`Invalid UUID for userId: ${userId}`)
+        }
+
+        if (validUserId) {
+            console.log(`Updating via User ID: ${validUserId}`)
+            query = query.eq('id', validUserId)
             matched = true
         } else if (payerEmail) {
             console.log(`Updating via Payer Email: ${payerEmail}`)
             query = query.eq('email', payerEmail)
             matched = true
+        } else if (payload.payerPhone) {
+            // Fallback: Check by Phone
+            // Webhook sends local format usually: 0545851576
+            const phone = payload.payerPhone
+            console.log(`Updating via Payer Phone: ${phone}`)
+            query = query.eq('phone', phone)
+            matched = true
         } else {
-            console.error('No identifier found in webhook (cField1 missing, payerEmail empty)')
-            return new Response(JSON.stringify({ error: 'No identifier found (cField1 missing, payerEmail empty)' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            console.error('No identifier found in webhook (cField1/identifyParam invalid, payerEmail empty, payerPhone missing)')
+            return new Response(JSON.stringify({ error: 'No identifier found' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         const { error: updateError, count } = await query.select()

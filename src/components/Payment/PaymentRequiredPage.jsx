@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { supabase as supabaseBrowser } from '../../lib/supabase'
 import { FaLock, FaCrown, FaCheck, FaCreditCard } from 'react-icons/fa'
 import './PaymentRequiredPage.css'
 
@@ -13,7 +14,7 @@ const PaymentRequiredPage = () => {
     // Construct the link with User ID
     // Base link has no query params, so we start with '?'
     const paymentLink = user?.id
-        ? `${BASE_PAYMENT_LINK}?cField1=${user.id}&description=${user.id}&identifyParam=${user.id}&userId=${user.id}`
+        ? `${BASE_PAYMENT_LINK}?user_id=${user.id}&userId=${user.id}&cField1=${user.id}`
         : '#'
 
     return (
@@ -66,15 +67,25 @@ const PaymentRequiredPage = () => {
                     </ul>
 
                     {/* CTA Button - Using btn-primary from system */}
-                    <a
-                        href={paymentLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-primary payment-button shadow-lg"
+                    {/* CTA Button - Using btn-primary from system */}
+                    <button
+                        onClick={async () => {
+                            try {
+                                // Log payment attempt
+                                await supabaseBrowser.from('payment_attempts').insert({
+                                    user_id: user.id
+                                })
+                            } catch (e) {
+                                console.error('Failed to log payment attempt', e)
+                            }
+                            // Redirect to payment
+                            window.open(paymentLink, '_blank', 'noopener,noreferrer')
+                        }}
+                        className="btn btn-primary payment-button shadow-lg w-full flex justify-center items-center gap-2"
                     >
                         <span>מעבר לתשלום מאובטח</span>
                         <FaCreditCard />
-                    </a>
+                    </button>
 
                     <p className="secure-note">
                         התשלום מאובטח באמצעות משולם (Meshulam)
