@@ -5,7 +5,7 @@ import { FaLock, FaCrown, FaCheck, FaCreditCard } from 'react-icons/fa'
 import './PaymentRequiredPage.css'
 
 const PaymentRequiredPage = () => {
-    const { user, logout } = useAuth()
+    const { user, logout, refreshProfile } = useAuth()
 
     // Meshulam Payment Link
     // Using user-provided Grow.link URL
@@ -16,6 +16,17 @@ const PaymentRequiredPage = () => {
     const paymentLink = user?.id
         ? `${BASE_PAYMENT_LINK}?user_id=${user.id}&userId=${user.id}&cField1=${user.id}`
         : '#'
+
+    // Poll for status update (in case webhook updates DB while user is here)
+    React.useEffect(() => {
+        if (!user) return
+
+        const interval = setInterval(async () => {
+            await refreshProfile()
+        }, 3000)
+
+        return () => clearInterval(interval)
+    }, [user, refreshProfile])
 
     return (
         <div className="payment-page-container" dir="rtl">

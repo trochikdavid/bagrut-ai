@@ -56,7 +56,28 @@ serve(async (req) => {
         console.log(`Processing approved payment for userId: ${userId} or email: ${payerEmail}`)
 
         if (!userId && !payerEmail) {
-            return new Response(JSON.stringify({ error: 'User ID (cField1) or Payer Email is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            // Check for manual email field before giving up
+        }
+
+        // Helper to find email in any field (handling Hebrew keys from Grow)
+        const findEmailInPayload = (obj: any): string | null => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            for (const key in obj) {
+                const value = obj[key]
+                if (typeof value === 'string' && emailRegex.test(value)) {
+                    // Return the first valid email found
+                    return value
+                }
+            }
+            return null
+        }
+
+        // Specific check for the Hebrew field name (if passed as is)
+        const manualEmail = payload['ה-email איתו נרשמתם'] || findEmailInPayload(payload)
+        const targetEmail = manualEmail || payerEmail
+
+        if (!userId && !targetEmail) {
+            return new Response(JSON.stringify({ error: 'User ID (cField1) or Email is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         // 4. Update Database
@@ -77,26 +98,24 @@ serve(async (req) => {
         if (userId && isValidUUID(userId)) {
             validUserId = userId
         } else if (userId) {
-            console.warn(`Invalid UUID for userId: ${userId}`)
+            // "cField1" or "=user_id" are common misconfiguration values from Grow
+            if (userId === 'cField1' || userId === '=user_id') {
+                console.log(`Debug: identifyParam is '${userId}' (default/misconfig), ignoring.`)
+            } else {
+                console.warn(`Invalid UUID for userId: ${userId}`)
+            }
         }
 
         if (validUserId) {
             console.log(`Updating via User ID: ${validUserId}`)
             query = query.eq('id', validUserId)
             matched = true
-        } else if (payerEmail) {
-            console.log(`Updating via Payer Email: ${payerEmail}`)
-            query = query.eq('email', payerEmail)
-            matched = true
-        } else if (payload.payerPhone) {
-            // Fallback: Check by Phone
-            // Webhook sends local format usually: 0545851576
-            const phone = payload.payerPhone
-            console.log(`Updating via Payer Phone: ${phone}`)
-            query = query.eq('phone', phone)
+        } else if (targetEmail) {
+            console.log(`Updating via Target Email (Manual/Payer): ${targetEmail}`)
+            query = query.eq('email', targetEmail)
             matched = true
         } else {
-            console.error('No identifier found in webhook (cField1/identifyParam invalid, payerEmail empty, payerPhone missing)')
+            console.error('No identifier found in webhook (cField1/identifyParam invalid, Email missing)')
             return new Response(JSON.stringify({ error: 'No identifier found' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 

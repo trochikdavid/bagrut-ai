@@ -386,7 +386,8 @@ export function AuthProvider({ children }) {
             register,
             logout,
             updateProfile,
-            deleteAccount
+            deleteAccount,
+            refreshProfile: () => user ? fetchUserProfile(user.id) : Promise.resolve()
         }}>
             {children}
         </AuthContext.Provider>
