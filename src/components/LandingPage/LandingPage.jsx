@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaMicrophone, FaChartLine, FaUserGraduate, FaChevronDown, FaCheckCircle, FaStar } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { FaMicrophone, FaChartLine, FaUserGraduate, FaChevronDown, FaCheckCircle, FaStar, FaArrowLeft } from 'react-icons/fa';
+import { FiMic, FiBarChart2, FiShield, FiCheck, FiArrowLeft } from 'react-icons/fi';
 import './LandingPage.css';
 
 const LandingPage = () => {
-    const navigate = useNavigate();
     const [openFaq, setOpenFaq] = useState(null);
 
     const toggleFaq = (index) => {
@@ -13,26 +13,47 @@ const LandingPage = () => {
 
     const features = [
         {
-            icon: <FaMicrophone />,
+            icon: <FiMic />,
             title: "סימולציה מדויקת",
-            description: "תרגול שמדמה את מבחן הבגרות האמיתי באנגלית, כולל זמנים ושאלות אותנטיות."
+            description: "תרגול שמדמה את מבחן הבגרות האמיתי באנגלית, כולל זמנים ושאלות אותנטיות.",
+            color: '#6366F1'
         },
         {
-            icon: <FaChartLine />,
+            icon: <FiBarChart2 />,
             title: "פידבק בזמן אמת",
-            description: "קבלו משוב מיידי על כל תשובה, כולל דיוק לשוני, אוצר מילים ושטף דיבור."
+            description: "קבלו משוב מיידי על כל תשובה, כולל דיוק לשוני, אוצר מילים ושטף דיבור.",
+            color: '#0EA5E9'
         },
         {
-            icon: <FaUserGraduate />,
+            icon: <FiShield />,
             title: "שיפור הביטחון",
-            description: "תרגלו שוב ושוב בסביבה בטוחה עד שתגיעו למבחן מוכנים ורגועים."
+            description: "תרגלו שוב ושוב בסביבה בטוחה עד שתגיעו למבחן מוכנים ורגועים.",
+            color: '#10B981'
+        }
+    ];
+
+    const steps = [
+        {
+            number: "01",
+            title: "בוחרים שאלון",
+            description: "בוחרים את המודול שרוצים לתרגל (A, B, C) או סימולציה מלאה"
+        },
+        {
+            number: "02",
+            title: "מתרגלים ומדברים",
+            description: "עונים על שאלות מול הבוחן הווירטואלי בזמן אמת, בדיוק כמו במבחן"
+        },
+        {
+            number: "03",
+            title: "מקבלים ציון ופידבק",
+            description: "רואים ניתוח מפורט, נקודות חזקות ונקודות לשיפור"
         }
     ];
 
     const faqs = [
         {
             question: "האם הסימולציה מתאימה לכל השאלונים?",
-            answer: "כן, המערכת תומכת בכל שאלוני הבגרות באנגלית (Module A, B, C, E, G) ומותאמת למבנה הבחינה העדכני."
+            answer: "כן, המערכת תומכת בכל שאלוני הבגרות באנגלית (Module A, B, C) ומותאמת למבנה הבחינה העדכני."
         },
         {
             question: "כמה עולה להשתמש במערכת?",
@@ -51,144 +72,183 @@ const LandingPage = () => {
     return (
         <div className="landing-page">
             {/* Header/Nav */}
-            <header className="flex justify-between items-center p-4 max-w-6xl mx-auto">
-                <div className="text-2xl font-bold text-primary flex items-center gap-2">
-                    <FaMicrophone /> Speakit
+            <header className="landing-header">
+                <div className="landing-header-inner">
+                    <div className="landing-logo">
+                        <FaMicrophone className="landing-logo-icon" /> Speakit
+                    </div>
+                    <nav className="landing-nav">
+                        <a href="#features">יתרונות</a>
+                        <a href="#how-it-works">איך זה עובד</a>
+                        <a href="#faq">שאלות ותשובות</a>
+                    </nav>
+                    <Link to="/login" className="landing-header-cta">
+                        התחברות / הרשמה
+                    </Link>
                 </div>
-                <nav className="hidden md:flex gap-6">
-                    <a href="#features" className="text-secondary hover:text-primary transition-colors">יתרונות</a>
-                    <a href="#how-it-works" className="text-secondary hover:text-primary transition-colors">איך זה עובד</a>
-                    <a href="#faq" className="text-secondary hover:text-primary transition-colors">שאלות ותשובות</a>
-                </nav>
-                <Link to="/login" className="btn btn-primary">
-                    התחברות / הרשמה
-                </Link>
             </header>
 
             {/* Hero Section */}
             <section className="hero-section">
+                <div className="hero-bg-shapes">
+                    <div className="hero-shape hero-shape-1"></div>
+                    <div className="hero-shape hero-shape-2"></div>
+                    <div className="hero-shape hero-shape-3"></div>
+                </div>
                 <div className="hero-content">
-                    <h1 className="hero-title animate-fade-in">
-                        Speakit - Practice before you speak it
-                        <br />
-                        <span className="text-primary text-4xl block mt-4">תרגול אינסופי בסימולציה המדויקת ביותר לבגרות</span>
+                    <div className="hero-badge">
+                        <FiMic /> הפלטפורמה #1 בישראל לתרגול בגרות באנגלית
+                    </div>
+                    <h1 className="hero-title">
+                        <span className="hero-title-en">Practice before you speak it</span>
+                        <span className="hero-title-he">תרגול אינסופי בסימולציה המדויקת ביותר לבגרות</span>
                     </h1>
-                    <p className="hero-subtitle animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <p className="hero-subtitle">
                         דברו, קבלו פידבק מיידי ושפרו את הביטחון שלכם – והכל במחיר של שיעור פרטי אחד.
-                        הפלטפורמה הראשונה בישראל שמדמה את הבגרות בעל פה באנגלית.
                     </p>
-                    <div className="hero-cta-group animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                        <Link to="/register" className="btn btn-primary btn-lg">
+                    <div className="hero-cta-group">
+                        <Link to="/register" className="hero-btn-primary">
                             התחילו לתרגל עכשיו
+                            <FiArrowLeft />
                         </Link>
-                        <Link to="/login" className="btn btn-outline btn-lg">
+                        <Link to="/login" className="hero-btn-secondary">
                             יש לי כבר חשבון
                         </Link>
                     </div>
+                    <div className="hero-stats">
+                        <div className="hero-stat">
+                            <span className="hero-stat-value">3</span>
+                            <span className="hero-stat-label">מודולים</span>
+                        </div>
+                        <div className="hero-stat-divider"></div>
+                        <div className="hero-stat">
+                            <span className="hero-stat-value">AI</span>
+                            <span className="hero-stat-label">ניתוח חכם</span>
+                        </div>
+                        <div className="hero-stat-divider"></div>
+                        <div className="hero-stat">
+                            <span className="hero-stat-value">∞</span>
+                            <span className="hero-stat-label">תרגולים</span>
+                        </div>
+                    </div>
                 </div>
-                {/* Abstract shape or image placeholder could go here */}
-                {/* <div className="hero-image-container"> ... </div> */}
             </section>
-
-            {/* Value Proposition Strip */}
-            <div className="bg-white py-12 border-y border-gray-100">
-                <div className="max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-2xl font-bold mb-6">כל ההכנה לבגרות במקום אחד</h2>
-                    <p className="text-gray-600 text-lg">
-                        מתרגלים בסימולציה שמרגישה בדיוק כמו המבחן האמיתי, מקבלים תיקונים בזמן אמת, משפרים ומתרגלים ללא הגבלה כדי להגיע לבחינה הכי מוכנים שיש.
-                    </p>
-                </div>
-            </div>
 
             {/* Features Section */}
             <section id="features" className="features-section">
-                <h2 className="section-title">למה לבחור ב-Speakit?</h2>
-                <div className="features-grid">
-                    {features.map((feature, index) => (
-                        <div key={index} className="feature-card">
-                            <div className="feature-icon-wrapper">
-                                {feature.icon}
+                <div className="section-container">
+                    <h2 className="section-title">למה לבחור ב-Speakit?</h2>
+                    <p className="section-subtitle">הכלים שיעזרו לכם להצליח בבגרות באנגלית</p>
+                    <div className="features-grid">
+                        {features.map((feature, index) => (
+                            <div key={index} className="feature-card" style={{ '--feature-color': feature.color }}>
+                                <div className="feature-icon-wrapper">
+                                    {feature.icon}
+                                </div>
+                                <h3 className="feature-title">{feature.title}</h3>
+                                <p className="feature-description">{feature.description}</p>
                             </div>
-                            <h3 className="feature-title">{feature.title}</h3>
-                            <p className="text-secondary">{feature.description}</p>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works */}
+            <section id="how-it-works" className="how-section">
+                <div className="section-container">
+                    <h2 className="section-title">איך זה עובד?</h2>
+                    <p className="section-subtitle">שלושה צעדים פשוטים להצלחה</p>
+                    <div className="steps-grid">
+                        {steps.map((step, index) => (
+                            <div key={index} className="step-card">
+                                <div className="step-number-circle">{step.number}</div>
+                                <h3 className="step-title">{step.title}</h3>
+                                <p className="step-desc">{step.description}</p>
+                                {index < steps.length - 1 && <div className="step-connector"></div>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Social Proof */}
+            <section className="social-proof-section">
+                <div className="section-container">
+                    <div className="social-proof-card">
+                        <div className="social-proof-stars">
+                            <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
                         </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* How It Works (Simplified) */}
-            <section id="how-it-works" className="how-it-works-section">
-                <h2 className="section-title">איך זה עובד?</h2>
-                <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
-                    <div className="text-center">
-                        <div className="w-12 h-12 bg-blue-100 text-primary rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
-                        <h3 className="font-bold text-lg mb-2">בוחרים שאלון</h3>
-                        <p className="text-gray-600">בוחרים את המודול שרוצים לתרגל (A, B, C...)</p>
+                        <blockquote className="social-proof-quote">
+                            "הביטחון שלי השתפר פלאים. הגעתי למבחן הבגרות מוכן לחלוטין"
+                        </blockquote>
+                        <p className="social-proof-join">
+                            הצטרפו לתלמידים שכבר מתרגלים ומשפרים את האנגלית שלהם
+                        </p>
+                        <div className="social-proof-badges">
+                            <div className="proof-badge">
+                                <FiCheck />
+                                <span>סימולציה אמיתית</span>
+                            </div>
+                            <div className="proof-badge">
+                                <FiCheck />
+                                <span>ניתוח AI</span>
+                            </div>
+                            <div className="proof-badge">
+                                <FiCheck />
+                                <span>תמיכה בנייד</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <div className="w-12 h-12 bg-blue-100 text-primary rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
-                        <h3 className="font-bold text-lg mb-2">מתרגלים מדברים</h3>
-                        <p className="text-gray-600">עונים על שאלות מול הבוחן הווירטואלי בזמן אמת</p>
-                    </div>
-                    <div className="text-center">
-                        <div className="w-12 h-12 bg-blue-100 text-primary rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
-                        <h3 className="font-bold text-lg mb-2">מקבלים ציון</h3>
-                        <p className="text-gray-600">רואים איפה טעינו ומשתפרים לפעם הבאה</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* Testimonials / Social Proof (Optional placeholder) */}
-            <section className="py-16 bg-white text-center">
-                <div className="container">
-                    <div className="flex justify-center mb-4 text-yellow-400 gap-1 text-2xl">
-                        <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">"הביטחון שלי השתפר פלאים"</h3>
-                    <p className="text-gray-600">הצטרפו לתלמידים שכבר מתרגלים ומשפרים את האנגלית שלהם.</p>
                 </div>
             </section>
 
             {/* FAQ Section */}
             <section id="faq" className="faq-section">
-                <h2 className="section-title">שאלות נפוצות</h2>
-                <div className="faq-container">
-                    {faqs.map((faq, index) => (
-                        <div key={index} className="faq-item">
-                            <div
-                                className="faq-question"
-                                onClick={() => toggleFaq(index)}
-                            >
-                                {faq.question}
-                                <FaChevronDown
-                                    style={{
-                                        transform: openFaq === index ? 'rotate(180deg)' : 'rotate(0)',
-                                        transition: 'transform 0.3s'
-                                    }}
-                                />
-                            </div>
-                            {openFaq === index && (
-                                <div className="faq-answer">
-                                    {faq.answer}
+                <div className="section-container">
+                    <h2 className="section-title">שאלות נפוצות</h2>
+                    <div className="faq-container">
+                        {faqs.map((faq, index) => (
+                            <div key={index} className={`faq-item ${openFaq === index ? 'faq-open' : ''}`}>
+                                <button
+                                    className="faq-question"
+                                    onClick={() => toggleFaq(index)}
+                                >
+                                    <span>{faq.question}</span>
+                                    <FaChevronDown className="faq-chevron" />
+                                </button>
+                                <div className="faq-answer-wrapper">
+                                    <div className="faq-answer">
+                                        {faq.answer}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Final CTA */}
+            <section className="final-cta-section">
+                <div className="section-container">
+                    <h2 className="final-cta-title">מוכנים להתחיל?</h2>
+                    <p className="final-cta-subtitle">הצטרפו עכשיו ותתחילו לתרגל בשניות</p>
+                    <Link to="/register" className="hero-btn-primary">
+                        התחילו לתרגל עכשיו
+                        <FiArrowLeft />
+                    </Link>
                 </div>
             </section>
 
             {/* Footer */}
             <footer className="landing-footer">
                 <div className="footer-content">
-                    <div className="flex items-center gap-2 mb-4">
-                        <FaMicrophone /> <span className="font-bold text-lg">Speakit</span>
+                    <div className="footer-logo">
+                        <FaMicrophone /> <span>Speakit</span>
                     </div>
-                    <p className="text-sm">© {new Date().getFullYear()} Speakit. כל הזכויות שמורות.</p>
-                    <div className="flex gap-4 mt-4 text-sm">
-                        <Link to="/login" className="hover:text-white">כניסה</Link>
-                        <Link to="/register" className="hover:text-white">הרשמה</Link>
-                        <a href="#" className="hover:text-white">תנאי שימוש</a>
-                        <a href="#" className="hover:text-white">מדיניות פרטיות</a>
+                    <p className="footer-copyright">© {new Date().getFullYear()} Speakit. כל הזכויות שמורות.</p>
+                    <div className="footer-links">
+                        <Link to="/login">כניסה</Link>
+                        <Link to="/register">הרשמה</Link>
                     </div>
                 </div>
             </footer>
