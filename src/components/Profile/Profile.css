@@ -6,6 +6,28 @@
     padding-bottom: 2rem;
 }
 
+/* Back to Dashboard */
+.back-to-dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+}
+
+.back-to-dashboard:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.back-to-dashboard svg {
+    font-size: 1.1rem;
+}
+
 /* Profile Card */
 .profile-card {
     background: white;

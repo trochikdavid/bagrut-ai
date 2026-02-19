@@ -190,26 +190,32 @@ export default function AnalysisPage() {
                             חזרה להמשך
                         </Link>
                     </header>
-                    <div className="score-hero-wrapper">
-                        <div className="score-hero card" style={{ textAlign: 'center', padding: '3rem' }}>
-                            <div className="loading-spinner" style={{ margin: '0 auto 1.5rem' }}></div>
-                            <h2 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>מנתחים את התשובות שלך...</h2>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2rem' }}>
-                                העמוד יתעדכן אוטומטית ברגע שהניתוח יסתיים.
-                                <br />
-                                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>אפשר להישאר כאן או לחזור מאוחר יותר.</span>
-                            </p>
+                    <div className="analysis-loading-card">
+                        <div className="premium-spinner"></div>
+                        <h2 className="loading-text-glow">מנתחים את התשובות שלך...</h2>
+                        <p className="loading-subtitle">
+                            אנחנו עוברים על ההקלטות ומכינים עבורך משוב מפורט.
+                            <span>אפשר להישאר כאן (העמוד יתעדכן אוטומטית) או לחזור מאוחר יותר.</span>
+                        </p>
 
-                            <div className="processing-steps" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem' }}>
-                                <span className="step-dot active"></span>
-                                <span className="step-dot active"></span>
-                                <span className="step-dot active"></span>
+                        <div className="processing-insights">
+                            <div className="insight-pill">
+                                <FiVolume2 className="insight-icon" style={{ animation: 'pulse 2s infinite' }} />
+                                <span className="insight-text">מעבד קול</span>
                             </div>
-
-                            <Link to="/history" className="btn btn-outline">
-                                חזרה להיסטוריית התרגולים
-                            </Link>
+                            <div className="insight-pill">
+                                <FiTarget className="insight-icon" style={{ animation: 'pulse 2s infinite 0.5s' }} />
+                                <span className="insight-text">מנתח תוכן</span>
+                            </div>
+                            <div className="insight-pill">
+                                <FiCheckCircle className="insight-icon" style={{ animation: 'pulse 2s infinite 1s' }} />
+                                <span className="insight-text">מחשב ציון</span>
+                            </div>
                         </div>
+
+                        <Link to="/history" className="btn btn-outline" style={{ marginTop: '1rem' }}>
+                            חזרה להיסטוריית התרגולים
+                        </Link>
                     </div>
                 </div>
             </div>

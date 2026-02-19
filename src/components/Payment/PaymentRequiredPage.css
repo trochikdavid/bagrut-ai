@@ -1,235 +1,400 @@
-/* PaymentRequiredPage.css - Modern Minimalist Redesign */
+/* PaymentRequiredPage.css - Premium Design (matches app design system) */
 
-.payment-page-container {
+/* ============================================
+   PAGE LAYOUT & BACKGROUND
+   ============================================ */
+.pay-page {
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-md);
-    background-color: var(--bg-page);
-    /* Use theme background */
-    overflow-x: hidden;
-    /* Prevent horizontal scroll */
-}
-
-.payment-card {
-    width: 100%;
-    max-width: 480px;
-    padding: 0 !important;
-    /* Override default card padding to handle header image */
-    overflow: hidden;
-    border: 1px solid var(--border-subtle);
-    display: flex;
-    flex-direction: column;
-}
-
-.payment-header {
-    background-color: var(--primary);
-    padding: var(--space-xl);
-    text-align: center;
+    background: var(--bg-tertiary);
+    padding: 2rem 1rem;
     position: relative;
     overflow: hidden;
-    /* Ensure skew doesn't overflow */
 }
 
-.payment-header-bg-accent {
+/* Animated floating blobs for depth */
+.pay-bg-blob {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: skewY(-6deg);
-    transform-origin: top left;
-    pointer-events: none;
-}
-
-/* Visual Header */
-.payment-visual {
-    margin-bottom: 32px;
-    position: relative;
-    display: inline-block;
-}
-
-.visual-icon-container {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+    filter: blur(80px);
+    opacity: 0.5;
+    pointer-events: none;
+    animation: blobFloat 12s ease-in-out infinite alternate;
 }
 
-.visual-icon {
-    font-size: 32px;
-    color: var(--primary);
-    filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.2));
+.pay-blob-1 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(99, 102, 241, 0.12));
+    top: -100px;
+    right: -100px;
+    animation-delay: 0s;
 }
 
-.visual-glow {
-    position: absolute;
+.pay-blob-2 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(37, 99, 235, 0.08));
+    bottom: -80px;
+    left: -80px;
+    animation-delay: -4s;
+}
+
+.pay-blob-3 {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(245, 158, 11, 0.06));
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-    z-index: 1;
-    pointer-events: none;
+    animation-delay: -8s;
 }
 
-/* Text Content */
-.payment-text-content {
-    margin-bottom: 32px;
+@keyframes blobFloat {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(30px, -20px) scale(1.05);
+    }
+
+    66% {
+        transform: translate(-20px, 15px) scale(0.95);
+    }
+
+    100% {
+        transform: translate(10px, -10px) scale(1.02);
+    }
 }
 
-.modern-title {
-    font-size: 1.75rem;
+/* ============================================
+   CONTAINER
+   ============================================ */
+.pay-container {
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    animation: fadeSlideUp 0.6s ease-out;
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   CROWN BADGE
+   ============================================ */
+.pay-crown-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    border: 1px solid #F59E0B;
+    border-radius: 999px;
+    color: #92400E;
     font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 12px;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    animation: fadeSlideUp 0.6s ease-out 0.1s both;
+}
+
+.pay-crown-badge svg {
+    font-size: 1.1rem;
+    color: #D97706;
+}
+
+/* ============================================
+   HERO CARD (Gradient Border - like score-hero-wrapper)
+   ============================================ */
+.pay-hero-border {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, #6366F1 50%, var(--success) 100%);
+    padding: 3px;
+    border-radius: calc(20px + 3px);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+    animation: fadeSlideUp 0.6s ease-out 0.2s both;
+}
+
+.pay-hero-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+
+.pay-hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 0.75rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, #475569 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     letter-spacing: -0.025em;
 }
 
-.modern-subtitle {
-    font-size: 1rem;
-    color: #64748b;
-    line-height: 1.6;
-    margin-bottom: 32px;
+.pay-hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+    max-width: none;
 }
 
-/* Features */
-.features-preview {
-    background: #f8fafc;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 32px;
+/* ============================================
+   FEATURES GRID (like nav-btn-lg cards)
+   ============================================ */
+.pay-features-grid {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    border: 1px solid #f1f5f9;
+    gap: 0.75rem;
+    animation: fadeSlideUp 0.6s ease-out 0.3s both;
 }
 
-.feature-row {
+.pay-feature-card {
     display: flex;
     align-items: center;
-    gap: 12px;
-    text-align: right;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: white;
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.check-icon {
-    width: 24px;
-    height: 24px;
-    background: #dcfce7;
-    border-radius: 50%;
+.pay-feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary);
+}
+
+.pay-feature-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #166534;
-    font-size: 10px;
+    font-size: 1.4rem;
+    color: white;
     flex-shrink: 0;
 }
 
-.feature-row span {
-    font-size: 0.95rem;
-    color: #334155;
-    font-weight: 500;
+/* Reuse existing gradient icon classes from Dashboard */
+/* .bg-blue, .bg-orange, .bg-purple are defined in Dashboard.css */
+
+.pay-feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-/* Buttons */
-.btn-upgrade-modern {
-    width: 100%;
-    padding: 16px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    font-size: 1.1rem;
+.pay-feature-title {
+    font-size: 1rem;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+    color: var(--text-primary);
+}
+
+.pay-feature-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   CTA SECTION
+   ============================================ */
+.pay-cta-wrapper {
+    width: 100%;
+    animation: fadeSlideUp 0.6s ease-out 0.4s both;
+}
+
+.pay-cta-btn {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
-.btn-upgrade-modern:hover {
-    background: var(--primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+.pay-cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.15),
+            transparent);
+    transition: left 0.5s;
 }
 
-.btn-upgrade-modern:active {
+.pay-cta-btn:hover::before {
+    left: 100%;
+}
+
+.pay-cta-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+}
+
+.pay-cta-btn:active {
     transform: translateY(0);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
-.btn-icon-small {
-    font-size: 0.9em;
+.pay-cta-icon {
+    font-size: 1.1rem;
     opacity: 0.9;
 }
 
-.payment-note {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    margin-top: 16px;
-    font-weight: 500;
-}
-
-/* Footer Actions */
-.payment-footer-actions {
+.pay-secure-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.action-link {
-    font-size: 0.875rem;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: inherit;
-}
-
-.footer-link {
-    background: none;
-    border: none;
-    color: #64748b;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.footer-link:hover {
-    color: var(--primary);
-    background: #f1f5f9;
-}
-
-.divider {
-    color: #cbd5e1;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--text-muted);
     font-size: 0.8rem;
+    font-weight: 500;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-    .payment-card-modern {
-        padding: 32px 24px;
+.pay-secure-icon {
+    font-size: 0.85rem;
+    color: var(--success);
+}
+
+/* ============================================
+   BOTTOM ACTIONS
+   ============================================ */
+.pay-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    animation: fadeSlideUp 0.6s ease-out 0.5s both;
+}
+
+.pay-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.pay-action-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.pay-refresh-btn.refreshing {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.pay-action-btn svg {
+    font-size: 1rem;
+}
+
+.pay-action-btn svg.spin {
+    animation: spinIcon 0.8s linear infinite;
+}
+
+@keyframes spinIcon {
+    from {
+        transform: rotate(0deg);
     }
 
-    .modern-title {
-        font-size: 1.5rem;
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS
+   ============================================ */
+@media (max-width: 480px) {
+    .pay-page {
+        padding: 1.5rem 1rem;
+        align-items: flex-start;
+        padding-top: 3rem;
+    }
+
+    .pay-hero-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .pay-hero-title {
+        font-size: 1.65rem;
+    }
+
+    .pay-hero-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .pay-feature-card {
+        padding: 1rem;
+    }
+
+    .pay-feature-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .pay-cta-btn {
+        font-size: 1.05rem;
+        padding: 0.9rem 1.5rem;
+    }
+
+    .pay-bg-blob {
+        opacity: 0.3;
     }
 }

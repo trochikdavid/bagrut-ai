@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { usePractice } from '../../context/PracticeContext'
 import {
     FiUser, FiMail, FiPackage, FiLogOut,
-    FiChevronLeft, FiShield, FiKey
+    FiChevronLeft, FiShield, FiKey, FiArrowRight
 } from 'react-icons/fi'
 import './Profile.css'
 
@@ -47,6 +47,10 @@ export default function ProfilePage() {
                 <div className="profile-page">
                     <header className="page-header">
                         <h1 className="page-title">הפרופיל שלי</h1>
+                        <Link to="/dashboard" className="btn btn-ghost back-to-dashboard">
+                            <span>חזרה לדאשבורד</span>
+                            <FiArrowRight />
+                        </Link>
                     </header>
 
                     {/* Profile Card */}
