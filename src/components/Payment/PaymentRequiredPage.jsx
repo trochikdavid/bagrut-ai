@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase as supabaseBrowser } from '../../lib/supabase'
 import { FaLock, FaCrown, FaCheck, FaCreditCard } from 'react-icons/fa'
@@ -6,6 +7,14 @@ import './PaymentRequiredPage.css'
 
 const PaymentRequiredPage = () => {
     const { user, logout, refreshProfile } = useAuth()
+    const navigate = useNavigate()
+
+    // Redirect if already premium
+    useEffect(() => {
+        if (user?.isPremium) {
+            navigate('/dashboard')
+        }
+    }, [user, navigate])
 
     // Meshulam Payment Link
     // Using user-provided Grow.link URL
