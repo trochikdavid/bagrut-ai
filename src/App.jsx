@@ -50,6 +50,15 @@ function PremiumRoute({ children }) {
   // Admin is always premium
   if (user.isAdmin) return children
 
+  // Wait for premium status to be determined
+  if (user.isPremium === null) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: '100vh' }}>
+        <div className="loading-spinner"></div>
+      </div>
+    )
+  }
+
   return user.isPremium ? children : <Navigate to="/payment" />
 }
 

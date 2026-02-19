@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
                         name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
                         email: session.user.email,
                         isAdmin: false,
-                        isPremium: false, // Default until profile loaded
+                        isPremium: null, // Default until profile loaded
                         createdAt: session.user.created_at
                     })
                 } else if (event === 'SIGNED_OUT') {
@@ -198,7 +198,7 @@ export function AuthProvider({ children }) {
                     name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
                     email: data.user.email,
                     isAdmin: false, // Will be updated later
-                    isPremium: false,
+                    isPremium: null,
                     createdAt: data.user.created_at
                 }
                 setUser(sessionUser)

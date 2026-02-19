@@ -194,3 +194,28 @@
     margin-bottom: 1rem;
     object-fit: contain;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    .auth-page {
+        padding: 1rem;
+        align-items: flex-start;
+        /* Better for tall forms on short screens */
+        padding-top: 2rem;
+    }
+
+    .auth-container {
+        padding: 1.5rem;
+        box-shadow: none;
+        border: none;
+        background: transparent;
+    }
+
+    .auth-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-logo {
+        font-size: 2.5rem;
+    }
+}

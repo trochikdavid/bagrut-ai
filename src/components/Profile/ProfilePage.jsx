@@ -3,18 +3,16 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { usePractice } from '../../context/PracticeContext'
 import {
-    FiUser, FiMail, FiPackage, FiLogOut, FiTrash2,
+    FiUser, FiMail, FiPackage, FiLogOut,
     FiChevronLeft, FiShield, FiKey
 } from 'react-icons/fi'
 import './Profile.css'
 
 export default function ProfilePage() {
-    const { user, logout, deleteAccount, updateProfile } = useAuth()
-    const { clearHistory, getStats } = usePractice()
+    const { user, logout, updateProfile } = useAuth()
+    const { getStats } = usePractice()
     const stats = getStats()
 
-    const [loading, setLoading] = useState(false)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const [editingName, setEditingName] = useState(false)
     const [newName, setNewName] = useState(user?.name || '')
@@ -26,13 +24,6 @@ export default function ProfilePage() {
     const confirmLogout = () => {
         setShowLogoutConfirm(false)
         logout()
-    }
-
-    const handleDeleteAccount = async () => {
-        setLoading(true)
-        await clearHistory()
-        await deleteAccount()
-        setLoading(false)
     }
 
     const handleUpdateName = async () => {
@@ -118,7 +109,9 @@ export default function ProfilePage() {
                                 <FiPackage className="menu-icon" />
                                 <div className="menu-content">
                                     <span className="menu-label">חבילה</span>
-                                    <span className="menu-value">חינמי (MVP)</span>
+                                    <span className="menu-value">
+                                        {user?.isPremium ? 'Pro' : 'חינמי (MVP)'}
+                                    </span>
                                 </div>
                             </div>
 
@@ -141,17 +134,6 @@ export default function ProfilePage() {
                                 </div>
                                 <FiChevronLeft className="menu-arrow" />
                             </Link>
-
-                            <button
-                                className="menu-item card danger"
-                                onClick={() => setShowDeleteConfirm(true)}
-                            >
-                                <FiTrash2 className="menu-icon" />
-                                <div className="menu-content">
-                                    <span className="menu-label">מחיקת חשבון</span>
-                                </div>
-                                <FiChevronLeft className="menu-arrow" />
-                            </button>
                         </div>
 
                         {user?.isAdmin && (
@@ -190,34 +172,6 @@ export default function ProfilePage() {
                                 onClick={confirmLogout}
                             >
                                 התנתק
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>מחיקת חשבון</h3>
-                        <p style={{ margin: 'var(--space-md) 0', color: 'var(--text-secondary)' }}>
-                            פעולה זו תמחק את כל הנתונים שלך לצמיתות, כולל היסטוריית התרגולים.
-                            לא ניתן לשחזר את המידע לאחר מחיקה.
-                        </p>
-                        <div className="modal-actions">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => setShowDeleteConfirm(false)}
-                            >
-                                ביטול
-                            </button>
-                            <button
-                                className="btn btn-danger"
-                                onClick={handleDeleteAccount}
-                                disabled={loading}
-                            >
-                                {loading ? 'מוחק...' : 'מחק חשבון'}
                             </button>
                         </div>
                     </div>

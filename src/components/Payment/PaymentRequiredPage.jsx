@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { supabase as supabaseBrowser } from '../../lib/supabase'
-import { FaLock, FaCrown, FaCheck, FaCreditCard } from 'react-icons/fa'
+import { FaLock, FaCrown, FaCheck, FaCreditCard, FaArrowLeft } from 'react-icons/fa'
 import './PaymentRequiredPage.css'
 
 const PaymentRequiredPage = () => {
@@ -17,102 +16,72 @@ const PaymentRequiredPage = () => {
     }, [user, navigate])
 
     // Meshulam Payment Link
-    // Using user-provided Grow.link URL
     const BASE_PAYMENT_LINK = 'https://pay.grow.link/b85cbd024eb58e63c53f9e3d9af1c5bd-MzA4NDY4Mw'
-
-    // Construct the link (No redundant params, rely on payerEmail)
     const paymentLink = BASE_PAYMENT_LINK
 
-    // Poll for status update (in case webhook updates DB while user is here)
+    // Poll for status update
     React.useEffect(() => {
         if (!user) return
-
         const interval = setInterval(async () => {
             await refreshProfile()
         }, 3000)
-
         return () => clearInterval(interval)
     }, [user, refreshProfile])
 
     return (
-        <div className="payment-page-container" dir="rtl">
+        <div className="payment-page-wrapper" dir="rtl">
+            <div className="payment-content-container">
 
-            <div className="card payment-card">
-                {/* Header */}
-                <div className="payment-header">
-                    <div className="payment-header-bg-accent"></div>
-                    <div className="relative z-10">
-                        <div className="icon-wrapper">
-                            <FaLock className="text-white text-2xl" />
+                <div className="payment-card-modern">
+                    {/* Visual Header */}
+                    <div className="payment-visual">
+                        <div className="visual-icon-container">
+                            <FaCrown className="visual-icon" />
                         </div>
-                        <h1 className="payment-title">המנוי לא פעיל</h1>
-                        <p className="payment-subtitle">
-                            החשבון של <strong>{user?.name}</strong> נוצר בהצלחה, אך נדרש מנוי כדי להמשיך.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Body */}
-                <div className="payment-body">
-                    <div className="text-center mb-8">
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">רכוש מנוי וקבל גישה מיידית</h2>
-                        <p className="text-secondary text-sm">
-                            שחרר את הפוטנציאל שלך עם גישה מלאה לכל כלי התרגול של Speakit.
-                        </p>
+                        <div className="visual-glow"></div>
                     </div>
 
-                    {/* Features List */}
-                    <ul className="features-list">
-                        <li className="feature-item">
-                            <div className="feature-icon icon-green">
-                                <FaCheck />
-                            </div>
-                            <span className="text-sm font-medium">גישה לכל שאלוני הבגרות (A, B, C, E, G)</span>
-                        </li>
-                        <li className="feature-item">
-                            <div className="feature-icon icon-blue">
-                                <FaCrown />
-                            </div>
-                            <span className="text-sm font-medium">סימולציות ללא הגבלה עם משוב AI</span>
-                        </li>
-                        <li className="feature-item">
-                            <div className="feature-icon icon-purple">
-                                <FaCheck />
-                            </div>
-                            <span className="text-sm font-medium">סטטיסטיקות ומעקב שיפור אישי</span>
-                        </li>
-                    </ul>
+                    <div className="payment-text-content">
+                        <h1 className="modern-title">שדרוג לגרסת Pro</h1>
+                        <p className="modern-subtitle">
+                            היי {user?.name}, כדי להמשיך לתרגל ולהשתפר, עליך להפעיל את המנוי שלך.
+                        </p>
 
-                    {/* CTA Button - Using btn-primary from system */}
-                    {/* CTA Button - Using btn-primary from system */}
-                    <button
-                        onClick={() => {
-                            // Redirect to payment
-                            window.open(paymentLink, '_blank', 'noopener,noreferrer')
-                        }}
-                        className="btn btn-primary payment-button shadow-lg w-full flex justify-center items-center gap-2"
-                    >
-                        <span>מעבר לתשלום מאובטח</span>
-                        <FaCreditCard />
-                    </button>
+                        <div className="features-preview">
+                            <div className="feature-row">
+                                <div className="check-icon"><FaCheck /></div>
+                                <span>גישה מלאה לכל שאלוני הבגרות</span>
+                            </div>
+                            <div className="feature-row">
+                                <div className="check-icon"><FaCheck /></div>
+                                <span>סימולציות דיבור ללא הגבלה</span>
+                            </div>
+                            <div className="feature-row">
+                                <div className="check-icon"><FaCheck /></div>
+                                <span>משוב AI מתקדם וניתוח ביצועים</span>
+                            </div>
+                        </div>
 
-                    <p className="secure-note">
-                        התשלום מאובטח באמצעות משולם (Meshulam)
-                    </p>
-
-                    {/* Actions */}
-                    <div className="payment-actions">
                         <button
-                            onClick={logout}
-                            className="action-link text-muted hover:text-primary"
+                            onClick={() => window.open(paymentLink, '_blank', 'noopener,noreferrer')}
+                            className="btn-upgrade-modern"
                         >
-                            התנתק
+                            <span>מעבר לתשלום מאובטח</span>
+                            <FaCreditCard className="btn-icon-small" />
                         </button>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="action-link text-primary font-medium"
-                        >
+
+                        <p className="payment-note">
+                            התשלום מאובטח ע״י Meshulam. חשבונית נשלחת למייל אוטומטית.
+                        </p>
+                    </div>
+
+                    <div className="payment-footer-actions">
+                        <button onClick={() => window.location.reload()} className="footer-link">
                             כבר שילמתי? רענן
+                        </button>
+                        <span className="divider">•</span>
+                        <button onClick={logout} className="footer-link">
+                            יציאה
                         </button>
                     </div>
                 </div>
