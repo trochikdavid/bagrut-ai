@@ -538,6 +538,13 @@ export default function Simulation() {
                             {/* Power Sentence */}
                             {/* <div className="practice-info card" ... /> (It was not here in Simulation but in ModuleB.jsx, here just Question Card) */}
 
+                            <div className="tip-card-slim animate-fade-in" style={{ marginBottom: 'var(--space-md)' }}>
+                                <span className="tip-icon">💡</span>
+                                <p className="tip-text">
+                                    <strong>שימו לב:</strong> תשובה של פחות מדקה תגרור הורדת ציון בבגרות! כוונו ל-1-2 דקות.
+                                </p>
+                            </div>
+
                             <div className="question-card card">
                                 <span className="question-number" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                     <span>מודול B</span>

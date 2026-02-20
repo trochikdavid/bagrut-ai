@@ -96,6 +96,13 @@ export default function ModuleB() {
                         </p>
                     </div>
 
+                    <div className="tip-card-slim animate-fade-in" style={{ marginBottom: 'var(--space-md)' }}>
+                        <span className="tip-icon">💡</span>
+                        <p className="tip-text">
+                            <strong>שימו לב:</strong> תשובה של פחות מדקה תגרור הורדת ציון בבגרות! כוונו ל-1-2 דקות.
+                        </p>
+                    </div>
+
                     <div className="question-card card">
                         <span className="question-number">שאלה</span>
                         <p className="question-text">{question.text}</p>
