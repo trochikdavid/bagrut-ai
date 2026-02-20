@@ -4,28 +4,29 @@ import { supabase, isSupabaseConfigured, fetchFromSupabase } from '../lib/supaba
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState(() => {
+        if (!isSupabaseConfigured) {
+            const storedUser = localStorage.getItem('bagrut_user')
+            return storedUser ? JSON.parse(storedUser) : null
+        }
+        const cachedUser = localStorage.getItem('bagrut_user_cache')
+        if (cachedUser) {
+            try { return JSON.parse(cachedUser) } catch (e) { }
+        }
+        return null
+    })
+
+    const [loading, setLoading] = useState(() => {
+        if (!isSupabaseConfigured) return false
+        return !localStorage.getItem('bagrut_user_cache')
+    })
     const [demoMode] = useState(!isSupabaseConfigured)
     const fetchingProfile = useRef(false)
 
     useEffect(() => {
         // If not configured, use demo mode
         if (!isSupabaseConfigured) {
-            const storedUser = localStorage.getItem('bagrut_user')
-            if (storedUser) {
-                setUser(JSON.parse(storedUser))
-            }
-            setLoading(false)
             return
-        }
-
-        // Optimistically load from cache for Supabase mode to prevent empty state
-        const cachedUser = localStorage.getItem('bagrut_user_cache')
-        if (cachedUser) {
-            try {
-                setUser(JSON.parse(cachedUser))
-            } catch (e) { }
         }
 
         // Supabase mode - check for existing session
@@ -34,7 +35,7 @@ export function AuthProvider({ children }) {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session?.user) {
                     await fetchUserProfile(session.user.id)
-                } else if (cachedUser) {
+                } else if (localStorage.getItem('bagrut_user_cache')) {
                     // Session is invalid or gone, clear cache
                     localStorage.removeItem('bagrut_user_cache')
                     setUser(null)
@@ -50,15 +51,21 @@ export function AuthProvider({ children }) {
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
-                if (event === 'SIGNED_IN' && session?.user && !user) {
-                    // Set basic user from session (don't fetch profile here to avoid AbortError)
-                    setUser({
-                        id: session.user.id,
-                        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                        email: session.user.email,
-                        isAdmin: false,
-                        isPremium: null, // Default until profile loaded
-                        createdAt: session.user.created_at
+                if (event === 'SIGNED_IN' && session?.user) {
+                    setUser(currentUser => {
+                        // Prevent stale closure bug: If we already have a user, do nothing!
+                        // This prevents resetting isPremium to null when window refocus triggers SIGNED_IN
+                        if (currentUser) return currentUser;
+
+                        // Set basic user from session (don't fetch profile here to avoid AbortError)
+                        return {
+                            id: session.user.id,
+                            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                            email: session.user.email,
+                            isAdmin: false,
+                            isPremium: null, // Default until profile loaded
+                            createdAt: session.user.created_at
+                        };
                     })
                 } else if (event === 'SIGNED_OUT') {
                     localStorage.removeItem('bagrut_user_cache')
