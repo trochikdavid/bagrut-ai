@@ -11,9 +11,7 @@ export default function SupportButton() {
         <div className="support-button-container">
             {isOpen && (
                 <div className="support-popover animate-fade-in-up">
-                    <button className="close-btn" onClick={toggleOpen} aria-label="Close support message">
-                        <FiX />
-                    </button>
+
                     <div className="support-content">
                         <h4>צריכים עזרה?</h4>
                         <p>נתקלתם בבעיה? אנחנו כאן כדי לעזור! צרו איתנו קשר ונענה בהקדם.</p>

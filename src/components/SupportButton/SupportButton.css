@@ -5,7 +5,7 @@
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     pointer-events: none;
     /* Let clicks pass through the container */
 }
@@ -62,27 +62,7 @@
     transform-origin: bottom left;
 }
 
-.close-btn {
-    position: absolute;
-    top: var(--space-sm);
-    left: var(--space-sm);
-    right: auto;
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--space-xs);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
 
-.close-btn:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
 
 .support-content {
     display: flex;
