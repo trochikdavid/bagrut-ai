@@ -141,10 +141,10 @@ export default function ProfilePage() {
 
                             <a href="mailto:team@speakit-app.com" className="menu-item card">
                                 <FiMail className="menu-icon" />
-                                <div className="menu-content">
+                                <div className="menu-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                     <span className="menu-label">צור קשר</span>
+                                    <span className="menu-value" style={{ direction: 'ltr', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>team@speakit-app.com</span>
                                 </div>
-                                <FiChevronLeft className="menu-arrow" />
                             </a>
                         </div>
 

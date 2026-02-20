@@ -35,7 +35,7 @@
 
 .support-fab:hover {
     transform: scale(1.05);
-    background: var(--primary-dark);
+    background: var(--primary-hover);
     box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
 }
 
@@ -51,8 +51,8 @@
 
 /* Popover Message */
 .support-popover {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     width: 320px;
@@ -65,7 +65,8 @@
 .close-btn {
     position: absolute;
     top: var(--space-sm);
-    right: var(--space-sm);
+    left: var(--space-sm);
+    right: auto;
     background: none;
     border: none;
     color: var(--text-secondary);
@@ -79,7 +80,7 @@
 }
 
 .close-btn:hover {
-    background: var(--surface-hover);
+    background: var(--bg-tertiary);
     color: var(--text-primary);
 }
 
