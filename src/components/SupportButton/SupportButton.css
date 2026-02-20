@@ -1,0 +1,156 @@
+.support-button-container {
+    position: fixed;
+    bottom: var(--space-xl);
+    left: var(--space-xl);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    pointer-events: none;
+    /* Let clicks pass through the container */
+}
+
+.support-button-container>* {
+    pointer-events: auto;
+    /* Re-enable clicks for children */
+}
+
+/* Floating Action Button (FAB) */
+.support-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: var(--space-md);
+}
+
+.support-fab:hover {
+    transform: scale(1.05);
+    background: var(--primary-dark);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.support-fab:active {
+    transform: scale(0.95);
+}
+
+.support-fab.open {
+    background: var(--surface-light);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+}
+
+/* Popover Message */
+.support-popover {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    width: 320px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    margin-bottom: var(--space-sm);
+    transform-origin: bottom left;
+}
+
+.close-btn {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-xs);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.support-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: right;
+}
+
+.support-content h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.support-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.support-contact-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+    margin-top: var(--space-xs);
+    font-weight: 500;
+}
+
+.contact-icon {
+    font-size: 1.1rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .support-button-container {
+        bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
+        /* Account for mobile nav bar */
+        left: var(--space-md);
+    }
+
+    .support-fab {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+
+    .support-popover {
+        width: calc(100vw - var(--space-md) * 2);
+        max-width: 320px;
+    }
+}

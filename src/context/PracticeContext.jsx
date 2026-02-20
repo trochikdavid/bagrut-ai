@@ -286,7 +286,6 @@ export function PracticeProvider({ children }) {
             }
 
             // Step 2: Upload all recordings to storage
-            console.log('Uploading recordings...')
             for (const recording of recordingsRef.current) {
                 if (recording.audioBlob && !recording.storagePath) {
                     try {
@@ -329,13 +328,11 @@ export function PracticeProvider({ children }) {
 
             // Step 4: Client-side transcription using Azure SDK
             // (SDK requires browser APIs like AudioContext, so must run client-side)
-            console.log('Starting client-side transcription...')
 
             for (const recording of recordingsRef.current) {
                 if (!recording.storagePath) continue
 
                 try {
-                    console.log(`Transcribing question ${recording.questionId}...`)
                     const result = await speechService.transcribeAudio(recording.storagePath)
 
                     // Trim pronunciation data — only keep what's needed for scoring
@@ -369,7 +366,6 @@ export function PracticeProvider({ children }) {
                         transcript,
                         trimmedPronunciation
                     )
-                    console.log(`Saved transcript for ${recording.questionId}`)
                 } catch (error) {
                     console.error(`Transcription failed for ${recording.questionId}:`, error)
                     // Save failure marker
@@ -383,13 +379,9 @@ export function PracticeProvider({ children }) {
                 }
             }
 
-            console.log('All transcriptions saved to DB')
-
             // Step 5: Trigger background processing (fire-and-forget)
             // Edge Function reads transcripts + pronunciation from DB
-            console.log('Triggering background processing...')
             practiceService.triggerProcessing(dbPracticeId)
-                .then(result => console.log('Background processing triggered:', result))
                 .catch(err => console.error('Background processing error:', err))
 
             // Step 6: Return immediately - analysis continues server-side

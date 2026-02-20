@@ -26,7 +26,6 @@ export default function HistoryPage() {
                     filter: `user_id=eq.${user.id}`
                 },
                 (payload) => {
-                    console.log('Practice updated:', payload)
                     // Refresh practices when processing status changes
                     if (payload.new.processing_status === 'completed' ||
                         payload.new.processing_status === 'failed') {
@@ -176,9 +175,6 @@ export default function HistoryPage() {
                                 className={`history-item ${isProcessing(practice) ? 'processing' : ''} ${hasFailed(practice) ? 'failed' : ''}`}
                                 onClick={(e) => isProcessing(practice) && e.preventDefault()}
                             >
-                                {isPracticeNew(practice.id) && !isProcessing(practice) && !hasFailed(practice) && (
-                                    <span className="new-badge">חדש!</span>
-                                )}
                                 <div className="history-main-row">
                                     <div className="history-icon">
                                         {isProcessing(practice) ? (
@@ -190,7 +186,12 @@ export default function HistoryPage() {
                                         )}
                                     </div>
                                     <div className="history-info">
-                                        <span className="history-title">{getTitle(practice.type)}</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span className="history-title">{getTitle(practice.type)}</span>
+                                            {isPracticeNew(practice.id) && !isProcessing(practice) && !hasFailed(practice) && (
+                                                <span className="new-badge">חדש!</span>
+                                            )}
+                                        </div>
                                         <span className="history-date">
                                             <FiCalendar className="inline-icon" /> {formatDate(practice.completedAt || practice.startedAt)}
                                         </span>

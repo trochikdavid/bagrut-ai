@@ -138,6 +138,14 @@ export default function ProfilePage() {
                                 </div>
                                 <FiChevronLeft className="menu-arrow" />
                             </Link>
+
+                            <a href="mailto:team@speakit-app.com" className="menu-item card">
+                                <FiMail className="menu-icon" />
+                                <div className="menu-content">
+                                    <span className="menu-label">צור קשר</span>
+                                </div>
+                                <FiChevronLeft className="menu-arrow" />
+                            </a>
                         </div>
 
                         {user?.isAdmin && (

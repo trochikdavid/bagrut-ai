@@ -21,6 +21,7 @@ import LandingPage from './components/LandingPage/LandingPage'
 import ScrollToTop from './components/ScrollToTop'
 
 import PaymentRequiredPage from './components/Payment/PaymentRequiredPage'
+import SupportButton from './components/SupportButton/SupportButton'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -90,9 +91,7 @@ function AdminRoute({ children }) {
   }
 
   return user?.isAdmin ? children : <Navigate to="/dashboard" />
-}
-
-function App() {
+} function App() {
   return (
     <Router>
       <ScrollToTop />
@@ -149,11 +148,11 @@ function App() {
               </AdminRoute>
             } />
 
-            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </PracticeProvider>
       </AuthProvider>
+      <SupportButton />
     </Router>
   )
 }
