@@ -416,14 +416,17 @@ export function PracticeProvider({ children }) {
         }
     }
 
-    const getPracticeById = async (id) => {
+    const getPracticeById = async (id, forceRefresh = false) => {
         // First check local state
         const localPractice = practices.find(p => p.id === id)
-        if (localPractice) return localPractice
+
+        if (localPractice && !forceRefresh) {
+            return localPractice
+        }
 
         // Demo mode - can only use local state
         if (demoMode || !isSupabaseConfigured) {
-            return null
+            return localPractice || null
         }
 
         // Try to fetch from database

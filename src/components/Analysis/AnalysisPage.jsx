@@ -8,7 +8,7 @@ import './Analysis.css'
 export default function AnalysisPage() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { getPracticeById, markAsViewed } = usePractice()
+    const { getPracticeById, markAsViewed, refreshPractices } = usePractice()
     const [practice, setPractice] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -56,13 +56,14 @@ export default function AnalysisPage() {
                         if (!pollInterval) {
                             pollInterval = setInterval(async () => {
                                 try {
-                                    const updated = await getPracticeById(id)
+                                    const updated = await getPracticeById(id, true)
                                     if (updated) {
                                         setPractice(updated)
                                         if (updated.status === 'completed' || updated.processing_status === 'completed') {
                                             clearInterval(pollInterval)
                                             pollInterval = null
                                             markAsViewed(id)
+                                            if (refreshPractices) refreshPractices()
                                             // Fetch audio URLs for the completed practice
                                             if (updated.questionAnalyses) {
                                                 const urls = {}

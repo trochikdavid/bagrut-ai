@@ -19,7 +19,7 @@ export const supabase = createClient(
 )
 
 // Native fetch helper to bypass Supabase client AbortError issues
-export async function fetchFromSupabase(table, query = {}, token = null) {
+export async function fetchFromSupabase(table, query = {}, token = null, timeoutMs = 8000) {
     if (!isSupabaseConfigured) return null
 
     const { select = '*', eq, single } = query
@@ -36,6 +36,9 @@ export async function fetchFromSupabase(table, query = {}, token = null) {
             'Content-Type': 'application/json'
         }
 
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
         // Use provided token or fall back to anon key (auth needed for RLS)
         if (token) {
             headers['Authorization'] = `Bearer ${token}`
@@ -43,13 +46,17 @@ export async function fetchFromSupabase(table, query = {}, token = null) {
             headers['Authorization'] = `Bearer ${supabaseAnonKey}`
         }
 
-        const response = await fetch(url, { headers })
+        const response = await fetch(url, { headers, signal: controller.signal })
+        clearTimeout(timeoutId)
 
         if (!response.ok) return null
 
         const data = await response.json()
         return single ? data[0] : data
     } catch (e) {
+        if (e.name === 'AbortError') {
+            throw e // Let the caller handle the timeout/retry logic
+        }
         return null
     }
 }

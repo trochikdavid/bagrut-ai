@@ -20,12 +20,24 @@ export function AuthProvider({ children }) {
             return
         }
 
+        // Optimistically load from cache for Supabase mode to prevent empty state
+        const cachedUser = localStorage.getItem('bagrut_user_cache')
+        if (cachedUser) {
+            try {
+                setUser(JSON.parse(cachedUser))
+            } catch (e) { }
+        }
+
         // Supabase mode - check for existing session
         const initializeAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session?.user) {
                     await fetchUserProfile(session.user.id)
+                } else if (cachedUser) {
+                    // Session is invalid or gone, clear cache
+                    localStorage.removeItem('bagrut_user_cache')
+                    setUser(null)
                 }
             } catch (error) {
             } finally {
@@ -49,6 +61,7 @@ export function AuthProvider({ children }) {
                         createdAt: session.user.created_at
                     })
                 } else if (event === 'SIGNED_OUT') {
+                    localStorage.removeItem('bagrut_user_cache')
                     setUser(null)
                 }
             }
@@ -74,12 +87,12 @@ export function AuthProvider({ children }) {
                 const { data: { session } } = await supabase.auth.getSession()
                 const token = session?.access_token
 
-                // Use native fetch helper consistently
+                // Use native fetch helper consistently (with 8s timeout)
                 const profile = await fetchFromSupabase('profiles', {
                     select: 'role,name,email,created_at,is_approved,is_premium',
                     eq: { id: userId },
                     single: true
-                }, token)
+                }, token, 8000)
 
                 if (!profile) {
                     throw new Error('Profile fetch failed or returned null')
@@ -97,10 +110,12 @@ export function AuthProvider({ children }) {
 
                 // If user is explicitly not approved, don't log them in
                 if (profile.is_approved === false) {
+                    localStorage.removeItem('bagrut_user_cache')
                     setUser(null)
                     return
                 }
 
+                localStorage.setItem('bagrut_user_cache', JSON.stringify(fullUser))
                 setUser(fullUser)
                 fetchingProfile.current = false
                 return
@@ -118,13 +133,19 @@ export function AuthProvider({ children }) {
         try {
             const { data: { user: authUser } } = await supabase.auth.getUser()
             if (authUser) {
-                setUser({
-                    id: authUser.id,
-                    name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-                    email: authUser.email,
-                    isAdmin: false,
-                    isPremium: false,
-                    createdAt: authUser.created_at
+                // Only use fallback if we don't have a valid cached user already
+                setUser(prev => {
+                    if (prev && prev.isPremium !== null && prev.isPremium !== undefined) {
+                        return prev
+                    }
+                    return {
+                        id: authUser.id,
+                        name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+                        email: authUser.email,
+                        isAdmin: false,
+                        isPremium: false,
+                        createdAt: authUser.created_at
+                    }
                 })
             }
         } catch (e) {
@@ -213,13 +234,17 @@ export function AuthProvider({ children }) {
                     }, token)
 
                     if (profile) {
-                        setUser(prev => ({
-                            ...prev,
-                            name: profile.name || prev.name,
-                            isAdmin: profile.role === 'admin',
-                            isApproved: profile.is_approved,
-                            isPremium: profile.is_premium === true || profile.is_premium === 'true' // Handle both boolean and string "true" only
-                        }))
+                        setUser(prev => {
+                            const updatedUser = {
+                                ...prev,
+                                name: profile.name || prev.name,
+                                isAdmin: profile.role === 'admin',
+                                isApproved: profile.is_approved,
+                                isPremium: profile.is_premium === true || profile.is_premium === 'true' // Handle both boolean and string "true" only
+                            }
+                            localStorage.setItem('bagrut_user_cache', JSON.stringify(updatedUser))
+                            return updatedUser
+                        })
 
                         if (profile.is_approved === false) {
                             await logout()
@@ -302,6 +327,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         // Clear user immediately
+        localStorage.removeItem('bagrut_user_cache')
         setUser(null)
 
         if (demoMode) {
@@ -339,7 +365,11 @@ export function AuthProvider({ children }) {
 
             if (error) throw error
 
-            setUser(prev => ({ ...prev, ...updates }))
+            setUser(prev => {
+                const updatedUser = { ...prev, ...updates }
+                localStorage.setItem('bagrut_user_cache', JSON.stringify(updatedUser))
+                return updatedUser
+            })
             return { success: true }
         } catch (error) {
             return { success: false, error: 'שגיאה בעדכון הפרופיל' }
@@ -369,6 +399,7 @@ export function AuthProvider({ children }) {
 
             // Sign out (Note: actual auth.users deletion requires admin API)
             await supabase.auth.signOut()
+            localStorage.removeItem('bagrut_user_cache')
             setUser(null)
 
             return { success: true }

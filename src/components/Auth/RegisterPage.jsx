@@ -49,42 +49,42 @@ export default function RegisterPage() {
     if (registrationSuccess) {
         return (
             <div className="auth-page">
-                <div className="auth-container animate-slide-up">
-                    <div className="auth-header">
-                        <div className="auth-logo success-icon">
-                            <FiCheckCircle size={48} color="var(--success)" />
+                <div className="auth-container success-state animate-slide-up">
+                    <div className="auth-header text-center">
+                        <div className="success-icon-wrapper">
+                            <FiCheckCircle className="success-icon-bounce" />
                         </div>
                         <h1 className="auth-title">איזה יופי, נרשמת! 🎉</h1>
-                        <p className="auth-subtitle">
-                            שלחנו מייל אימות לכתובת:
-                        </p>
-                        <p className="auth-email-highlight">{email}</p>
+                        <p className="auth-subtitle">שלחנו עכשיו מכתב אימות לכתובת:</p>
+                        <div className="auth-email-highlight">{email}</div>
                     </div>
 
                     <div className="verification-notice">
-                        <div className="notice-icon">📧</div>
+                        <div className="notice-icon-wrapper">
+                            <FiMail className="notice-icon-svg" />
+                        </div>
                         <div className="notice-content">
-                            <h3>יש לאמת את כתובת המייל</h3>
+                            <h3>שלב אחרון לפני שמתחילים!</h3>
                             <p>
-                                לחיצה על הלינק שבמייל תפעיל את החשבון.
+                                כדי להפעיל את החשבון, יש ללחוץ על הלינק שבמייל.
                                 <br />
-                                אחרי האימות אפשר להתחבר ולהתחיל לתרגל!
+                                לאחר מכן, תועברו לבחירת מסלול התשלום שמתאים לכם ותוכלו להתחיל לתרגל מיד!
                             </p>
                         </div>
                     </div>
 
-                    <div className="verification-tips">
-                        <p>לא מצאת את המייל?</p>
+                    <div className="verification-tips border-top-subtle">
+                        <h4>לא קיבלתם את המייל?</h4>
                         <ul>
-                            <li>בדקו בתיקיית הספאם</li>
-                            <li>האם הכתובת נכונה?</li>
-                            <li>אפשר לחכות כמה דקות ולנסות שוב</li>
+                            <li>הציצו בתיקיית ה<strong>ספאם</strong> או ה<strong>קידומי מכירות</strong>.</li>
+                            <li>וודאו שכתובת המייל שהזנתם נכונה לחלוטין.</li>
+                            <li>לפעמים לוקח למייל כמה דקות להגיע, שווה להמתין.</li>
                         </ul>
                     </div>
 
-                    <div className="auth-footer">
-                        <Link to="/login" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-                            מעבר להתחברות
+                    <div className="auth-footer modern-footer">
+                        <Link to="/login" className="btn btn-primary btn-lg full-width-btn">
+                            הבנתי, למסך ההתחברות
                         </Link>
                     </div>
                 </div>
