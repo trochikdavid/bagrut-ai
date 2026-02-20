@@ -4,6 +4,8 @@ import { PracticeProvider } from './context/PracticeContext'
 import Layout from './components/Layout/Layout'
 import LoginPage from './components/Auth/LoginPage'
 import RegisterPage from './components/Auth/RegisterPage'
+import ForgotPasswordPage from './components/Auth/ForgotPasswordPage'
+import ResetPasswordPage from './components/Auth/ResetPasswordPage'
 import Dashboard from './components/Dashboard/Dashboard'
 import ModuleSelector from './components/Practice/ModuleSelector'
 import ModuleA from './components/Practice/ModuleA'
@@ -109,6 +111,12 @@ function App() {
                 <RegisterPage />
               </PublicRoute>
             } />
+            <Route path="/forgot-password" element={
+              <PublicRoute>
+                <ForgotPasswordPage />
+              </PublicRoute>
+            } />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Private Routes */}
             <Route path="/payment" element={

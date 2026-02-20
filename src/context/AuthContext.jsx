@@ -288,6 +288,59 @@ export function AuthProvider({ children }) {
         return { success: true }
     }
 
+    const resetPassword = async (email) => {
+        if (demoMode) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            return { success: true }
+        }
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            })
+
+            if (error) {
+                let errorMessage = error.message
+                if (error.message.includes('User not found') || error.message.includes('For security purposes')) {
+                    // Avoid user enumeration
+                    return { success: true }
+                }
+                throw error
+            }
+
+            return { success: true }
+        } catch (error) {
+            return { success: false, error: 'שגיאה בשליחת קישור לאיפוס סיסמה. נסה שוב.' }
+        }
+    }
+
+    const updatePassword = async (newPassword) => {
+        if (demoMode) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            return { success: true }
+        }
+
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            })
+
+            if (error) {
+                let errorMessage = error.message
+                if (error.message.includes('Password should be at least')) {
+                    errorMessage = 'הסיסמה חייבת להכיל לפחות 6 תווים'
+                } else if (error.message.includes('New password should be different')) {
+                    errorMessage = 'הסיסמה החדשה חייבת להיות שונה מהסיסמה הישנה'
+                }
+                return { success: false, error: errorMessage }
+            }
+
+            return { success: true }
+        } catch (error) {
+            return { success: false, error: 'שגיאה בעדכון הסיסמה. נסה שוב.' }
+        }
+    }
+
     const register = async (name, email, password) => {
         // Use demo mode if Supabase not configured
         if (demoMode) {
@@ -423,6 +476,8 @@ export function AuthProvider({ children }) {
             login,
             register,
             logout,
+            resetPassword,
+            updatePassword,
             updateProfile,
             deleteAccount,
             refreshProfile: () => user ? fetchUserProfile(user.id) : Promise.resolve()

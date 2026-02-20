@@ -112,6 +112,9 @@ export default function LoginPage() {
                 </form>
 
                 <div className="auth-footer">
+                    <div style={{ marginBottom: '1rem' }}>
+                        <Link to="/forgot-password" className="auth-link" style={{ fontSize: '0.9rem' }}>שכחת סיסמה?</Link>
+                    </div>
                     <p>אין לך חשבון?</p>
                     <Link to="/register" className="auth-link">הרשמה</Link>
                 </div>
