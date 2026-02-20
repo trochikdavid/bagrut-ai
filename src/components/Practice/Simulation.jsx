@@ -392,6 +392,24 @@ export default function Simulation() {
                                 </div>
                             </div>
 
+                            <div style={{
+                                backgroundColor: 'var(--bg-secondary)',
+                                padding: 'var(--space-md)',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: 'var(--space-lg)',
+                                textAlign: 'right'
+                            }}>
+                                <h4 style={{ margin: '0 0 var(--space-sm) 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}>
+                                    💡 איך להצליח בסימולציה?
+                                </h4>
+                                <ul style={{ margin: 0, paddingRight: '20px', color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <li><strong>הקלטה ברורה:</strong> שבו במקום שקט ודברו בקצב טבעי. הקלטה נקייה = הענקת ציון מדויק.</li>
+                                    <li><strong>תכנון:</strong> קחו 10-20 שניות לארגן מחשבות (הסבר ⭢ דוגמה ⭢ סיכום קצר).</li>
+                                    <li><strong>אורך התשובה:</strong> כוונו למינימום דקה על הפרויקט, ולפחות 45 שניות בשאר. תשובות קצרות מקשות על הערכת שטף דיבור ואוצר מילים.</li>
+                                    <li><strong>זרימה וביטחון:</strong> טעיתם במילה? המשיכו הלאה טבעי! בודקים יכולת תקשורת ולא אנגלית של דובר ילידי.</li>
+                                </ul>
+                            </div>
+
                             <button
                                 className="btn btn-primary btn-lg"
                                 onClick={startSimulation}
