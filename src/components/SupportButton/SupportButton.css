@@ -119,7 +119,7 @@
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     .support-button-container {
-        bottom: calc(env(safe-area-inset-bottom, 10px) + 64px);
+        bottom: calc(env(safe-area-inset-bottom, 10px) + 24px);
         left: var(--space-sm);
     }
 
@@ -134,3 +134,5 @@
         max-width: 320px;
     }
 }
+
+/*hi 
