@@ -11,6 +11,7 @@ const PaymentRequiredPage = () => {
     const [isRefreshing, setIsRefreshing] = useState(false)
     const [showModal, setShowModal] = useState(false)
     const [emailConfirmation, setEmailConfirmation] = useState(null)
+    const [hasClickedRefresh, setHasClickedRefresh] = useState(false)
 
     useEffect(() => {
         if (user?.isPremium) {
@@ -31,6 +32,7 @@ const PaymentRequiredPage = () => {
 
     const handleRefresh = async () => {
         setIsRefreshing(true)
+        setHasClickedRefresh(true)
         await refreshProfile()
         setTimeout(() => setIsRefreshing(false), 1500)
     }
@@ -126,15 +128,22 @@ const PaymentRequiredPage = () => {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="pay-actions">
-                    <button onClick={handleRefresh} className={`pay-action-btn pay-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}>
-                        <FiRefreshCw className={isRefreshing ? 'spin' : ''} />
-                        <span>{isRefreshing ? 'בודק...' : 'כבר שילמתי? רענן'}</span>
-                    </button>
-                    <button onClick={logout} className="pay-action-btn">
-                        <FiLogOut />
-                        <span>התנתקות</span>
-                    </button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <div className="pay-actions">
+                        <button onClick={handleRefresh} className={`pay-action-btn pay-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}>
+                            <FiRefreshCw className={isRefreshing ? 'spin' : ''} />
+                            <span>{isRefreshing ? 'בודק...' : 'כבר שילמתי, רענן'}</span>
+                        </button>
+                        <button onClick={logout} className="pay-action-btn">
+                            <FiLogOut />
+                            <span>התנתקות</span>
+                        </button>
+                    </div>
+                    {hasClickedRefresh && (
+                        <div style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', maxWidth: '300px', fontWeight: '500' }}>
+                            קליטת התשלום במערכת לוקחת עד 5 דקות.
+                        </div>
+                    )}
                 </div>
             </div>
 
