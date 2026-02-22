@@ -1605,4 +1605,49 @@ a.exit-button:hover {
         max-width: 100%;
         font-size: 0.9rem;
     }
+
+    /* 9. Simulation Header content margin fix */
+    .simulation-header~div {
+        margin-top: 72px;
+        /* Adjusted for smaller mobile header (56px + gap) */
+    }
+
+    /* 10. Preview Actions - prevent overflow */
+    .preview-actions {
+        grid-template-columns: auto auto auto;
+        gap: 8px;
+    }
+
+    .action-btn-primary {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    .action-btn-subtle {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    /* 11. Weight badges wrap */
+    .simulation-weights {
+        flex-wrap: wrap;
+    }
+
+    .weight-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+
+    /* 12. Module selector adjustments */
+    .practice-selector {
+        padding: 0 var(--space-sm);
+    }
+
+    .simulation-cta .simulation-content {
+        text-align: center;
+    }
+
+    .simulation-description {
+        margin-bottom: var(--space-sm);
+    }
 }

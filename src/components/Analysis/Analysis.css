@@ -1213,6 +1213,18 @@
         gap: var(--space-lg);
     }
 
+    /* Processing insights - prevent overflow */
+    .processing-insights {
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        max-width: 100%;
+    }
+
+    .insight-pill {
+        flex: 1 1 calc(50% - var(--space-md));
+        min-width: 0;
+    }
+
     .score-circle {
         width: 110px;
         height: 110px;

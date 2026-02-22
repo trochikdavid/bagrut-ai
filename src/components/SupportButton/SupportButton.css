@@ -119,7 +119,8 @@
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     .support-button-container {
-        bottom: calc(env(safe-area-inset-bottom, 10px) + 24px);
+        bottom: calc(env(safe-area-inset-bottom, 10px) + 74px);
+        /* Account for bottom nav (60px) + some spacing */
         left: var(--space-sm);
     }
 
