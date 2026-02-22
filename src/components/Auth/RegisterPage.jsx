@@ -12,6 +12,9 @@ export default function RegisterPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [agreeTerms, setAgreeTerms] = useState(false)
+    const [agreePrivacy, setAgreePrivacy] = useState(false)
+    const [isAdult, setIsAdult] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -20,6 +23,11 @@ export default function RegisterPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+
+        if (!agreeTerms || !agreePrivacy || !isAdult) {
+            setError('יש לאשר את כל התנאים כדי להירשם')
+            return
+        }
 
         if (password !== confirmPassword) {
             setError('הסיסמאות לא תואמות')
@@ -33,7 +41,15 @@ export default function RegisterPage() {
 
         setLoading(true)
 
-        const result = await register(name, email, password)
+        const agreementData = {
+            termsAgreed: agreeTerms,
+            termsVersion: '1.0',
+            privacyAgreed: agreePrivacy,
+            privacyVersion: '1.0',
+            isAdult: isAdult
+        }
+
+        const result = await register(name, email, password, agreementData)
 
         if (!result.success) {
             setError(result.error)
@@ -175,6 +191,41 @@ export default function RegisterPage() {
                                 dir="ltr"
                             />
                         </div>
+                    </div>
+
+                    <div className="auth-checkboxes">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                className="custom-checkbox"
+                                checked={agreeTerms}
+                                onChange={(e) => setAgreeTerms(e.target.checked)}
+                                required
+                            />
+                            <span>קראתי ואני מסכים ל<Link to="/terms" target="_blank" className="auth-link-inline">תנאי השימוש</Link> של המערכת.</span>
+                        </label>
+
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                className="custom-checkbox"
+                                checked={agreePrivacy}
+                                onChange={(e) => setAgreePrivacy(e.target.checked)}
+                                required
+                            />
+                            <span>אני מאשר את <Link to="/privacy" target="_blank" className="auth-link-inline">מדיניות הפרטיות</Link>, לרבות עיבוד ושמירת נתוני שמע (הקלטות).</span>
+                        </label>
+
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                className="custom-checkbox"
+                                checked={isAdult}
+                                onChange={(e) => setIsAdult(e.target.checked)}
+                                required
+                            />
+                            <span>אני מצהיר כי אני בן 18 ומעלה.</span>
+                        </label>
                     </div>
 
                     <button

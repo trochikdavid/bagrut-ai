@@ -1,0 +1,90 @@
+.document-page {
+    min-height: 100vh;
+    background-color: var(--bg-tertiary);
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.document-container {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 900px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.document-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color var(--transition);
+    margin-bottom: 1rem;
+}
+
+.back-link:hover {
+    color: var(--primary);
+}
+
+.back-link svg {
+    margin-left: 0.25rem;
+    margin-right: 0;
+}
+
+.document-header h1 {
+    color: var(--text-primary);
+    font-size: 2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-icon {
+    color: var(--primary);
+}
+
+.document-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-viewer {
+    flex: 1;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-secondary);
+    min-height: 60vh;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .document-page {
+        padding: 1rem;
+    }
+
+    .document-container {
+        padding: 1.5rem;
+    }
+
+    .document-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .pdf-viewer {
+        min-height: 70vh;
+    }
+}

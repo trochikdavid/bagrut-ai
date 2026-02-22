@@ -6,6 +6,8 @@ import LoginPage from './components/Auth/LoginPage'
 import RegisterPage from './components/Auth/RegisterPage'
 import ForgotPasswordPage from './components/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './components/Auth/ResetPasswordPage'
+import TermsPage from './components/Auth/TermsPage'
+import PrivacyPage from './components/Auth/PrivacyPage'
 import Dashboard from './components/Dashboard/Dashboard'
 import ModuleSelector from './components/Practice/ModuleSelector'
 import ModuleA from './components/Practice/ModuleA'
@@ -116,6 +118,8 @@ function AdminRoute({ children }) {
               </PublicRoute>
             } />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
 
             {/* Private Routes */}
             <Route path="/payment" element={

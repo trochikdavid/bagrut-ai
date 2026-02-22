@@ -268,7 +268,7 @@ export function AuthProvider({ children }) {
     }
 
     // Demo mode register (fallback)
-    const demoRegister = async (name, email, password) => {
+    const demoRegister = async (name, email, password, agreements = null) => {
         await new Promise(resolve => setTimeout(resolve, 1000))
 
         if (password.length < 6) {
@@ -280,7 +280,8 @@ export function AuthProvider({ children }) {
             name,
             email,
             isAdmin: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            agreements: agreements,
         }
 
         setUser(newUser)
@@ -341,10 +342,10 @@ export function AuthProvider({ children }) {
         }
     }
 
-    const register = async (name, email, password) => {
+    const register = async (name, email, password, agreements = null) => {
         // Use demo mode if Supabase not configured
         if (demoMode) {
-            return demoRegister(name, email, password)
+            return demoRegister(name, email, password, agreements)
         }
 
         try {
@@ -357,7 +358,12 @@ export function AuthProvider({ children }) {
                 password,
                 options: {
                     data: {
-                        name: name
+                        name: name,
+                        terms_agreed: agreements?.termsAgreed || false,
+                        terms_version: agreements?.termsVersion || '1.0',
+                        privacy_agreed: agreements?.privacyAgreed || false,
+                        privacy_version: agreements?.privacyVersion || '1.0',
+                        is_adult: agreements?.isAdult || false
                     }
                 }
             })

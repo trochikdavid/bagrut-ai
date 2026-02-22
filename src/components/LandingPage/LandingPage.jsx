@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaMicrophone, FaChevronDown, FaStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaMicrophone, FaChevronDown, FaStar, FaChevronLeft, FaChevronRight, FaBars, FaTimes } from 'react-icons/fa';
 import { FiMic, FiBarChart2, FiRefreshCw, FiMonitor, FiSmartphone, FiTablet, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import './LandingPage.css';
 import logoImg from '../../assets/logo.png';
@@ -9,7 +9,10 @@ const LandingPage = () => {
     const [openFaq, setOpenFaq] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
     const [activeSlide, setActiveSlide] = useState(0);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
+
+    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index);
@@ -129,15 +132,18 @@ const LandingPage = () => {
                     <div className="landing-logo" style={{ marginRight: '0' }}>
                         <img src={logoImg} alt="Speakit Logo" className="landing-logo-img" />
                     </div>
-                    <nav className="landing-nav" style={{ marginLeft: 'auto', marginRight: '2rem' }}>
-                        <a href="#features">היתרונות שלנו</a>
-                        <a href="#reviews">ביקורות</a>
-                        <a href="#faq">שאלות נפוצות</a>
+                    <nav className={`landing-nav ${isMobileMenuOpen ? 'open' : ''}`} style={{ marginLeft: 'auto', marginRight: '2rem' }}>
+                        <a href="#features" onClick={() => setIsMobileMenuOpen(false)}>היתרונות שלנו</a>
+                        <a href="#reviews" onClick={() => setIsMobileMenuOpen(false)}>ביקורות</a>
+                        <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>שאלות נפוצות</a>
                     </nav>
                     <div className="header-actions">
                         <Link to="/login" className="nav-login-link">התחברות</Link>
                         <button onClick={() => navigate('/register')} className="header-cta-pill">
                             התחילו לתרגל
+                        </button>
+                        <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
+                            {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
                         </button>
                     </div>
                 </div>
