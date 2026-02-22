@@ -1,24 +1,13 @@
 import { createClient } from "@supabase/supabase-js"
 import fs from "fs"
 
-const supabaseUrl = "https://sjyororqyzzxyygafleg.supabase.co"
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeW9yb3JxeXp6eHl5Z2FmbGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MDIyNDksImV4cCI6MjA4Mzk3ODI0OX0.j21G2oaoFODFICd5_wONxTx8BF6m7ZLkSLWa7kQ3pFA" // fallback to anon
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://sjyororqyzzxyygafleg.supabase.co"
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeW9yb3JxeXp6eHl5Z2FmbGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MDIyNDksImV4cCI6MjA4Mzk3ODI0OX0.j21G2oaoFODFICd5_wONxTx8BF6m7ZLkSLWa7kQ3pFA"
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function run() {
   const { data, error } = await supabase.rpc('execute_sql_query', {
-    query: `
-      ALTER TABLE profiles ADD COLUMN IF NOT EXISTS terms_agreed BOOLEAN DEFAULT false,
-      ADD COLUMN IF NOT EXISTS terms_version TEXT,
-      ADD COLUMN IF NOT EXISTS privacy_agreed BOOLEAN DEFAULT false,
-      ADD COLUMN IF NOT EXISTS privacy_version TEXT,
-      ADD COLUMN IF NOT EXISTS is_adult BOOLEAN DEFAULT false;
-    `
-  })
-  
-  // also run handle_new_user update
-  await supabase.rpc('execute_sql_query', {
     query: `
     CREATE OR REPLACE FUNCTION public.handle_new_user()
     RETURNS TRIGGER AS $$
@@ -50,6 +39,16 @@ async function run() {
     $$ LANGUAGE plpgsql SECURITY DEFINER;
     `
   });
-  console.log("Error:", error)
+  console.log("Error from update trigger:", error)
+  
+  const { data: triggerCheck, error: triggerError } = await supabase.rpc('execute_sql_query', {
+    query: `
+      SELECT pg_get_functiondef(oid) 
+      FROM pg_proc 
+      WHERE proname = 'handle_new_user';
+    `
+  })
+  console.log("Current trigger definition:")
+  console.log(triggerCheck)
 }
 run();

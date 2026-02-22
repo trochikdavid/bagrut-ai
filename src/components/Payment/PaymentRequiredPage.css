@@ -355,7 +355,8 @@
     cursor: pointer;
     transition: var(--pay-transition);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    flex: 1;
+    flex: 1 1 50%;
+    min-width: 0;
 }
 
 .pay-action-btn:hover {

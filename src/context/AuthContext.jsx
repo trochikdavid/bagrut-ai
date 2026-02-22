@@ -383,6 +383,20 @@ export function AuthProvider({ children }) {
                 return { success: false, error: 'כתובת האימייל כבר רשומה במערכת' }
             }
 
+            // Immediately update the profile with the agreements since the trigger sometimes misses the metadata
+            if (data.user) {
+                // Wait briefly for the trigger to insert the row first
+                setTimeout(async () => {
+                    await supabase.from('profiles').update({
+                        terms_agreed: agreements?.termsAgreed || false,
+                        terms_version: agreements?.termsVersion || '1.0',
+                        privacy_agreed: agreements?.privacyAgreed || false,
+                        privacy_version: agreements?.privacyVersion || '1.0',
+                        is_adult: agreements?.isAdult || false
+                    }).eq('id', data.user.id)
+                }, 1500)
+            }
+
             // Don't auto-login - user needs to verify email first
             // Just return success to show verification message
             return { success: true }

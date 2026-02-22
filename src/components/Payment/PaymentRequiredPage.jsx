@@ -132,7 +132,7 @@ const PaymentRequiredPage = () => {
                     <div className="pay-actions">
                         <button onClick={handleRefresh} className={`pay-action-btn pay-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}>
                             <FiRefreshCw className={isRefreshing ? 'spin' : ''} />
-                            <span>{isRefreshing ? 'בודק...' : 'כבר שילמתי, רענן'}</span>
+                            <span>{isRefreshing ? 'בודק...' : 'שילמתי, רענן'}</span>
                         </button>
                         <button onClick={logout} className="pay-action-btn">
                             <FiLogOut />
