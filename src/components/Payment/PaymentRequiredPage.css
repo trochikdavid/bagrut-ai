@@ -333,10 +333,10 @@
    ============================================ */
 .pay-actions {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
     gap: 1rem;
-    width: 100%;
+    width: auto;
 }
 
 .pay-action-btn {
@@ -344,7 +344,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0.75rem 0;
+    padding: 0.5rem 1.25rem;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--pay-radius-pill);
@@ -355,8 +355,8 @@
     cursor: pointer;
     transition: var(--pay-transition);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    flex: 1 1 50%;
-    min-width: 0;
+    flex: none;
+    height: 40px;
 }
 
 .pay-action-btn:hover {

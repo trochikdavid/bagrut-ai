@@ -128,8 +128,8 @@ const PaymentRequiredPage = () => {
                 </div>
 
                 {/* Bottom Actions */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                    <div className="pay-actions">
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div className="pay-actions" style={{ width: 'auto', gap: '12px' }}>
                         <button onClick={handleRefresh} className={`pay-action-btn pay-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}>
                             <FiRefreshCw className={isRefreshing ? 'spin' : ''} />
                             <span>{isRefreshing ? 'בודק...' : 'שילמתי, רענן'}</span>
