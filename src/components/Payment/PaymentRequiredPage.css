@@ -333,7 +333,7 @@
    ============================================ */
 .pay-actions {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     gap: 1rem;
     width: 100%;
@@ -344,7 +344,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 0;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--pay-radius-pill);
