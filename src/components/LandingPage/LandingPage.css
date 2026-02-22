@@ -1293,7 +1293,18 @@
 
     .features-tab-visualizer {
         height: auto;
-        aspect-ratio: 16 / 11;
+    }
+
+    .visualizer-content.has-image {
+        height: auto;
+        flex: none;
+    }
+
+    .visualizer-real-image {
+        position: relative;
+        height: auto;
+        object-fit: contain;
+        display: block;
     }
 
     .feature-tab {
