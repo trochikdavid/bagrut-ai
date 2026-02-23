@@ -127,6 +127,11 @@ function AdminRoute({ children }) {
                 <PaymentRequiredPage />
               </PrivateRoute>
             } />
+            <Route path="/payment-success" element={
+              <PrivateRoute>
+                <PaymentRequiredPage />
+              </PrivateRoute>
+            } />
 
             <Route element={
               <PremiumRoute>
