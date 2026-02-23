@@ -87,6 +87,39 @@ const LandingPage = () => {
     // Reviews carousel scroll
     const reviewsTrackRef = useRef(null);
 
+    // Google Analytics Tag - Only for Landing Page
+    useEffect(() => {
+        const script1Id = 'gtag-script-1';
+        const script2Id = 'gtag-script-2';
+
+        if (!document.getElementById(script1Id)) {
+            const script1 = document.createElement('script');
+            script1.async = true;
+            script1.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17971494834';
+            script1.id = script1Id;
+            document.head.appendChild(script1);
+
+            const script2 = document.createElement('script');
+            script2.id = script2Id;
+            script2.innerHTML = `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+
+              gtag('config', 'AW-17971494834');
+            `;
+            document.head.appendChild(script2);
+        }
+
+        return () => {
+            // Cleanup scripts if component unmounts
+            const s1 = document.getElementById(script1Id);
+            const s2 = document.getElementById(script2Id);
+            if (s1) document.head.removeChild(s1);
+            if (s2) document.head.removeChild(s2);
+        };
+    }, []);
+
     // Center the reviews carousel on mount
     useEffect(() => {
         const track = reviewsTrackRef.current;
