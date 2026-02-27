@@ -78,7 +78,7 @@ async function getMessages(threadId: string) {
     return openaiRequest(`/threads/${threadId}/messages`)
 }
 
-async function waitForCompletion(threadId: string, runId: string, maxAttempts = 60) {
+async function waitForCompletion(threadId: string, runId: string, maxAttempts = 40) {
     for (let i = 0; i < maxAttempts; i++) {
         const run = await getRunStatus(threadId, runId)
 
@@ -90,7 +90,8 @@ async function waitForCompletion(threadId: string, runId: string, maxAttempts = 
             throw new Error(`Run ${run.status}: ${run.last_error?.message || 'Unknown error'}`)
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Wait 2 seconds between polls to avoid rate limits when running multiple analyses in parallel
+        await new Promise(resolve => setTimeout(resolve, 2000))
     }
 
     throw new Error('Timeout waiting for assistant response')
@@ -253,202 +254,172 @@ async function transcribeAudio(audioUrl: string, supabaseAdmin: any) {
 // ============================================
 
 async function analyzeModuleAB(question: string, transcript: string, pronunciationMetrics: any) {
-    // Score topic development
-    const topicMessage = `Question: "${question}"\n\nStudent's Answer: "${transcript}"`
-    const topicResult = await runAssistantAndGetResponse(ASSISTANT_IDS.topicDevelopment!, topicMessage)
-    const topicScore = topicResult.score || 0
-    const topicRange = topicResult.range || ''
+    // Run all 4 scoring categories in parallel
+    const [topicRes, vocabRes, grammarRes, fluencyRes] = await Promise.all([
+        // Score topic development
+        (async () => {
+            const topicMessage = `Question: "${question}"\n\nStudent's Answer: "${transcript}"`
+            const topicResult = await runAssistantAndGetResponse(ASSISTANT_IDS.topicDevelopment!, topicMessage)
+            const topicScore = topicResult.score || 0
+            const topicRange = topicResult.range || ''
 
-    // Get topic feedback
-    const topicFeedbackMessage = `שאלה: "${question}"\nציון: ${topicScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const topicFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.topicDevelopmentFeedback!, topicFeedbackMessage)
+            const topicFeedbackMessage = `שאלה: "${question}"\nציון: ${topicScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const topicFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.topicDevelopmentFeedback!, topicFeedbackMessage)
+            return { score: topicScore, range: topicRange, ...topicFeedback }
+        })(),
 
-    // Score vocabulary
-    const vocabMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
-    const vocabResult = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabulary!, vocabMessage)
-    const vocabScore = vocabResult.score || 0
+        // Score vocabulary
+        (async () => {
+            const vocabMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
+            const vocabResult = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabulary!, vocabMessage)
+            const vocabScore = vocabResult.score || 0
 
-    // Get vocabulary feedback
-    const vocabFeedbackMessage = `שאלה: "${question}"\nציון: ${vocabScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const vocabFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabularyFeedback!, vocabFeedbackMessage)
+            const vocabFeedbackMessage = `שאלה: "${question}"\nציון: ${vocabScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const vocabFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabularyFeedback!, vocabFeedbackMessage)
+            return { score: vocabScore, ...vocabFeedback }
+        })(),
 
-    // Score grammar/language
-    const grammarMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
-    const grammarResult = await runAssistantAndGetResponse(ASSISTANT_IDS.language!, grammarMessage)
-    const grammarScore = grammarResult.score || 0
+        // Score grammar/language
+        (async () => {
+            const grammarMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
+            const grammarResult = await runAssistantAndGetResponse(ASSISTANT_IDS.language!, grammarMessage)
+            const grammarScore = grammarResult.score || 0
 
-    // Get grammar feedback
-    const grammarFeedbackMessage = `שאלה: "${question}"\nציון: ${grammarScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const grammarFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.languageFeedback!, grammarFeedbackMessage)
+            const grammarFeedbackMessage = `שאלה: "${question}"\nציון: ${grammarScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const grammarFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.languageFeedback!, grammarFeedbackMessage)
+            return { score: grammarScore, ...grammarFeedback }
+        })(),
 
-    // Score fluency with pronunciation metrics
-    const problematicWordsText = pronunciationMetrics?.problematicWords?.length > 0
-        ? pronunciationMetrics.problematicWords.map((w: any) => {
-            let detail = `• "${w.word}" - Overall Score: ${w.accuracyScore}/100, Issue: ${w.errorType}`
-            return detail
-        }).join('\n')
-        : 'No problematic words detected'
+        // Score fluency with pronunciation metrics
+        (async () => {
+            const problematicWordsText = pronunciationMetrics?.problematicWords?.length > 0
+                ? pronunciationMetrics.problematicWords.map((w: any) =>
+                    `• "${w.word}" - Overall Score: ${w.accuracyScore}/100, Issue: ${w.errorType}`
+                ).join('\n')
+                : 'No problematic words detected'
 
-    const longPausesText = pronunciationMetrics?.longPauses?.length > 0
-        ? pronunciationMetrics.longPauses.map((p: any) =>
-            `• ${p.durationSeconds}s pause after "${p.afterWord}" before "${p.beforeWord}"`
-        ).join('\n')
-        : 'No abnormal pauses detected'
+            const longPausesText = pronunciationMetrics?.longPauses?.length > 0
+                ? pronunciationMetrics.longPauses.map((p: any) =>
+                    `• ${p.durationSeconds}s pause after "${p.afterWord}" before "${p.beforeWord}"`
+                ).join('\n')
+                : 'No abnormal pauses detected'
 
-    const fluencyMessage = `Question: "${question}"
+            const fluencyMessage = `Question: "${question}"\n\nStudent's spoken answer transcript:\n"${transcript}"\n\n=== Azure Pronunciation Assessment Metrics ===\n\nOverall Scores:\n- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100\n- Prosody Score: ${pronunciationMetrics?.prosodyScore || 'N/A'}/100\n- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100\n\n=== Long Pauses (2.5+ seconds) ===\n${longPausesText}\n\n=== Problematic Words ===\n${problematicWordsText}`
 
-Student's spoken answer transcript:
-"${transcript}"
+            const fluencyResult = await runAssistantAndGetResponse(ASSISTANT_IDS.fluency!, fluencyMessage)
+            const fluencyScore = fluencyResult.score || 0
 
-=== Azure Pronunciation Assessment Metrics ===
+            const fluencyFeedbackMessage = `Question: "${question}"\nScore: ${fluencyScore} (Range: ${fluencyResult.range || ''})\n\nStudent's spoken answer transcript:\n"${transcript}"\n\n=== Azure Pronunciation Assessment Metrics ===\n- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100\n- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100\n\n${longPausesText}\n\n${problematicWordsText}`
 
-Overall Scores:
-- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100
-- Prosody Score: ${pronunciationMetrics?.prosodyScore || 'N/A'}/100
-- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100
-
-=== Long Pauses (2.5+ seconds) ===
-${longPausesText}
-
-=== Problematic Words ===
-${problematicWordsText}`
-
-    const fluencyResult = await runAssistantAndGetResponse(ASSISTANT_IDS.fluency!, fluencyMessage)
-    const fluencyScore = fluencyResult.score || 0
-
-    // Get fluency feedback
-    const fluencyFeedbackMessage = `Question: "${question}"
-Score: ${fluencyScore} (Range: ${fluencyResult.range || ''})
-
-Student's spoken answer transcript:
-"${transcript}"
-
-=== Azure Pronunciation Assessment Metrics ===
-- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100
-- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100
-
-${longPausesText}
-
-${problematicWordsText}`
-
-    const fluencyFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.fluencyFeedback!, fluencyFeedbackMessage)
+            const fluencyFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.fluencyFeedback!, fluencyFeedbackMessage)
+            return { score: fluencyScore, ...fluencyFeedback }
+        })()
+    ])
 
     // Calculate weighted total score
     // Topic Development: 50%, Delivery: 15%, Vocabulary: 20%, Language: 15%
     const totalScore = Math.round(
-        topicScore * 0.50 +
-        fluencyScore * 0.15 +
-        vocabScore * 0.20 +
-        grammarScore * 0.15
+        topicRes.score * 0.50 +
+        fluencyRes.score * 0.15 +
+        vocabRes.score * 0.20 +
+        grammarRes.score * 0.15
     )
 
     return {
-        topicDevelopment: { score: topicScore, range: topicRange, ...topicFeedback },
-        vocabulary: { score: vocabScore, ...vocabFeedback },
-        grammar: { score: grammarScore, ...grammarFeedback },
-        fluency: { score: fluencyScore, ...fluencyFeedback },
+        topicDevelopment: topicRes,
+        vocabulary: vocabRes,
+        grammar: grammarRes,
+        fluency: fluencyRes,
         totalScore,
-        preservationPoints: topicFeedback.preservationPoints || [],
-        improvementPoints: topicFeedback.improvementPoints || [],
+        preservationPoints: topicRes.preservationPoints || [],
+        improvementPoints: topicRes.improvementPoints || [],
     }
 }
 
 async function analyzeModuleC(question: string, transcript: string, videoTranscript: string, pronunciationMetrics: any) {
-    // Score topic development for Module C (with video context)
-    const topicMessage = `Video Transcript:\n"""\n${videoTranscript || 'No video transcript available'}\n"""\n\nQuestion about the video: "${question}"\n\nStudent's spoken answer: "${transcript}"`
-    const topicResult = await runAssistantAndGetResponse(ASSISTANT_IDS.moduleCTopic!, topicMessage)
-    const topicScore = topicResult.score || 0
+    // Run all 4 scoring categories in parallel
+    const [topicRes, vocabRes, grammarRes, fluencyRes] = await Promise.all([
+        // Score topic development for Module C (with video context)
+        (async () => {
+            const topicMessage = `Video Transcript:\n"""\n${videoTranscript || 'No video transcript available'}\n"""\n\nQuestion about the video: "${question}"\n\nStudent's spoken answer: "${transcript}"`
+            const topicResult = await runAssistantAndGetResponse(ASSISTANT_IDS.moduleCTopic!, topicMessage)
+            const topicScore = topicResult.score || 0
 
-    // Get topic feedback
-    const topicFeedbackMessage = `תמלול הסרטון:\n"""\n${videoTranscript || 'אין תמלול זמין'}\n"""\n\nשאלה על הסרטון: "${question}"\n\nציון שהתקבל: ${topicScore}\n\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const topicFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.moduleCTopicFeedback!, topicFeedbackMessage)
+            const topicFeedbackMessage = `תמלול הסרטון:\n"""\n${videoTranscript || 'אין תמלול זמין'}\n"""\n\nשאלה על הסרטון: "${question}"\n\nציון שהתקבל: ${topicScore}\n\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const topicFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.moduleCTopicFeedback!, topicFeedbackMessage)
+            return { score: topicScore, ...topicFeedback }
+        })(),
 
-    // Score vocabulary (same as Module A/B)
-    const vocabMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
-    const vocabResult = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabulary!, vocabMessage)
-    const vocabScore = vocabResult.score || 0
-    const vocabFeedbackMessage = `שאלה: "${question}"\nציון: ${vocabScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const vocabFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabularyFeedback!, vocabFeedbackMessage)
+        // Score vocabulary
+        (async () => {
+            const vocabMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
+            const vocabResult = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabulary!, vocabMessage)
+            const vocabScore = vocabResult.score || 0
 
-    // Score grammar
-    const grammarMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
-    const grammarResult = await runAssistantAndGetResponse(ASSISTANT_IDS.language!, grammarMessage)
-    const grammarScore = grammarResult.score || 0
-    const grammarFeedbackMessage = `שאלה: "${question}"\nציון: ${grammarScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
-    const grammarFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.languageFeedback!, grammarFeedbackMessage)
+            const vocabFeedbackMessage = `שאלה: "${question}"\nציון: ${vocabScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const vocabFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.vocabularyFeedback!, vocabFeedbackMessage)
+            return { score: vocabScore, ...vocabFeedback }
+        })(),
 
-    // Score fluency with pronunciation metrics (if available)
-    let fluencyScore = 65 // Default if no pronunciation metrics
-    let fluencyFeedback: any = { strengths: [], improvements: [], generalFeedback: 'No pronunciation metrics available' }
+        // Score grammar
+        (async () => {
+            const grammarMessage = `Question: "${question}"\n\nStudent's spoken answer:\n"${transcript}"`
+            const grammarResult = await runAssistantAndGetResponse(ASSISTANT_IDS.language!, grammarMessage)
+            const grammarScore = grammarResult.score || 0
 
-    if (pronunciationMetrics) {
-        const problematicWordsText = pronunciationMetrics?.problematicWords?.length > 0
-            ? pronunciationMetrics.problematicWords.map((w: any) => {
-                return `• "${w.word}" - Overall Score: ${w.accuracyScore}/100, Issue: ${w.errorType}`
-            }).join('\n')
-            : 'No problematic words detected'
+            const grammarFeedbackMessage = `שאלה: "${question}"\nציון: ${grammarScore}\nתמלול תשובת התלמיד:\n"${transcript}"`
+            const grammarFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.languageFeedback!, grammarFeedbackMessage)
+            return { score: grammarScore, ...grammarFeedback }
+        })(),
 
-        const longPausesText = pronunciationMetrics?.longPauses?.length > 0
-            ? pronunciationMetrics.longPauses.map((p: any) =>
-                `• ${p.durationSeconds}s pause after "${p.afterWord}" before "${p.beforeWord}"`
-            ).join('\n')
-            : 'No abnormal pauses detected'
+        // Score fluency with pronunciation metrics (if available)
+        (async () => {
+            let fluencyScore = 65 // Default if no pronunciation metrics
+            let fluencyFeedback: any = { strengths: [], improvements: [], generalFeedback: 'No pronunciation metrics available' }
 
-        const fluencyMessage = `Question: "${question}"
+            if (pronunciationMetrics) {
+                const problematicWordsText = pronunciationMetrics?.problematicWords?.length > 0
+                    ? pronunciationMetrics.problematicWords.map((w: any) =>
+                        `• "${w.word}" - Overall Score: ${w.accuracyScore}/100, Issue: ${w.errorType}`
+                    ).join('\n')
+                    : 'No problematic words detected'
 
-Student's spoken answer transcript:
-"${transcript}"
+                const longPausesText = pronunciationMetrics?.longPauses?.length > 0
+                    ? pronunciationMetrics.longPauses.map((p: any) =>
+                        `• ${p.durationSeconds}s pause after "${p.afterWord}" before "${p.beforeWord}"`
+                    ).join('\n')
+                    : 'No abnormal pauses detected'
 
-=== Azure Pronunciation Assessment Metrics ===
+                const fluencyMessage = `Question: "${question}"\n\nStudent's spoken answer transcript:\n"${transcript}"\n\n=== Azure Pronunciation Assessment Metrics ===\n\nOverall Scores:\n- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100\n- Prosody Score: ${pronunciationMetrics?.prosodyScore || 'N/A'}/100\n- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100\n\n=== Long Pauses (2.5+ seconds) ===\n${longPausesText}\n\n=== Problematic Words ===\n${problematicWordsText}`
 
-Overall Scores:
-- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100
-- Prosody Score: ${pronunciationMetrics?.prosodyScore || 'N/A'}/100
-- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100
+                const fluencyResult = await runAssistantAndGetResponse(ASSISTANT_IDS.fluency!, fluencyMessage)
+                fluencyScore = fluencyResult.score || 65
 
-=== Long Pauses (2.5+ seconds) ===
-${longPausesText}
+                const fluencyFeedbackMessage = `Question: "${question}"\nScore: ${fluencyScore} (Range: ${fluencyResult.range || ''})\n\nStudent's spoken answer transcript:\n"${transcript}"\n\n=== Azure Pronunciation Assessment Metrics ===\n- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100\n- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100\n\n${longPausesText}\n\n${problematicWordsText}`
 
-=== Problematic Words ===
-${problematicWordsText}`
-
-        const fluencyResult = await runAssistantAndGetResponse(ASSISTANT_IDS.fluency!, fluencyMessage)
-        fluencyScore = fluencyResult.score || 65
-
-        const fluencyFeedbackMessage = `Question: "${question}"
-Score: ${fluencyScore} (Range: ${fluencyResult.range || ''})
-
-Student's spoken answer transcript:
-"${transcript}"
-
-=== Azure Pronunciation Assessment Metrics ===
-- Fluency Score: ${pronunciationMetrics?.fluencyScore || 'N/A'}/100
-- Accuracy Score: ${pronunciationMetrics?.accuracyScore || 'N/A'}/100
-
-${longPausesText}
-
-${problematicWordsText}`
-
-        fluencyFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.fluencyFeedback!, fluencyFeedbackMessage)
-    }
+                fluencyFeedback = await runAssistantAndGetResponse(ASSISTANT_IDS.fluencyFeedback!, fluencyFeedbackMessage)
+            }
+            return { score: fluencyScore, ...fluencyFeedback }
+        })()
+    ])
 
     // Calculate weighted total score
     // Topic Development: 50%, Delivery: 15%, Vocabulary: 20%, Language: 15%
     const totalScore = Math.round(
-        topicScore * 0.50 +
-        fluencyScore * 0.15 +
-        vocabScore * 0.20 +
-        grammarScore * 0.15
+        topicRes.score * 0.50 +
+        fluencyRes.score * 0.15 +
+        vocabRes.score * 0.20 +
+        grammarRes.score * 0.15
     )
 
     return {
-        topicDevelopment: { score: topicScore, ...topicFeedback },
-        vocabulary: { score: vocabScore, ...vocabFeedback },
-        grammar: { score: grammarScore, ...grammarFeedback },
-        fluency: { score: fluencyScore, ...fluencyFeedback },
+        topicDevelopment: topicRes,
+        vocabulary: vocabRes,
+        grammar: grammarRes,
+        fluency: fluencyRes,
         totalScore,
-        preservationPoints: topicFeedback.preservationPoints || [],
-        improvementPoints: topicFeedback.improvementPoints || [],
+        preservationPoints: topicRes.preservationPoints || [],
+        improvementPoints: topicRes.improvementPoints || [],
     }
 }
 
@@ -539,17 +510,14 @@ serve(async (req) => {
 
         console.log(`Processing ${questions.length} questions`)
 
-        const processedQuestions: any[] = []
-
-        for (const question of questions) {
+        const processedQuestions = await Promise.all(questions.map(async (question) => {
             try {
                 console.log(`Processing question: ${question.question_id}`)
 
                 // Skip if no recording
                 if (!question.recording_url) {
                     console.log('No recording, skipping')
-                    processedQuestions.push(question)
-                    continue
+                    return question
                 }
 
                 // Step 1: Get transcription
@@ -631,20 +599,20 @@ serve(async (req) => {
                     })
                     .eq('id', question.id)
 
-                processedQuestions.push({
+                return {
                     ...question,
                     scores,
                     feedback,
                     total_score: analysis.totalScore,
                     preservationPoints: analysis.preservationPoints,
                     improvementPoints: analysis.improvementPoints,
-                })
+                }
 
             } catch (questionError) {
                 console.error(`Error processing question ${question.question_id}:`, questionError)
-                processedQuestions.push(question)
+                return question
             }
-        }
+        }))
 
         // Calculate overall scores
         const questionsWithScores = processedQuestions.filter(q => q.total_score)
