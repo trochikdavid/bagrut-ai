@@ -328,8 +328,6 @@ export function PracticeProvider({ children }) {
 
             // Step 4: Client-side transcription using Azure SDK
             // (SDK requires browser APIs like AudioContext, so must run client-side)
-            // Store results for use in step 5 scoring
-            const transcriptionResults = new Map() // questionId -> { transcript, pronunciationMetrics }
 
             for (const recording of recordingsRef.current) {
                 if (!recording.storagePath) continue
@@ -368,12 +366,6 @@ export function PracticeProvider({ children }) {
                         transcript,
                         trimmedPronunciation
                     )
-
-                    // Store for step 5 scoring
-                    transcriptionResults.set(recording.questionId, {
-                        transcript,
-                        pronunciationMetrics: trimmedPronunciation
-                    })
                 } catch (error) {
                     console.error(`Transcription failed for ${recording.questionId}:`, error)
                     // Save failure marker
@@ -387,136 +379,19 @@ export function PracticeProvider({ children }) {
                 }
             }
 
-            // Step 5: Score each question client-side via openai-scoring edge function
-            // Each call goes to a small, fast edge function — no timeout issue
-            const scoredQuestions = []
+            // Step 5: Trigger background processing (fire-and-forget)
+            // Edge Function reads transcripts + pronunciation from DB
+            practiceService.triggerProcessing(dbPracticeId)
+                .catch(err => console.error('Background processing error:', err))
 
-            for (let i = 0; i < questions.length; i++) {
-                const q = questions[i]
-
-                // Get transcript from step 4
-                const transcriptionData = transcriptionResults.get(q.id)
-                const transcript = transcriptionData?.transcript
-                const pronunciationMetrics = transcriptionData?.pronunciationMetrics
-
-                if (!transcript || transcript === '[No speech detected]' || transcript === '[Transcription failed]') {
-                    scoredQuestions.push({ questionId: q.id, scores: null, feedback: null, totalScore: null })
-                    continue
-                }
-
-                // Score with OpenAI
-                try {
-                    const isModuleCQuestion = currentPractice.type === 'module-c' ||
-                        (currentPractice.type === 'simulation' && q.moduleType === 'module-c')
-
-                    let aiAnalysis
-
-                    if (isModuleCQuestion) {
-                        const questionData = currentPractice.questions?.find(cq =>
-                            cq.id === q.id || cq.questionId === q.id
-                        )
-                        const videoTranscript = questionData?.videoTranscript ||
-                            questionData?.parentVideo?.videoTranscript || ''
-
-                        aiAnalysis = await openaiService.analyzeAnswerModuleC({
-                            question: q.text || q.questionText,
-                            studentTranscript: transcript,
-                            videoTranscript,
-                            pronunciationMetrics
-                        })
-                    } else {
-                        aiAnalysis = await openaiService.analyzeAnswer(
-                            q.text || q.questionText,
-                            transcript,
-                            pronunciationMetrics
-                        )
-                    }
-
-                    const scores = {
-                        topicDevelopment: aiAnalysis.topicDevelopment.score,
-                        fluency: aiAnalysis.fluency?.score || null,
-                        vocabulary: aiAnalysis.vocabulary.score,
-                        grammar: aiAnalysis.grammar.score
-                    }
-
-                    const feedback = {
-                        topicDevelopment: aiAnalysis.topicDevelopment,
-                        fluency: aiAnalysis.fluency,
-                        vocabulary: aiAnalysis.vocabulary,
-                        grammar: aiAnalysis.grammar
-                    }
-
-                    // Save scores to DB
-                    try {
-                        await practiceService.updatePracticeQuestionScores(
-                            dbPracticeId,
-                            q.id,
-                            scores,
-                            feedback,
-                            aiAnalysis.totalScore
-                        )
-                    } catch (dbError) {
-                        console.error('Failed to save scores:', dbError)
-                    }
-
-                    scoredQuestions.push({
-                        questionId: q.id,
-                        scores,
-                        feedback,
-                        totalScore: aiAnalysis.totalScore,
-                        preservationPoints: aiAnalysis.preservationPoints || [],
-                        improvementPoints: aiAnalysis.improvementPoints || []
-                    })
-                } catch (aiError) {
-                    console.error(`AI scoring failed for question ${q.id}:`, aiError)
-                    scoredQuestions.push({ questionId: q.id, scores: null, feedback: null, totalScore: null })
-                }
-            }
-
-            // Step 6: Finalize practice with overall scores
-            const questionsWithScores = scoredQuestions.filter(q => q.totalScore)
-            const avgScore = questionsWithScores.length > 0
-                ? Math.round(questionsWithScores.reduce((sum, q) => sum + q.totalScore, 0) / questionsWithScores.length)
-                : 0
-
-            const calculateAverage = (qs, key) => {
-                const valid = qs.filter(q => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
-                if (valid.length === 0) return 0
-                return Math.round(valid.reduce((sum, q) => sum + q.scores[key], 0) / valid.length)
-            }
-
-            const overallScores = {
-                topicDevelopment: calculateAverage(scoredQuestions, 'topicDevelopment'),
-                fluency: calculateAverage(scoredQuestions, 'fluency'),
-                vocabulary: calculateAverage(scoredQuestions, 'vocabulary'),
-                grammar: calculateAverage(scoredQuestions, 'grammar')
-            }
-
-            const allPreservation = scoredQuestions.flatMap(q => q.preservationPoints || [])
-            const allImprovement = scoredQuestions.flatMap(q => q.improvementPoints || [])
-
-            try {
-                await practiceService.completePractice(dbPracticeId, {
-                    totalScore: avgScore,
-                    scores: overallScores,
-                    strengths: [...new Set(allPreservation)].slice(0, 10),
-                    improvements: [...new Set(allImprovement)].slice(0, 10)
-                })
-            } catch (e) {
-                console.error('Failed to complete practice:', e)
-            }
-
-            // Step 7: Return completed practice
-            const completedPractice = {
+            // Step 6: Return immediately - analysis continues server-side
+            const pendingPractice = {
                 ...currentPractice,
                 id: dbPracticeId,
-                status: 'completed',
-                processingStatus: 'completed',
-                totalScore: avgScore,
-                scores: overallScores,
+                status: 'in-progress',
+                processingStatus: 'processing',
                 startedAt: new Date().toISOString()
             }
-
 
             // Reload practices to show the new pending one
             await loadPractices()
