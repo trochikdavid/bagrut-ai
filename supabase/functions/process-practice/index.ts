@@ -510,14 +510,19 @@ serve(async (req) => {
 
         console.log(`Processing ${questions.length} questions`)
 
-        const processedQuestions = await Promise.all(questions.map(async (question) => {
+        const processedQuestions: any[] = []
+
+        // Process questions sequentially to avoid overwhelming OpenAI rate limits
+        // (category-level parallelization within each question already provides 4x speedup)
+        for (const question of questions) {
             try {
                 console.log(`Processing question: ${question.question_id}`)
 
                 // Skip if no recording
                 if (!question.recording_url) {
                     console.log('No recording, skipping')
-                    return question
+                    processedQuestions.push(question)
+                    continue
                 }
 
                 // Step 1: Get transcription
@@ -599,20 +604,20 @@ serve(async (req) => {
                     })
                     .eq('id', question.id)
 
-                return {
+                processedQuestions.push({
                     ...question,
                     scores,
                     feedback,
                     total_score: analysis.totalScore,
                     preservationPoints: analysis.preservationPoints,
                     improvementPoints: analysis.improvementPoints,
-                }
+                })
 
             } catch (questionError) {
                 console.error(`Error processing question ${question.question_id}:`, questionError)
-                return question
+                processedQuestions.push(question)
             }
-        }))
+        }
 
         // Calculate overall scores
         const questionsWithScores = processedQuestions.filter(q => q.total_score)
