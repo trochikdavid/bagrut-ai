@@ -456,7 +456,11 @@ ${problematicWordsText}`
 // MAIN HANDLER
 // ============================================
 
+console.log('[DIAG] Module loaded, about to call serve()')
+
 serve(async (req) => {
+    console.log('[DIAG] Handler called, method:', req.method, 'url:', req.url)
+
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -471,7 +475,7 @@ serve(async (req) => {
     try {
         // Verify user is authenticated
         const authHeader = req.headers.get('Authorization')
-        console.log(`Auth Header present: ${!!authHeader}, length: ${authHeader?.length}`)
+        console.log(`[DIAG] Auth Header present: ${!!authHeader}, length: ${authHeader?.length}`)
 
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
