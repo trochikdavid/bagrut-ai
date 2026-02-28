@@ -537,191 +537,158 @@ serve(async (req) => {
             throw new Error(`Failed to get questions: ${questionsError.message}`)
         }
 
-        // Get processing stage from request body
-        const questionIndex = body.questionIndex || 0
-        const isFinalization = body.finalize || false
+        console.log(`Processing ${questions.length} questions`)
 
-        console.log(`Processing ${questions.length} questions, current index: ${questionIndex}, finalization: ${isFinalization}`)
+        const processedQuestions: any[] = []
 
-        if (!isFinalization) {
-            // Processing a single question
-            const question = questions[questionIndex]
+        for (const question of questions) {
+            try {
+                console.log(`Processing question: ${question.question_id}`)
 
-            if (question) {
-                try {
-                    console.log(`Processing question: ${question.question_id}`)
-
-                    // Skip if no recording
-                    if (!question.recording_url) {
-                        console.log('No recording, skipping')
-                    } else {
-                        // Step 1: Get transcription
-                        let transcriptText: string
-                        let pronunciationMetrics: any = null
-
-                        if (question.transcript && question.transcript !== '[No speech detected]') {
-                            console.log('Using client-side transcript from DB for:', question.question_id)
-                            transcriptText = question.transcript
-                            pronunciationMetrics = question.scores?._pronunciationAssessment || null
-                        } else {
-                            console.log('Falling back to Azure REST API transcription for:', question.question_id)
-                            const transcription = await transcribeAudio(question.recording_url, supabaseAdmin)
-                            transcriptText = transcription.text
-                            pronunciationMetrics = transcription.pronunciationAssessment
-
-                            await supabaseAdmin
-                                .from('practice_questions')
-                                .update({ transcript: transcriptText })
-                                .eq('id', question.id)
-                        }
-
-                        console.log('Transcript:', transcriptText?.substring(0, 50))
-
-                        // Step 2: Analyze with AI
-                        const isModuleC = practice.type === 'module-c' ||
-                            (practice.type === 'simulation' && question.order_index >= 2)
-
-                        let analysis
-                        if (isModuleC) {
-                            const moduleAInfo = practice.module_a_info || {}
-                            const videoTranscript = question.video_transcript || moduleAInfo.videoTranscript || ''
-                            analysis = await analyzeModuleC(
-                                question.question_text,
-                                transcriptText,
-                                videoTranscript,
-                                pronunciationMetrics
-                            )
-                        } else {
-                            analysis = await analyzeModuleAB(
-                                question.question_text,
-                                transcriptText,
-                                pronunciationMetrics
-                            )
-                        }
-
-                        console.log('Analysis complete, total score:', analysis.totalScore)
-
-                        // Step 3: Update question with scores
-                        const scores = {
-                            topicDevelopment: analysis.topicDevelopment.score,
-                            fluency: analysis.fluency?.score || null,
-                            vocabulary: analysis.vocabulary.score,
-                            grammar: analysis.grammar.score,
-                        }
-
-                        const feedback = {
-                            topicDevelopment: analysis.topicDevelopment,
-                            fluency: analysis.fluency,
-                            vocabulary: analysis.vocabulary,
-                            grammar: analysis.grammar,
-                            preservationPoints: analysis.preservationPoints,
-                            improvementPoints: analysis.improvementPoints,
-                        }
-
-                        await supabaseAdmin
-                            .from('practice_questions')
-                            .update({
-                                scores,
-                                feedback,
-                                total_score: analysis.totalScore,
-                            })
-                            .eq('id', question.id)
-                    }
-                } catch (questionError) {
-                    console.error(`Error processing question ${question.question_id}:`, questionError)
+                // Skip if no recording
+                if (!question.recording_url) {
+                    console.log('No recording, skipping')
+                    processedQuestions.push(question)
+                    continue
                 }
-            }
 
-            // Step 4: Call next question or finalize
-            const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/process-practice`
-            const headers = {
-                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-                'Content-Type': 'application/json'
-            }
+                // Step 1: Get transcription
+                // Prefer client-side transcript from DB, fallback to Azure REST API
+                let transcriptText: string
+                let pronunciationMetrics: any = null
 
-            if (questionIndex + 1 < questions.length) {
-                console.log(`Triggering next question: ${questionIndex + 1}`)
-                fetch(functionUrl, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ practiceId, questionIndex: questionIndex + 1 })
-                }).catch(e => console.error('Failed to chain next question:', e))
-            } else {
-                console.log(`Triggering finalization`)
-                fetch(functionUrl, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ practiceId, finalize: true })
-                }).catch(e => console.error('Failed to chain finalization:', e))
-            }
+                if (question.transcript && question.transcript !== '[No speech detected]') {
+                    // Client already transcribed and saved to DB
+                    console.log('Using client-side transcript from DB for:', question.question_id)
+                    transcriptText = question.transcript
+                    // Read pronunciation metrics from scores._pronunciationAssessment
+                    pronunciationMetrics = question.scores?._pronunciationAssessment || null
+                } else {
+                    // Fallback: transcribe with Azure REST API
+                    console.log('Falling back to Azure REST API transcription for:', question.question_id)
+                    const transcription = await transcribeAudio(question.recording_url, supabaseAdmin)
+                    transcriptText = transcription.text
+                    pronunciationMetrics = transcription.pronunciationAssessment
 
-            return new Response(JSON.stringify({ success: true, message: 'Question processed, chained next' }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
-        }
+                    // Save transcript to DB
+                    await supabaseAdmin
+                        .from('practice_questions')
+                        .update({ transcript: transcriptText })
+                        .eq('id', question.id)
+                }
 
-        // ==========================================
-        // FINALIZATION PHASE
-        // ==========================================
-        if (isFinalization) {
-            console.log('Finalizing practice')
-            const processedQuestions = questions
+                console.log('Transcript:', transcriptText?.substring(0, 50))
 
-            // Need to fetch fresh questions to get the newly calculated scores
-            const { data: latestQuestions } = await supabaseAdmin
-                .from('practice_questions')
-                .select('*')
-                .eq('practice_id', practiceId)
+                // Step 2: Analyze with AI
+                // Detect Module C by checking question metadata or practice type
+                const questionData = question.scores ? question : null
+                const isModuleC = practice.type === 'module-c' ||
+                    (practice.type === 'simulation' && question.order_index >= 2) // Module C questions are index 2+ in simulation
 
-            const finalQuestions = latestQuestions || processedQuestions
+                let analysis
+                if (isModuleC) {
+                    // Get video transcript from practice's module_a_info or question metadata
+                    // In simulations, Module C content info may be stored in the practice record
+                    const moduleAInfo = practice.module_a_info || {}
+                    const videoTranscript = question.video_transcript || moduleAInfo.videoTranscript || ''
+                    analysis = await analyzeModuleC(
+                        question.question_text,
+                        transcriptText,
+                        videoTranscript,
+                        pronunciationMetrics
+                    )
+                } else {
+                    analysis = await analyzeModuleAB(
+                        question.question_text,
+                        transcriptText,
+                        pronunciationMetrics
+                    )
+                }
 
-            // Calculate overall scores
-            const questionsWithScores = finalQuestions.filter((q: any) => q.total_score)
-            const avgScore = questionsWithScores.length > 0
-                ? Math.round(questionsWithScores.reduce((sum: number, q: any) => sum + q.total_score, 0) / questionsWithScores.length)
-                : 0
+                console.log('Analysis complete, total score:', analysis.totalScore)
 
-            const calculateAverage = (qs: any[], key: string) => {
-                const validQuestions = qs.filter((q: any) => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
-                if (validQuestions.length === 0) return 0
-                return Math.round(validQuestions.reduce((sum: number, q: any) => sum + q.scores[key], 0) / validQuestions.length)
-            }
+                // Step 3: Update question with scores
+                const scores = {
+                    topicDevelopment: analysis.topicDevelopment.score,
+                    fluency: analysis.fluency?.score || null,
+                    vocabulary: analysis.vocabulary.score,
+                    grammar: analysis.grammar.score,
+                }
 
-            const overallScores = {
-                topicDevelopment: calculateAverage(finalQuestions, 'topicDevelopment'),
-                fluency: calculateAverage(finalQuestions, 'fluency'),
-                vocabulary: calculateAverage(finalQuestions, 'vocabulary'),
-                grammar: calculateAverage(finalQuestions, 'grammar'),
-            }
+                const feedback = {
+                    topicDevelopment: analysis.topicDevelopment,
+                    fluency: analysis.fluency,
+                    vocabulary: analysis.vocabulary,
+                    grammar: analysis.grammar,
+                }
 
-            // Aggregate preservation/improvement points
-            const allPreservation = finalQuestions.flatMap((q: any) => q.feedback?.preservationPoints || [])
-            const allImprovement = finalQuestions.flatMap((q: any) => q.feedback?.improvementPoints || [])
+                await supabaseAdmin
+                    .from('practice_questions')
+                    .update({
+                        scores,
+                        feedback,
+                        total_score: analysis.totalScore,
+                    })
+                    .eq('id', question.id)
 
-            // Complete the practice
-            await supabaseAdmin
-                .from('practices')
-                .update({
-                    status: 'completed',
-                    processing_status: 'completed',
-                    total_score: avgScore,
-                    scores: overallScores,
-                    strengths: [...new Set(allPreservation)].slice(0, 10),
-                    improvements: [...new Set(allImprovement)].slice(0, 10),
-                    completed_at: new Date().toISOString(),
+                processedQuestions.push({
+                    ...question,
+                    scores,
+                    feedback,
+                    total_score: analysis.totalScore,
+                    preservationPoints: analysis.preservationPoints,
+                    improvementPoints: analysis.improvementPoints,
                 })
-                .eq('id', practiceId)
 
-            return new Response(JSON.stringify({ success: true, message: 'Practice finalized' }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
+            } catch (questionError) {
+                console.error(`Error processing question ${question.question_id}:`, questionError)
+                processedQuestions.push(question)
+            }
         }
 
-        // Since we are either processing a single question or finalizing (which both return their own Response),
-        // we shouldn't reach here normally, but just in case:
+        // Calculate overall scores
+        const questionsWithScores = processedQuestions.filter(q => q.total_score)
+        const avgScore = questionsWithScores.length > 0
+            ? Math.round(questionsWithScores.reduce((sum, q) => sum + q.total_score, 0) / questionsWithScores.length)
+            : 0
+
+        const calculateAverage = (questions: any[], key: string) => {
+            const validQuestions = questions.filter(q => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
+            if (validQuestions.length === 0) return 0
+            return Math.round(validQuestions.reduce((sum, q) => sum + q.scores[key], 0) / validQuestions.length)
+        }
+
+        const overallScores = {
+            topicDevelopment: calculateAverage(processedQuestions, 'topicDevelopment'),
+            fluency: calculateAverage(processedQuestions, 'fluency'),
+            vocabulary: calculateAverage(processedQuestions, 'vocabulary'),
+            grammar: calculateAverage(processedQuestions, 'grammar'),
+        }
+
+        // Aggregate preservation/improvement points
+        const allPreservation = processedQuestions.flatMap(q => q.preservationPoints || [])
+        const allImprovement = processedQuestions.flatMap(q => q.improvementPoints || [])
+
+        // Complete the practice
+        await supabaseAdmin
+            .from('practices')
+            .update({
+                status: 'completed',
+                processing_status: 'completed',
+                total_score: avgScore,
+                scores: overallScores,
+                strengths: [...new Set(allPreservation)].slice(0, 10),
+                improvements: [...new Set(allImprovement)].slice(0, 10),
+                completed_at: new Date().toISOString(),
+            })
+            .eq('id', practiceId)
+
+        console.log(`Practice ${practiceId} completed with score: ${avgScore}`)
+
         return new Response(JSON.stringify({
             success: true,
-            message: 'Execution completed',
+            practiceId,
+            totalScore: avgScore,
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
