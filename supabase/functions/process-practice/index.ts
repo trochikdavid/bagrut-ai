@@ -537,31 +537,13 @@ serve(async (req) => {
             throw new Error(`Failed to get questions: ${questionsError.message}`)
         }
 
-        // If this is a simulation (has 4 questions), trigger process-practice-c in the background
-        if (questions.length > 2) {
-            console.log(`Simulation detected, triggering background processing for Module C`)
-            const supabaseUrl = Deno.env.get('SUPABASE_URL')
-
-            // Fire and forget
-            fetch(`${supabaseUrl}/functions/v1/process-practice-c`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-                },
-                body: JSON.stringify({ practiceId })
-            }).catch(e => console.error('Error triggering Module C edge function:', e))
-        }
-
-        // Filter to ONLY Module A/B questions (index 0, 1)
-        const moduleABQuestions = questions.filter(q => q.order_index < 2)
-        console.log(`Processing ${moduleABQuestions.length} Module A/B questions`)
+        console.log(`Processing ${questions.length} questions`)
 
         const processedQuestions: any[] = []
 
-        for (const question of moduleABQuestions) {
+        for (const question of questions) {
             try {
-                console.log(`Processing Module A/B question: ${question.question_id}`)
+                console.log(`Processing question: ${question.question_id}`)
 
                 // Skip if no recording
                 if (!question.recording_url) {
@@ -664,62 +646,28 @@ serve(async (req) => {
             }
         }
 
-        // ==========================================
-        // FINALIZATION CHECK
-        // ==========================================
-        // Fetch all questions fresh from DB to see if Module C is done
-        const { data: latestQuestions } = await supabaseAdmin
-            .from('practice_questions')
-            .select('*')
-            .eq('practice_id', practiceId)
-            .order('order_index')
-
-        const finalQuestions = latestQuestions || Object.values(questions)
-
-        // Merge newly processed questions with DB data
-        const mergedQuestions = finalQuestions.map((q: any) => {
-            const processed = processedQuestions.find(pq => pq.id === q.id)
-            return processed || q
-        })
-
-        // Check if ALL questions are done
-        const allQuestionsDone = mergedQuestions.every((q: any) => q.total_score !== null && q.total_score !== undefined)
-
-        if (!allQuestionsDone && questions.length > 2) {
-            console.log(`Module A/B finished, but Module C is still processing. Exiting without finalizing practice: ${practiceId}`)
-            return new Response(JSON.stringify({
-                success: true,
-                practiceId,
-                message: 'Module A/B scored. Waiting for Module C to finalize.'
-            }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
-        }
-
-        console.log(`All questions scored! Finalizing practice: ${practiceId}`)
-
         // Calculate overall scores
-        const questionsWithScores = mergedQuestions.filter((q: any) => q.total_score)
+        const questionsWithScores = processedQuestions.filter(q => q.total_score)
         const avgScore = questionsWithScores.length > 0
-            ? Math.round(questionsWithScores.reduce((sum: number, q: any) => sum + q.total_score, 0) / questionsWithScores.length)
+            ? Math.round(questionsWithScores.reduce((sum, q) => sum + q.total_score, 0) / questionsWithScores.length)
             : 0
 
-        const calculateAverage = (qs: any[], key: string) => {
-            const validQuestions = qs.filter((q: any) => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
+        const calculateAverage = (questions: any[], key: string) => {
+            const validQuestions = questions.filter(q => q.scores?.[key] !== null && q.scores?.[key] !== undefined)
             if (validQuestions.length === 0) return 0
-            return Math.round(validQuestions.reduce((sum: number, q: any) => sum + q.scores[key], 0) / validQuestions.length)
+            return Math.round(validQuestions.reduce((sum, q) => sum + q.scores[key], 0) / validQuestions.length)
         }
 
         const overallScores = {
-            topicDevelopment: calculateAverage(mergedQuestions, 'topicDevelopment'),
-            fluency: calculateAverage(mergedQuestions, 'fluency'),
-            vocabulary: calculateAverage(mergedQuestions, 'vocabulary'),
-            grammar: calculateAverage(mergedQuestions, 'grammar'),
+            topicDevelopment: calculateAverage(processedQuestions, 'topicDevelopment'),
+            fluency: calculateAverage(processedQuestions, 'fluency'),
+            vocabulary: calculateAverage(processedQuestions, 'vocabulary'),
+            grammar: calculateAverage(processedQuestions, 'grammar'),
         }
 
         // Aggregate preservation/improvement points
-        const allPreservation = mergedQuestions.flatMap((q: any) => q.feedback?.preservationPoints || q.preservationPoints || [])
-        const allImprovement = mergedQuestions.flatMap((q: any) => q.feedback?.improvementPoints || q.improvementPoints || [])
+        const allPreservation = processedQuestions.flatMap(q => q.preservationPoints || [])
+        const allImprovement = processedQuestions.flatMap(q => q.improvementPoints || [])
 
         // Complete the practice
         await supabaseAdmin
