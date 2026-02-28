@@ -312,40 +312,30 @@ export async function getPracticedQuestionIds(userId, moduleType) {
 
 // Trigger background processing for a practice
 export async function triggerProcessing(practiceId) {
-    // Use native fetch instead of supabase.functions.invoke() to avoid
-    // CORS preflight issues that prevent the POST from reaching the function
     try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const accessToken = session?.access_token
+        console.log('[triggerProcessing] Calling process-practice with practiceId:', practiceId)
 
-        if (!accessToken) {
-            console.error('No access token available for triggerProcessing')
-            return { success: false, error: 'No access token' }
-        }
-
-        const functionUrl = `${supabaseUrl}/functions/v1/process-practice`
-
-        const response = await fetch(functionUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'apikey': supabaseAnonKey,
-            },
-            body: JSON.stringify({ practiceId }),
+        const { data, error } = await supabase.functions.invoke('process-practice', {
+            body: { practiceId }
         })
 
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({}))
-            const errorDetail = errorBody?.error || response.statusText
-            console.error('Failed to trigger processing:', errorDetail)
+        if (error) {
+            // Extract actual error details from Edge Function response
+            let errorDetail = error.message
+            try {
+                if (error.context?.body) {
+                    const body = await error.context.json()
+                    errorDetail = body?.error || errorDetail
+                }
+            } catch (e) { /* ignore */ }
+            console.error('[triggerProcessing] Error:', errorDetail, 'Full error:', JSON.stringify(error))
             return { success: false, error: errorDetail }
         }
 
-        const data = await response.json()
+        console.log('[triggerProcessing] Success:', data)
         return data
     } catch (err) {
-        console.error('Failed to trigger processing:', err)
-        return { success: false, error: err.message }
+        console.error('[triggerProcessing] Exception:', err?.message, err?.name, err)
+        return { success: false, error: err?.message || 'Unknown error' }
     }
 }
