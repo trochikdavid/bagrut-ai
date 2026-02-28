@@ -537,31 +537,15 @@ serve(async (req) => {
             throw new Error(`Failed to get questions: ${questionsError.message}`)
         }
 
-        // If this is a simulation (has 4 questions), trigger process-practice-c in the background
-        if (questions.length > 2) {
-            console.log(`Simulation detected, triggering background processing for Module C`)
-            const supabaseUrl = Deno.env.get('SUPABASE_URL')
-
-            // Fire and forget
-            fetch(`${supabaseUrl}/functions/v1/process-practice-c`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-                },
-                body: JSON.stringify({ practiceId })
-            }).catch(e => console.error('Error triggering Module C edge function:', e))
-        }
-
-        // Filter to ONLY Module A/B questions (index 0, 1)
-        const moduleABQuestions = questions.filter(q => q.order_index < 2)
-        console.log(`Processing ${moduleABQuestions.length} Module A/B questions`)
+        // Filter to ONLY Module C questions (index 2+)
+        const moduleCQuestions = questions.filter(q => q.order_index >= 2)
+        console.log(`Processing ${moduleCQuestions.length} Module C questions`)
 
         const processedQuestions: any[] = []
 
-        for (const question of moduleABQuestions) {
+        for (const question of moduleCQuestions) {
             try {
-                console.log(`Processing Module A/B question: ${question.question_id}`)
+                console.log(`Processing Module C question: ${question.question_id}`)
 
                 // Skip if no recording
                 if (!question.recording_url) {
@@ -597,31 +581,15 @@ serve(async (req) => {
 
                 console.log('Transcript:', transcriptText?.substring(0, 50))
 
-                // Step 2: Analyze with AI
-                // Detect Module C by checking question metadata or practice type
-                const questionData = question.scores ? question : null
-                const isModuleC = practice.type === 'module-c' ||
-                    (practice.type === 'simulation' && question.order_index >= 2) // Module C questions are index 2+ in simulation
-
-                let analysis
-                if (isModuleC) {
-                    // Get video transcript from practice's module_a_info or question metadata
-                    // In simulations, Module C content info may be stored in the practice record
-                    const moduleAInfo = practice.module_a_info || {}
-                    const videoTranscript = question.video_transcript || moduleAInfo.videoTranscript || ''
-                    analysis = await analyzeModuleC(
-                        question.question_text,
-                        transcriptText,
-                        videoTranscript,
-                        pronunciationMetrics
-                    )
-                } else {
-                    analysis = await analyzeModuleAB(
-                        question.question_text,
-                        transcriptText,
-                        pronunciationMetrics
-                    )
-                }
+                // Step 2: Analyze with AI (Module C only)
+                const moduleAInfo = practice.module_a_info || {}
+                const videoTranscript = question.video_transcript || moduleAInfo.videoTranscript || ''
+                const analysis = await analyzeModuleC(
+                    question.question_text,
+                    transcriptText,
+                    videoTranscript,
+                    pronunciationMetrics
+                )
 
                 console.log('Analysis complete, total score:', analysis.totalScore)
 
@@ -667,7 +635,7 @@ serve(async (req) => {
         // ==========================================
         // FINALIZATION CHECK
         // ==========================================
-        // Fetch all questions fresh from DB to see if Module C is done
+        // Fetch all questions fresh from DB to see if A/B are done
         const { data: latestQuestions } = await supabaseAdmin
             .from('practice_questions')
             .select('*')
@@ -685,12 +653,12 @@ serve(async (req) => {
         // Check if ALL questions are done
         const allQuestionsDone = mergedQuestions.every((q: any) => q.total_score !== null && q.total_score !== undefined)
 
-        if (!allQuestionsDone && questions.length > 2) {
-            console.log(`Module A/B finished, but Module C is still processing. Exiting without finalizing practice: ${practiceId}`)
+        if (!allQuestionsDone) {
+            console.log(`Module C finished, but A/B are still processing. Exiting without finalizing practice: ${practiceId}`)
             return new Response(JSON.stringify({
                 success: true,
                 practiceId,
-                message: 'Module A/B scored. Waiting for Module C to finalize.'
+                message: 'Module C scored. Waiting for A/B to finalize.'
             }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             })
